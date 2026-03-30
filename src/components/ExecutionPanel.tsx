@@ -67,7 +67,7 @@ export function ExecutionPanel() {
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
-  const isResizing = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -75,18 +75,17 @@ export function ExecutionPanel() {
 
   function onResizeStart(e: React.MouseEvent) {
     e.preventDefault()
-    isResizing.current = true
     const startY = e.clientY
     const startHeight = panelHeight
+    setIsDragging(true)
 
     function onMouseMove(ev: MouseEvent) {
-      if (!isResizing.current) return
       const delta = startY - ev.clientY
       setPanelHeight(Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight + delta)))
     }
 
     function onMouseUp() {
-      isResizing.current = false
+      setIsDragging(false)
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('mouseup', onMouseUp)
     }
@@ -142,6 +141,11 @@ export function ExecutionPanel() {
           </svg>
         </button>
       </div>
+
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-[9999] cursor-row-resize" />
+      )}
 
       {/* Log list */}
       <div className="flex-1 overflow-y-auto py-1">

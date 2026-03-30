@@ -18,11 +18,12 @@ export function NodeBase({ accentColor, label, isSelected, executionStatus, chil
 
   return (
     <div
-      className={`relative rounded-lg border bg-[var(--color-surface)] min-w-[220px] select-none transition-shadow ${statusClass} ${
+      className={`relative rounded-lg border bg-[var(--color-surface)] select-none transition-shadow flex flex-col overflow-hidden ${statusClass} ${
         isSelected
           ? 'border-[var(--color-accent)] shadow-[0_0_0_1px_var(--color-accent)]'
           : 'border-[var(--color-border)]'
       }`}
+      style={{ width: 260, aspectRatio: '16/9' }}
     >
       {/* Colored left accent bar */}
       <div
@@ -31,7 +32,7 @@ export function NodeBase({ accentColor, label, isSelected, executionStatus, chil
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 pt-2.5 pb-2 pl-4 border-b border-[var(--color-border)]">
+      <div className="flex items-center justify-between px-3 pt-2.5 pb-2 pl-4 border-b border-[var(--color-border)] flex-shrink-0">
         <div className="flex flex-col gap-0.5 pl-1">
           <span className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider leading-none">
             {typeLabel}
@@ -56,7 +57,7 @@ export function NodeBase({ accentColor, label, isSelected, executionStatus, chil
       </div>
 
       {/* Body */}
-      <div className="px-4 py-2.5">
+      <div className="px-4 py-2 flex-1 overflow-hidden">
         {children}
       </div>
     </div>

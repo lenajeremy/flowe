@@ -37,6 +37,8 @@ export function Canvas() {
     setSelectedNodeId, selectedNodeId,
     addNode, deleteNodesById,
     executionState,
+    undo, redo,
+    setConfigPanelOpen,
   } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,  // still needed for animatedEdges + MiniMap
@@ -49,34 +51,45 @@ export function Canvas() {
       addNode: s.addNode,
       deleteNodesById: s.deleteNodesById,
       executionState: s.executionState,
+      undo: s.undo,
+      redo: s.redo,
+      setConfigPanelOpen: s.setConfigPanelOpen,
     })),
   )
 
   const rfInstance = useReactFlow()
 
-  // ── Delete key handler ────────────────────────────────────
+  // ── Keyboard handler ─────────────────────────────────────
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== 'Delete') return
-      // Don't fire while typing in form inputs
       const tag = (document.activeElement as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
+
+      // Undo / Redo — skip when typing
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (inInput) return
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+
+      // Delete / Backspace — skip when typing
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
+      if (inInput) return
       e.preventDefault()
 
       if (!selectedNodeId) return
-
       if (e.shiftKey) {
-        // Shift+Delete: delete selected node + all downstream nodes
         deleteNodesById(getDownstreamIds(selectedNodeId, edges))
       } else {
-        // Delete: remove the selected node (and its edges)
         deleteNodesById([selectedNodeId])
       }
     }
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [edges, selectedNodeId, deleteNodesById])
+  }, [edges, selectedNodeId, deleteNodesById, undo, redo])
 
   // ── Animated edges ────────────────────────────────────────
   const animatedEdges = useMemo(
@@ -85,8 +98,11 @@ export function Canvas() {
   )
 
   const onNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node) => setSelectedNodeId(node.id),
-    [setSelectedNodeId],
+    (_event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id)
+      setConfigPanelOpen(true)
+    },
+    [setSelectedNodeId, setConfigPanelOpen],
   )
 
   const onPaneClick = useCallback(

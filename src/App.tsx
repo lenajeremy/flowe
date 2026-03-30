@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { Toolbar } from '@/components/Toolbar'
 import { TabBar } from '@/components/TabBar'
@@ -10,36 +10,33 @@ import { ApiKeyModal } from '@/components/ApiKeyModal'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 
-const MIN_PANEL_WIDTH = 200
-const MAX_PANEL_WIDTH = 640
-const DEFAULT_PANEL_WIDTH = 288 // w-72
+const MIN_LEFT  = 120
+const MAX_LEFT  = 480
+const DEFAULT_LEFT = 224 // w-56
 
-function App() {
-  const { isApiKeyModalOpen, setApiKeyModalOpen } = useWorkflowStore(
-    useShallow((s) => ({
-      isApiKeyModalOpen: s.isApiKeyModalOpen,
-      setApiKeyModalOpen: s.setApiKeyModalOpen,
-    })),
-  )
+const MIN_RIGHT  = 200
+const MAX_RIGHT  = 640
+const DEFAULT_RIGHT = 288 // w-72
 
-  const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
-  const [panelOpen, setPanelOpen] = useState(true)
-  const isResizing = useRef(false)
+function useResizable(defaultWidth: number, min: number, max: number, direction: 'left' | 'right') {
+  const [width, setWidth] = useState(defaultWidth)
+  const [dragging, setDragging] = useState(false)
 
-  function onResizeStart(e: React.MouseEvent) {
+  function onMouseDown(e: React.MouseEvent) {
     e.preventDefault()
-    isResizing.current = true
     const startX = e.clientX
-    const startWidth = panelWidth
+    const startW = width
+    setDragging(true)
 
     function onMouseMove(ev: MouseEvent) {
-      if (!isResizing.current) return
-      const delta = startX - ev.clientX
-      setPanelWidth(Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, startWidth + delta)))
+      const delta = direction === 'right'
+        ? startX - ev.clientX   // drag left → wider
+        : ev.clientX - startX   // drag right → wider
+      setWidth(Math.max(min, Math.min(max, startW + delta)))
     }
 
     function onMouseUp() {
-      isResizing.current = false
+      setDragging(false)
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('mouseup', onMouseUp)
     }
@@ -47,6 +44,56 @@ function App() {
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
   }
+
+  return { width, dragging, onMouseDown }
+}
+
+function ResizeHandle({
+  onMouseDown, onToggle, open, chevronOpen, chevronClosed,
+}: {
+  onMouseDown: (e: React.MouseEvent) => void
+  onToggle: () => void
+  open: boolean
+  chevronOpen: string
+  chevronClosed: string
+}) {
+  return (
+    <div className="flex-shrink-0 flex flex-col" style={{ width: '8px', position: 'relative' }}>
+      <div
+        className="flex-1 cursor-col-resize hover:bg-blue-500/40 transition-colors"
+        style={{ background: 'var(--color-border)' }}
+        onMouseDown={open ? onMouseDown : undefined}
+      />
+      <button
+        onClick={onToggle}
+        className="flex-shrink-0 flex items-center justify-center h-10 w-full hover:bg-blue-500/20 transition-colors"
+        style={{ background: 'var(--color-border)' }}
+        title={open ? 'Collapse panel' : 'Expand panel'}
+      >
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path
+            d={open ? chevronOpen : chevronClosed}
+            stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+function App() {
+  const { isApiKeyModalOpen, setApiKeyModalOpen, isConfigPanelOpen, setConfigPanelOpen } = useWorkflowStore(
+    useShallow((s) => ({
+      isApiKeyModalOpen: s.isApiKeyModalOpen,
+      setApiKeyModalOpen: s.setApiKeyModalOpen,
+      isConfigPanelOpen: s.isConfigPanelOpen,
+      setConfigPanelOpen: s.setConfigPanelOpen,
+    })),
+  )
+
+  const [leftOpen, setLeftOpen] = useState(true)
+  const left  = useResizable(DEFAULT_LEFT,  MIN_LEFT,  MAX_LEFT,  'left')
+  const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
 
   return (
     <div
@@ -57,40 +104,45 @@ function App() {
       <TabBar />
 
       <div className="flex flex-1 overflow-hidden">
-        <NodePalette />
+        {/* Left panel */}
+        {leftOpen && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: left.width }}>
+            <NodePalette />
+          </div>
+        )}
+
+        {/* Left resize + toggle */}
+        <ResizeHandle
+          onMouseDown={left.onMouseDown}
+          onToggle={() => setLeftOpen((o) => !o)}
+          open={leftOpen}
+          chevronOpen="M6 1L2 4l4 3"
+          chevronClosed="M2 1l4 3-4 3"
+        />
 
         <ReactFlowProvider>
           <Canvas />
         </ReactFlowProvider>
 
-        {/* Resize handle + toggle */}
-        <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '12px', background: 'var(--color-border)', position: 'relative' }}>
-          {/* Drag area */}
-          <div
-            className="absolute inset-0 cursor-col-resize hover:bg-blue-500/30 active:bg-blue-500/50 transition-colors"
-            onMouseDown={panelOpen ? onResizeStart : undefined}
-          />
-          {/* Toggle chevron button */}
-          <button
-            onClick={() => setPanelOpen((o) => !o)}
-            className="absolute top-1/2 -translate-y-1/2 z-10 w-4 h-8 flex items-center justify-center rounded bg-[var(--color-surface2)] border border-[var(--color-border2)] text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
-            style={{ left: '-6px' }}
-            title={panelOpen ? 'Collapse panel' : 'Expand panel'}
-          >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              {panelOpen
-                ? <path d="M2 1l4 3-4 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                : <path d="M6 1L2 4l4 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-              }
-            </svg>
-          </button>
-        </div>
+        {/* Right resize + toggle */}
+        <ResizeHandle
+          onMouseDown={right.onMouseDown}
+          onToggle={() => setConfigPanelOpen(!isConfigPanelOpen)}
+          open={isConfigPanelOpen}
+          chevronOpen="M2 1l4 3-4 3"
+          chevronClosed="M6 1L2 4l4 3"
+        />
 
-        {/* Config panel with controlled width */}
-        {panelOpen && (
-          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: panelWidth }}>
+        {/* Right panel */}
+        {isConfigPanelOpen && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: right.width }}>
             <ConfigPanel />
           </div>
+        )}
+
+        {/* Drag overlays */}
+        {(left.dragging || right.dragging) && (
+          <div className="fixed inset-0 z-[9999] cursor-col-resize" />
         )}
       </div>
 

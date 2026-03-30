@@ -50,7 +50,7 @@ function PaletteItem({ type }: { type: NodeType }) {
 
 export function NodePalette() {
   return (
-    <aside className="w-56 flex-shrink-0 flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] overflow-y-auto">
+    <aside className="w-full h-full flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] overflow-y-auto">
       <div className="px-3 py-3 border-b border-[var(--color-border)]">
         <h2 className="text-[10px] text-[var(--color-muted)] uppercase tracking-widest font-medium">
           Node Palette

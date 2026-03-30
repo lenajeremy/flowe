@@ -24,6 +24,8 @@ export interface TabMeta {
   workflowName: string
 }
 
+type HistoryEntry = { nodes: FlowNode[]; edges: FlowEdge[] }
+
 export interface TabSnapshot {
   workflowName: string
   nodes: FlowNode[]
@@ -32,6 +34,9 @@ export interface TabSnapshot {
   executionState: ExecutionState
   executionLog: ExecutionEvent[]
   isLogPanelOpen: boolean
+  isConfigPanelOpen: boolean
+  history: HistoryEntry[]
+  future: HistoryEntry[]
 }
 
 // ── Store interface ──────────────────────────────────────────
@@ -54,6 +59,11 @@ interface WorkflowStore {
   onConnect: (connection: Connection) => void
   addNode: (node: FlowNode) => void
   deleteNodesById: (ids: string[]) => void
+
+  history: HistoryEntry[]
+  future: HistoryEntry[]
+  undo: () => void
+  redo: () => void
 
   selectedNodeId: string | null
   setSelectedNodeId: (id: string | null) => void
@@ -79,6 +89,9 @@ interface WorkflowStore {
   isLogPanelOpen: boolean
   setLogPanelOpen: (open: boolean) => void
 
+  isConfigPanelOpen: boolean
+  setConfigPanelOpen: (open: boolean) => void
+
   // ── Global UI (not per-tab) ──
   isApiKeyModalOpen: boolean
   setApiKeyModalOpen: (open: boolean) => void
@@ -95,7 +108,20 @@ function snap(s: WorkflowStore): TabSnapshot {
     executionState: s.executionState,
     executionLog: s.executionLog,
     isLogPanelOpen: s.isLogPanelOpen,
+    isConfigPanelOpen: s.isConfigPanelOpen,
+    history: s.history,
+    future: s.future,
   }
+}
+
+const HISTORY_LIMIT = 10
+
+function pushHistory(
+  history: HistoryEntry[],
+  nodes: FlowNode[],
+  edges: FlowEdge[],
+): HistoryEntry[] {
+  return [...history, { nodes, edges }].slice(-HISTORY_LIMIT)
 }
 
 function astToSnapshot(ast: WorkflowAST): TabSnapshot {
@@ -120,6 +146,9 @@ function astToSnapshot(ast: WorkflowAST): TabSnapshot {
     executionState: 'idle',
     executionLog: [],
     isLogPanelOpen: false,
+    isConfigPanelOpen: true,
+    history: [],
+    future: [],
   }
 }
 
@@ -142,11 +171,15 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     const newId = crypto.randomUUID()
     const target: TabSnapshot = snapshot ?? {
       workflowName: 'New Workflow',
-      ...buildDemoWorkflow(),
+      nodes: [],
+      edges: [],
       selectedNodeId: null,
       executionState: 'idle',
       executionLog: [],
       isLogPanelOpen: false,
+      isConfigPanelOpen: true,
+      history: [],
+      future: [],
     }
     set({
       snapshots: { ...s.snapshots, [s.activeTabId]: snap(s) },
@@ -203,18 +236,63 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   // Active tab state
   ...demo,
   workflowName: 'Blog Post Pipeline',
+  history: [],
+  future: [],
+
+  undo: () =>
+    set((state) => {
+      if (state.history.length === 0) return {}
+      const prev = state.history[state.history.length - 1]
+      return {
+        nodes: prev.nodes,
+        edges: prev.edges,
+        history: state.history.slice(0, -1),
+        future: [{ nodes: state.nodes, edges: state.edges }, ...state.future].slice(0, HISTORY_LIMIT),
+        selectedNodeId: null,
+      }
+    }),
+
+  redo: () =>
+    set((state) => {
+      if (state.future.length === 0) return {}
+      const next = state.future[0]
+      return {
+        nodes: next.nodes,
+        edges: next.edges,
+        history: pushHistory(state.history, state.nodes, state.edges),
+        future: state.future.slice(1),
+        selectedNodeId: null,
+      }
+    }),
 
   onNodesChange: (changes) =>
-    set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) })),
+    set((state) => {
+      const dragEnded = changes.some((c) => c.type === 'position' && c.dragging === false)
+      return {
+        nodes: applyNodeChanges(changes, state.nodes),
+        ...(dragEnded && {
+          history: pushHistory(state.history, state.nodes, state.edges),
+          future: [],
+        }),
+      }
+    }),
 
   onEdgesChange: (changes) =>
     set((state) => ({ edges: applyEdgeChanges(changes, state.edges) })),
 
   onConnect: (connection) =>
-    set((state) => ({ edges: addEdge(connection, state.edges) })),
+    set((state) => ({
+      edges: addEdge(connection, state.edges),
+      history: pushHistory(state.history, state.nodes, state.edges),
+      future: [],
+    })),
 
   addNode: (node) =>
-    set((state) => ({ nodes: [...state.nodes, node] })),
+    set((state) => ({
+      nodes: [...state.nodes, node],
+      history: pushHistory(state.history, state.nodes, state.edges),
+      future: [],
+    })),
 
   deleteNodesById: (ids) =>
     set((state) => {
@@ -223,6 +301,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         nodes: state.nodes.filter((n) => !idSet.has(n.id)),
         edges: state.edges.filter((e) => !idSet.has(e.source) && !idSet.has(e.target)),
         selectedNodeId: idSet.has(state.selectedNodeId ?? '') ? null : state.selectedNodeId,
+        history: pushHistory(state.history, state.nodes, state.edges),
+        future: [],
       }
     }),
 
@@ -234,6 +314,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       nodes: state.nodes.map((n) =>
         n.id === nodeId ? { ...n, data: { ...n.data, ...partial } } : n,
       ),
+      history: pushHistory(state.history, state.nodes, state.edges),
+      future: [],
     })),
 
   setWorkflowName: (name) =>
@@ -277,6 +359,9 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   isLogPanelOpen: false,
   setLogPanelOpen: (open) => set({ isLogPanelOpen: open }),
+
+  isConfigPanelOpen: true,
+  setConfigPanelOpen: (open) => set({ isConfigPanelOpen: open }),
 
   isApiKeyModalOpen: false,
   setApiKeyModalOpen: (open) => set({ isApiKeyModalOpen: open }),
