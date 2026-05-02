@@ -30,7 +30,11 @@ function getDownstreamIds(startId: string, edges: FlowEdge[]): string[] {
   return [...visited]
 }
 
-export function Canvas() {
+interface CanvasProps {
+  theme: 'dark' | 'light'
+}
+
+export function Canvas({ theme }: CanvasProps) {
   const {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
@@ -129,7 +133,7 @@ export function Canvas() {
   )
 
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div className="relative h-full flex-1 overflow-hidden">
       <ReactFlow
         nodes={nodes}
         edges={animatedEdges}
@@ -144,10 +148,15 @@ export function Canvas() {
         fitView
         fitViewOptions={{ padding: 0.2 }}
         deleteKeyCode={null}
-        colorMode="dark"
-        style={{ background: '#0a0a0f' }}
+        colorMode={theme}
+        style={{ background: 'var(--color-canvas)' }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2a3a" />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color={theme === 'dark' ? '#3a3a3a' : '#d8d8d8'}
+        />
         <Controls />
       </ReactFlow>
     </div>

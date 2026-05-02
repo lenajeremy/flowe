@@ -21,7 +21,7 @@ export function FormField({ label, htmlFor, children }: FormFieldProps) {
 }
 
 export const inputClass =
-  'w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-2.5 py-1.5 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-muted)] font-[var(--font-mono)]'
+  'w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-[7px] px-2.5 py-1.5 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-muted)] font-[var(--font-mono)]'
 
 export const textareaClass =
   `${inputClass} resize-none leading-relaxed`

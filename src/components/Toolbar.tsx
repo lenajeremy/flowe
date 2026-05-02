@@ -37,7 +37,29 @@ function Spinner() {
   )
 }
 
-export function Toolbar() {
+interface ToolbarProps {
+  theme: 'dark' | 'light'
+  onToggleTheme: () => void
+}
+
+function ThemeIcon({ theme }: { theme: 'dark' | 'light' }) {
+  if (theme === 'dark') {
+    return (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M8.2 1.8A4.8 4.8 0 1 0 12.2 8 4.6 4.6 0 0 1 8.2 1.8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="2.4" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M7 1v1.2M7 11.8V13M13 7h-1.2M2.2 7H1M11.2 2.8l-.8.8M3.6 10.4l-.8.8M11.2 11.2l-.8-.8M3.6 3.6l-.8-.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function Toolbar({ theme, onToggleTheme }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -82,7 +104,7 @@ export function Toolbar() {
     })
   }
 
-  function handleExport() {
+  function handleDownload() {
     const ast = serializeToAST(nodes, edges, workflowName)
     const blob = new Blob([JSON.stringify(ast, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -112,10 +134,10 @@ export function Toolbar() {
   }
 
   return (
-    <header className="h-12 flex items-center px-4 gap-4 bg-[var(--color-surface)] border-b border-[var(--color-border)] flex-shrink-0">
+    <header className="h-12 flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 shadow-[var(--panel-shadow)] flex-shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+      <div className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 hover:bg-[var(--color-surface2)] flex-shrink-0">
+        <div className="w-6 h-6 rounded-[7px] bg-[var(--color-accent)] flex items-center justify-center text-white">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <circle cx="3" cy="6" r="2" fill="white"/>
             <circle cx="9" cy="3" r="1.5" fill="white"/>
@@ -123,20 +145,20 @@ export function Toolbar() {
             <path d="M5 6h1.5M7.5 3H8M7.5 9H8" stroke="white" strokeWidth="1" strokeLinecap="round"/>
           </svg>
         </div>
-        <span className="text-sm font-semibold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-          Flowe
+        <span className="text-[13px] font-semibold text-[var(--color-text)]">
+          workflow-ai
         </span>
       </div>
 
       {/* Divider */}
-      <div className="w-px h-5 bg-[var(--color-border)]" />
+      <div className="mx-1 h-5 w-px bg-[var(--color-border)]" />
 
       {/* Workflow name */}
       <input
         type="text"
         value={workflowName}
         onChange={(e) => setWorkflowName(e.target.value)}
-        className="bg-transparent border-none outline-none text-xs text-[var(--color-text)] font-medium w-44 focus:bg-[var(--color-surface2)] focus:px-2 rounded transition-all placeholder:text-[var(--color-muted)]"
+        className="h-8 w-52 rounded-[7px] border border-transparent bg-transparent px-2 text-[12px] font-medium text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] hover:bg-[var(--color-surface2)] focus:border-[var(--color-border2)] focus:bg-[var(--color-surface2)]"
         placeholder="Untitled Workflow"
       />
 
@@ -157,7 +179,7 @@ export function Toolbar() {
       {/* API Keys */}
       <button
         onClick={() => setApiKeyModalOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] border border-transparent hover:border-[var(--color-border)] transition-all"
+        className="flex h-8 items-center gap-1.5 rounded-[7px] border border-transparent px-2.5 text-[12px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
         title="API Keys"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -178,29 +200,38 @@ export function Toolbar() {
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isRunning}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] border border-transparent hover:border-[var(--color-border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        className="flex h-8 items-center gap-1.5 rounded-[7px] border border-transparent px-2.5 text-[12px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <UploadIcon />
         Import
       </button>
 
-      {/* Export JSON */}
+      {/* Download JSON */}
       <button
-        onClick={handleExport}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] border border-transparent hover:border-[var(--color-border)] transition-all"
+        onClick={handleDownload}
+        className="flex h-8 items-center gap-1.5 rounded-[7px] border border-transparent px-2.5 text-[12px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
       >
         <DownloadIcon />
-        Export
+        Download
+      </button>
+
+      <button
+        onClick={onToggleTheme}
+        className="flex h-8 w-8 items-center justify-center rounded-[7px] border border-transparent text-[var(--color-muted)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      >
+        <ThemeIcon theme={theme} />
       </button>
 
       {/* Run button */}
       <button
         onClick={handleRun}
         disabled={isRunning}
-        className={`flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-medium transition-all ${
+        className={`flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-[12px] font-medium transition-all ${
           isRunning
             ? 'bg-blue-600/50 text-blue-300 cursor-not-allowed'
-            : 'bg-[var(--color-accent)] text-white hover:bg-blue-400 active:scale-95 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+            : 'bg-[var(--color-accent)] text-white hover:brightness-105 active:scale-95'
         }`}
       >
         {isRunning ? <Spinner /> : <PlayIcon />}

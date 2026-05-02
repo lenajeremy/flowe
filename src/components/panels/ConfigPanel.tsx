@@ -119,12 +119,14 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
 
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
-  const { nodes, edges, selectedNodeId, updateNodeData } = useWorkflowStore(
+  const { nodes, edges, selectedNodeId, updateNodeData, executionState, executionLog } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
       selectedNodeId: s.selectedNodeId,
       updateNodeData: s.updateNodeData,
+      executionState: s.executionState,
+      executionLog: s.executionLog,
     })),
   )
 
@@ -135,16 +137,71 @@ export function ConfigPanel() {
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null
 
   if (!selectedNode) {
+    const triggerCount = nodes.filter((node) => node.data.nodeType === 'textInput' || node.data.label.toLowerCase().includes('trigger')).length
+    const aiCount = nodes.filter((node) => node.data.nodeType === 'llm').length
+    const actionCount = nodes.filter((node) => node.data.nodeType === 'textOutput').length
+    const readiness = [
+      { label: 'Trigger input', complete: triggerCount > 0 },
+      { label: 'AI decision step', complete: aiCount > 0 },
+      { label: 'Output or action', complete: actionCount > 0 },
+      { label: 'Connected path', complete: edges.length > 0 },
+    ]
+
     return (
-      <aside className="w-full h-full flex flex-col items-center justify-center bg-[var(--color-surface)] border-l border-[var(--color-border)]">
-        <div className="text-center px-6">
-          <div className="w-10 h-10 rounded-full border-2 border-dashed border-[var(--color-border2)] flex items-center justify-center mx-auto mb-3">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="5.5" stroke="var(--color-muted)" strokeWidth="1.2"/>
-              <path d="M8 5v3l2 2" stroke="var(--color-muted)" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
+      <aside className="flex h-full w-full flex-col overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="border-b border-[var(--color-border)] px-4 py-4">
+          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
+          <h2 className="mt-1 text-[15px] font-semibold text-[var(--color-text)]">Run Inspector</h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-muted)]">
+            Select a step to configure it, or use this panel to check whether the workflow is ready to run.
+          </p>
+        </div>
+
+        <div className="overflow-y-auto">
+          <section className="border-b border-[var(--color-border)] px-4 py-4">
+            <h2 className="mb-3 text-[13px] font-semibold text-[var(--color-text)]">Run State</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Status</p>
+                <p className="mt-1 text-[12px] font-semibold capitalize text-[var(--color-text)]">{executionState}</p>
+              </div>
+              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Events</p>
+                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{executionLog.length}</p>
+              </div>
+              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Steps</p>
+                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{nodes.length}</p>
+              </div>
+              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Links</p>
+                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{edges.length}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="border-b border-[var(--color-border)] px-4 py-4">
+            <h2 className="mb-3 text-[13px] font-semibold text-[var(--color-text)]">Readiness</h2>
+            <div className="flex flex-col gap-2">
+              {readiness.map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-[12px]">
+                  <span className={`h-2 w-2 rounded-full ${item.complete ? 'bg-emerald-500' : 'bg-[var(--color-border2)]'}`} />
+                  <span className={item.complete ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="border-b border-[var(--color-border)] px-4 py-4">
+            <h2 className="mb-2 text-[13px] font-semibold text-[var(--color-text)]">Next Best Step</h2>
+            <p className="text-[12px] leading-relaxed text-[var(--color-muted)]">
+              Add a trigger, connect it to an AI step, then end with an action or report output.
+            </p>
+          </section>
+
+          <div className="px-4 py-8 text-center">
+            <p className="text-[12px] text-[var(--color-muted)]">Select a node to edit prompts, inputs, branches, and outputs.</p>
           </div>
-          <p className="text-xs text-[var(--color-muted)]">Select a node to configure it</p>
         </div>
       </aside>
     )
@@ -185,9 +242,9 @@ export function ConfigPanel() {
   const isCompleted = data.executionStatus === 'completed'
 
   return (
-    <aside className="w-full h-full flex flex-col bg-[var(--color-surface)] border-l border-[var(--color-border)] overflow-y-auto">
+    <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2 flex-shrink-0">
+      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
         <div
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: NODE_ACCENT_COLORS[nodeType] }}
@@ -196,7 +253,7 @@ export function ConfigPanel() {
           <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider leading-none mb-0.5">
             {NODE_LABELS[nodeType]}
           </p>
-          <p className="text-xs font-medium text-[var(--color-text)]">Node Config</p>
+          <p className="text-[13px] font-semibold text-[var(--color-text)]">Step Settings</p>
         </div>
         {data.executionStatus && data.executionStatus !== 'idle' && (
           <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wide flex-shrink-0 ${

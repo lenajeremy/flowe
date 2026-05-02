@@ -16,8 +16,8 @@ export function TabBar() {
   const isRunning = executionState === 'running'
 
   return (
-    <div className="flex items-end gap-0 px-3 bg-[var(--color-canvas)] border-b border-[var(--color-border)] overflow-x-auto flex-shrink-0"
-      style={{ minHeight: '34px' }}
+    <div className="flex items-end gap-0 overflow-x-auto border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 flex-shrink-0"
+      style={{ minHeight: '32px' }}
     >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTabId
@@ -26,10 +26,10 @@ export function TabBar() {
             key={tab.id}
             className={`
               group relative flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium
-              border-t border-x rounded-t cursor-pointer select-none
+              border border-b-0 rounded-t-[7px] cursor-pointer select-none
               transition-colors whitespace-nowrap max-w-[160px]
               ${isActive
-                ? 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)] -mb-px z-10'
+                ? 'bg-[var(--color-canvas)] border-[var(--color-border)] text-[var(--color-text)] -mb-px z-10'
                 : 'bg-transparent border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)]'
               }
               ${isRunning && !isActive ? 'opacity-50 cursor-not-allowed' : ''}
@@ -75,7 +75,7 @@ export function TabBar() {
         onClick={() => addTab()}
         disabled={isRunning}
         title="New workflow tab"
-        className="flex items-center justify-center w-7 h-7 mb-0.5 ml-1 rounded text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+        className="mb-0.5 ml-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[7px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
           <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>

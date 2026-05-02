@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { getApiKeys, saveApiKeys } from '@/lib/apiKeys'
 
 interface Props {
@@ -6,14 +6,8 @@ interface Props {
 }
 
 export function ApiKeyModal({ onClose }: Props) {
-  const [anthropic, setAnthropic] = useState('')
-  const [openai, setOpenai] = useState('')
-
-  useEffect(() => {
-    const keys = getApiKeys()
-    setAnthropic(keys.anthropic)
-    setOpenai(keys.openai)
-  }, [])
+  const [anthropic, setAnthropic] = useState(() => getApiKeys().anthropic)
+  const [openai, setOpenai] = useState(() => getApiKeys().openai)
 
   function handleSave() {
     saveApiKeys({ anthropic: anthropic.trim(), openai: openai.trim() })

@@ -11,7 +11,7 @@ export function Select({ id, value, onChange, options }: SelectProps) {
       id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-2.5 py-1.5 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors appearance-none cursor-pointer font-[var(--font-mono)]"
+      className="w-full cursor-pointer appearance-none rounded-[7px] border border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-[var(--font-mono)] text-xs text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)]"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value} className="bg-[var(--color-surface2)]">

@@ -116,7 +116,6 @@ function evaluateBranchCondition(condition: string, upstreamOutput: string): 'tr
     } catch {
       // keep as raw string
     }
-    // eslint-disable-next-line no-new-func
     const result = new Function('output', `"use strict"; return Boolean(${condition})`)(output)
     return result ? 'true' : 'false'
   } catch {
