@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase } from '@/components/ui/NodeBase'
-import { NODE_ACCENT_COLORS, NODE_LABELS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
 export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
@@ -12,9 +12,9 @@ export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
 
   return (
     <NodeBase
-      accentColor={NODE_ACCENT_COLORS.llm}
+      accentHex={NODE_ACCENT_HEX.llm}
+      iconPath={NODE_ICON_PATHS.llm}
       label={data.label}
-      typeLabel={NODE_LABELS.llm}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >

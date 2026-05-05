@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase } from '@/components/ui/NodeBase'
-import { NODE_ACCENT_COLORS, NODE_LABELS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
 export function LoopNode({ data, selected }: NodeProps<FlowNode>) {
@@ -9,9 +9,9 @@ export function LoopNode({ data, selected }: NodeProps<FlowNode>) {
 
   return (
     <NodeBase
-      accentColor={NODE_ACCENT_COLORS.loop}
+      accentHex={NODE_ACCENT_HEX.loop}
+      iconPath={NODE_ICON_PATHS.loop}
       label={data.label}
-      typeLabel={NODE_LABELS.loop}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >
@@ -21,7 +21,7 @@ export function LoopNode({ data, selected }: NodeProps<FlowNode>) {
         </p>
         <span className={`inline-flex w-fit text-[10px] px-1.5 py-0.5 rounded font-medium ${
           mode === 'concurrent'
-            ? 'bg-violet-500/15 text-violet-400 border border-violet-500/20'
+            ? 'bg-[var(--color-node-loop)]/15 text-[var(--color-node-loop)] border border-[var(--color-node-loop)]/20'
             : 'bg-[var(--color-surface2)] text-[var(--color-muted)] border border-[var(--color-border)]'
         }`}>
           {mode}

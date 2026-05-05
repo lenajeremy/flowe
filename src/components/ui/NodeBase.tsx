@@ -2,42 +2,45 @@ import type { ReactNode } from 'react'
 import type { ExecutionStatus } from '@/types/workflow'
 
 interface NodeBaseProps {
-  accentColor: string
+  accentHex: string
+  iconPath: string
   label: string
   isSelected: boolean
   executionStatus?: ExecutionStatus
   children: ReactNode
-  typeLabel: string
 }
 
-export function NodeBase({ accentColor, label, isSelected, executionStatus, children, typeLabel }: NodeBaseProps) {
+export function NodeBase({ accentHex, iconPath, label, isSelected, executionStatus, children }: NodeBaseProps) {
   const statusClass =
     executionStatus === 'running'   ? 'node-running'  :
     executionStatus === 'completed' ? 'node-complete'  :
     executionStatus === 'error'     ? 'node-error'     : ''
 
+  const shadow = isSelected
+    ? `0 0 0 2px ${accentHex}, 0 4px 16px rgba(0,0,0,0.12)`
+    : '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px var(--color-border)'
+
   return (
     <div
-      className={`relative flex select-none flex-col overflow-hidden rounded-[8px] border bg-[var(--color-elevated)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] transition-shadow ${statusClass} ${
-        isSelected
-          ? 'border-[var(--color-accent)] shadow-[0_0_0_1px_var(--color-accent)]'
-          : 'border-[var(--color-border)]'
-      }`}
-      style={{ width: 260, aspectRatio: '16/9' }}
+      className={`relative flex select-none flex-col overflow-hidden rounded-xl bg-[var(--color-elevated)] transition-shadow ${statusClass}`}
+      style={{ width: 260, aspectRatio: '16/9', boxShadow: shadow }}
     >
-      {/* Colored left accent bar */}
-      <div
-        className="absolute bottom-0 left-0 top-0 w-[3px] rounded-l-[8px]"
-        style={{ backgroundColor: accentColor }}
-      />
-
       {/* Header */}
-      <div className="flex flex-shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 pb-2 pl-4 pt-2.5">
-        <div className="flex flex-col gap-0.5 pl-1">
-          <span className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider leading-none">
-            {typeLabel}
-          </span>
-          <span className="text-xs font-medium text-[var(--color-text)] leading-tight">
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 py-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {/* Colored icon box */}
+          <div
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[7px]"
+            style={{ backgroundColor: `${accentHex}22` }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+              stroke={accentHex} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d={iconPath} />
+            </svg>
+          </div>
+
+          <span className="truncate text-xs font-semibold text-[var(--color-text)]">
             {label}
           </span>
         </div>
@@ -45,10 +48,10 @@ export function NodeBase({ accentColor, label, isSelected, executionStatus, chil
         {/* Status badge */}
         {executionStatus && executionStatus !== 'idle' && (
           <span
-            className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wide ${
-              executionStatus === 'running'   ? 'bg-blue-500/20 text-blue-400'   :
-              executionStatus === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-              'bg-red-500/20 text-red-400'
+            className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${
+              executionStatus === 'running'   ? 'bg-blue-500/20 text-blue-500'    :
+              executionStatus === 'completed' ? 'bg-emerald-500/20 text-emerald-600' :
+              'bg-red-500/20 text-red-500'
             }`}
           >
             {executionStatus === 'running' ? '●' : executionStatus === 'completed' ? '✓' : '✗'}
@@ -57,7 +60,7 @@ export function NodeBase({ accentColor, label, isSelected, executionStatus, chil
       </div>
 
       {/* Body */}
-      <div className="px-4 py-2 flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden px-3 py-2">
         {children}
       </div>
     </div>

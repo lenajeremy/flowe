@@ -2,7 +2,6 @@ import { useCallback, useMemo, useEffect } from 'react'
 import {
   ReactFlow,
   Background,
-  Controls,
   BackgroundVariant,
   useReactFlow,
   type Node,
@@ -157,7 +156,6 @@ export function Canvas({ theme }: CanvasProps) {
           size={1}
           color={theme === 'dark' ? '#3a3a3a' : '#d8d8d8'}
         />
-        <Controls />
       </ReactFlow>
     </div>
   )

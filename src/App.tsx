@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
-import { Toolbar } from '@/components/Toolbar'
-import { TabBar } from '@/components/TabBar'
 import { NodePalette } from '@/components/panels/NodePalette'
 import { ConfigPanel } from '@/components/panels/ConfigPanel'
 import { Canvas } from '@/components/Canvas'
@@ -103,7 +101,7 @@ function App() {
   const [leftOpen, setLeftOpen] = useState(true)
   const left  = useResizable(DEFAULT_LEFT,  MIN_LEFT,  MAX_LEFT,  'left')
   const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
-  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const [theme] = useState<Theme>(getInitialTheme)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -132,11 +130,6 @@ function App() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col bg-[var(--color-canvas)]">
-        <Toolbar
-          theme={theme}
-          onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-        />
-        <TabBar />
         <ReactFlowProvider>
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <Canvas theme={theme} />

@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase } from '@/components/ui/NodeBase'
-import { NODE_ACCENT_COLORS, NODE_LABELS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
 export function TextOutputNode({ data, selected }: NodeProps<FlowNode>) {
@@ -8,14 +8,14 @@ export function TextOutputNode({ data, selected }: NodeProps<FlowNode>) {
 
   return (
     <NodeBase
-      accentColor={NODE_ACCENT_COLORS.textOutput}
+      accentHex={NODE_ACCENT_HEX.textOutput}
+      iconPath={NODE_ICON_PATHS.textOutput}
       label={data.label}
-      typeLabel={NODE_LABELS.textOutput}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >
       {output ? (
-        <pre className="text-[11px] text-emerald-300 leading-relaxed whitespace-pre-wrap break-words max-h-20 overflow-y-auto font-[var(--font-mono)]">
+        <pre className="text-[11px] text-[var(--color-node-output)] leading-relaxed whitespace-pre-wrap break-words max-h-20 overflow-y-auto font-[var(--font-mono)]">
           {output}
         </pre>
       ) : (

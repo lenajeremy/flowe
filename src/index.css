@@ -78,7 +78,7 @@ body {
 
 .react-flow__edge-path {
   stroke: var(--color-border2);
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
 .react-flow__edge.animated .react-flow__edge-path {
@@ -115,11 +115,11 @@ body {
 }
 
 .react-flow__handle {
-  width: 10px !important;
-  height: 10px !important;
+  width: 8px !important;
+  height: 8px !important;
   border-radius: 50% !important;
-  border: 2px solid var(--color-border2) !important;
-  background: var(--color-surface2) !important;
+  border: 1.5px solid var(--color-border2) !important;
+  background: var(--color-elevated) !important;
   transition: background 0.15s, border-color 0.15s;
 }
 

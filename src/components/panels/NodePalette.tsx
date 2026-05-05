@@ -53,14 +53,6 @@ function PaletteItem({ type }: { type: NodeType }) {
 export function NodePalette() {
   const {
     workflowName,
-    tabs,
-    activeTabId,
-    nodes,
-    selectedNodeId,
-    addTab,
-    switchTab,
-    setSelectedNodeId,
-    setConfigPanelOpen,
   } = useWorkflowStore(
     useShallow((s) => ({
       workflowName: s.workflowName,
@@ -78,86 +70,18 @@ export function NodePalette() {
   return (
     <aside className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="border-b border-[var(--color-border)] px-3 py-3">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--color-text)] hover:bg-[var(--color-surface2)]">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="currentColor" strokeWidth="1.35" />
             </svg>
           </div>
-          <button
-            type="button"
-            title="Panel options"
-            className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--color-muted)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 5.5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
 
-        <div className="px-1">
-          <div className="flex items-center gap-1.5">
-            <h1 className="truncate text-[15px] font-semibold text-[var(--color-text)]">{workflowName}</h1>
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" className="flex-shrink-0 text-[var(--color-muted)]">
-              <path d="M2.5 4l3 3 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <h1 className="truncate text-[15px] font-semibold text-[var(--color-text)]">{workflowName}</h1>
         </div>
-      </div>
-
-      <div className="flex items-center gap-1 border-b border-[var(--color-border)] px-2 py-2">
-        <button className="rounded-[7px] bg-[var(--color-surface2)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-text)]">
-          Builder
-        </button>
-        <button className="rounded-[7px] px-2.5 py-1.5 text-[12px] text-[var(--color-muted)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]">
-          Runs
-        </button>
-        <button
-          type="button"
-          title="Search"
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--color-text)] hover:bg-[var(--color-surface2)]"
-        >
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M9.5 9.5l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
 
       <div className="overflow-y-auto">
-        <section className="border-b border-[var(--color-border)] px-3 py-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-[12px] font-semibold text-[var(--color-text)]">Open Workflows</h2>
-            <button
-              type="button"
-              onClick={() => addTab()}
-              title="New workflow"
-              className="flex h-7 w-7 items-center justify-center rounded-[7px] text-[var(--color-text)] hover:bg-[var(--color-surface2)]"
-            >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M6.5 2v9M2 6.5h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex flex-col gap-1">
-            {tabs.map((tab, index) => {
-              const isActive = tab.id === activeTabId
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => switchTab(tab.id)}
-                  className={`truncate rounded-[7px] px-2.5 py-1.5 text-left text-[12px] font-medium transition-colors ${isActive
-                    ? 'bg-[var(--color-surface2)] text-[var(--color-text)]'
-                    : 'text-[var(--color-muted)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]'
-                    }`}
-                >
-                  {index === 0 ? workflowName : tab.workflowName}
-                </button>
-              )
-            })}
-          </div>
-        </section>
         <section className="flex flex-col gap-4 p-3">
           <h2 className="text-[12px] font-semibold text-[var(--color-text)]">Node Library</h2>
           {PALETTE_GROUPS.map((group) => (
@@ -172,6 +96,6 @@ export function NodePalette() {
           ))}
         </section>
       </div>
-    </aside>
+    </aside >
   )
 }

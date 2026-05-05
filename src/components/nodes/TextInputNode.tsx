@@ -1,14 +1,14 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase } from '@/components/ui/NodeBase'
-import { NODE_ACCENT_COLORS, NODE_LABELS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
 export function TextInputNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase
-      accentColor={NODE_ACCENT_COLORS.textInput}
+      accentHex={NODE_ACCENT_HEX.textInput}
+      iconPath={NODE_ICON_PATHS.textInput}
       label={data.label}
-      typeLabel={NODE_LABELS.textInput}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >
