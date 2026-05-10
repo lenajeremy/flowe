@@ -22,12 +22,14 @@ import { buildDemoWorkflow } from '@/lib/demoWorkflow'
 export interface TabMeta {
   id: string
   workflowName: string
+  dbId?: string  // UUID of the saved workflow in the DB, if persisted
 }
 
 type HistoryEntry = { nodes: FlowNode[]; edges: FlowEdge[] }
 
 export interface TabSnapshot {
   workflowName: string
+  dbId?: string
   nodes: FlowNode[]
   edges: FlowEdge[]
   selectedNodeId: string | null
@@ -49,7 +51,7 @@ interface WorkflowStore {
   addTab: (snapshot?: TabSnapshot) => void
   closeTab: (id: string) => void
   switchTab: (id: string) => void
-  importWorkflowAsNewTab: (ast: WorkflowAST) => void
+  importWorkflowAsNewTab: (ast: WorkflowAST, dbId?: string) => void
 
   // ── Active tab state (flat; all existing consumers unchanged) ──
   nodes: FlowNode[]
@@ -73,6 +75,9 @@ interface WorkflowStore {
   workflowName: string
   setWorkflowName: (name: string) => void
 
+  dbId: string | undefined
+  setDbId: (id: string) => void
+
   executionState: ExecutionState
   executionLog: ExecutionEvent[]
   setExecutionState: (state: ExecutionState) => void
@@ -92,6 +97,11 @@ interface WorkflowStore {
   isConfigPanelOpen: boolean
   setConfigPanelOpen: (open: boolean) => void
 
+  // ── Save state ──
+  saveStatus: 'idle' | 'unsaved' | 'saving' | 'saved'
+  setSaveStatus: (status: 'idle' | 'unsaved' | 'saving' | 'saved') => void
+  loadWorkflow: (ast: WorkflowAST, dbId: string) => void
+
   // ── Global UI (not per-tab) ──
   isApiKeyModalOpen: boolean
   setApiKeyModalOpen: (open: boolean) => void
@@ -102,6 +112,7 @@ interface WorkflowStore {
 function snap(s: WorkflowStore): TabSnapshot {
   return {
     workflowName: s.workflowName,
+    dbId: s.dbId,
     nodes: s.nodes,
     edges: s.edges,
     selectedNodeId: s.selectedNodeId,
@@ -124,7 +135,7 @@ function pushHistory(
   return [...history, { nodes, edges }].slice(-HISTORY_LIMIT)
 }
 
-function astToSnapshot(ast: WorkflowAST): TabSnapshot {
+function astToSnapshot(ast: WorkflowAST, dbId?: string): TabSnapshot {
   const nodes: FlowNode[] = ast.nodes.map((n) => ({
     id: n.id,
     type: n.type,
@@ -140,6 +151,7 @@ function astToSnapshot(ast: WorkflowAST): TabSnapshot {
   }))
   return {
     workflowName: ast.name,
+    dbId,
     nodes,
     edges,
     selectedNodeId: null,
@@ -221,13 +233,13 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     set({ snapshots: newSnaps, activeTabId: tabId, ...target })
   },
 
-  importWorkflowAsNewTab: (ast) => {
+  importWorkflowAsNewTab: (ast, dbId?) => {
     const s = get()
     const newId = crypto.randomUUID()
-    const target = astToSnapshot(ast)
+    const target = astToSnapshot(ast, dbId)
     set({
       snapshots: { ...s.snapshots, [s.activeTabId]: snap(s) },
-      tabs: [...s.tabs, { id: newId, workflowName: target.workflowName }],
+      tabs: [...s.tabs, { id: newId, workflowName: target.workflowName, dbId }],
       activeTabId: newId,
       ...target,
     })
@@ -326,6 +338,15 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       ),
     })),
 
+  dbId: undefined,
+  setDbId: (id) =>
+    set((state) => ({
+      dbId: id,
+      tabs: state.tabs.map((t) =>
+        t.id === state.activeTabId ? { ...t, dbId: id } : t,
+      ),
+    })),
+
   executionState: 'idle',
   executionLog: [],
   setExecutionState: (executionState) => set({ executionState }),
@@ -365,4 +386,19 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   isApiKeyModalOpen: false,
   setApiKeyModalOpen: (open) => set({ isApiKeyModalOpen: open }),
+
+  saveStatus: 'idle',
+  setSaveStatus: (saveStatus) => set({ saveStatus }),
+
+  loadWorkflow: (ast, dbId) => {
+    const s = get()
+    const snapshot = astToSnapshot(ast, dbId)
+    set({
+      ...snapshot,
+      saveStatus: 'idle',
+      tabs: s.tabs.map((t) =>
+        t.id === s.activeTabId ? { ...t, workflowName: ast.name, dbId } : t,
+      ),
+    })
+  },
 }))

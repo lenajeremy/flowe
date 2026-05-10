@@ -2,6 +2,7 @@ import type { NodeType } from '@/types/workflow'
 import { NODE_ACCENT_COLORS, NODE_ACCENT_HEX, NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
+import { SaveIndicator } from '@/components/SaveIndicator'
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Inputs', items: ['textInput', 'imageInput'] },
@@ -78,6 +79,7 @@ export function NodePalette() {
           </div>
 
           <h1 className="truncate text-[15px] font-semibold text-[var(--color-text)]">{workflowName}</h1>
+          <SaveIndicator />
         </div>
       </div>
 

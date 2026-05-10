@@ -1,8 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
-import { runWorkflow, serializeToAST } from '@/lib/executor'
-import type { WorkflowAST } from '@/types/workflow'
+import { serializeToAST } from '@/lib/executor'
+import { listWorkflows, type SavedWorkflow } from '@/lib/workflowApi'
+import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 
 function Divider() {
   return <div className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--color-border)]" />
@@ -42,17 +44,22 @@ function Spinner() {
   )
 }
 
-export function BottomToolDock() {
+export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [tabsOpen, setTabsOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [savedWorkflows, setSavedWorkflows] = useState<SavedWorkflow[]>([])
+  const [savedLoading, setSavedLoading] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   const {
-    tabs, activeTabId, switchTab, closeTab, addTab,
+    tabs, activeTabId, switchTab, closeTab,
     undo, redo,
     executionState, nodes, edges,
     workflowName, setWorkflowName,
+    saveStatus,
     setApiKeyModalOpen, importWorkflowAsNewTab,
     resetNodeExecutionStatuses, clearExecutionLog,
     setExecutionState, appendExecutionEvent,
@@ -63,7 +70,6 @@ export function BottomToolDock() {
       activeTabId: s.activeTabId,
       switchTab: s.switchTab,
       closeTab: s.closeTab,
-      addTab: s.addTab,
       undo: s.undo,
       redo: s.redo,
       executionState: s.executionState,
@@ -71,6 +77,7 @@ export function BottomToolDock() {
       edges: s.edges,
       workflowName: s.workflowName,
       setWorkflowName: s.setWorkflowName,
+      saveStatus: s.saveStatus,
       setApiKeyModalOpen: s.setApiKeyModalOpen,
       importWorkflowAsNewTab: s.importWorkflowAsNewTab,
       resetNodeExecutionStatuses: s.resetNodeExecutionStatuses,
@@ -95,17 +102,116 @@ export function BottomToolDock() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Fetch saved workflows whenever the tabs popover opens
+  useEffect(() => {
+    if (!tabsOpen) return
+    setSavedLoading(true)
+    listWorkflows()
+      .then(setSavedWorkflows)
+      .catch(() => setSavedWorkflows([]))
+      .finally(() => setSavedLoading(false))
+  }, [tabsOpen])
+
+  async function handleNewWorkflow() {
+    if (creating) return
+    setCreating(true)
+    try {
+      const res = await fetch('/api/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),
+      })
+      const wf = await res.json() as SavedWorkflow
+      setTabsOpen(false)
+      navigate(`/workflow/${wf.id}`)
+    } catch {
+      // ignore
+    } finally {
+      setCreating(false)
+    }
+  }
+
   function handleRun() {
     if (isRunning) return
     resetNodeExecutionStatuses()
     clearExecutionLog()
     setExecutionState('running')
     setLogPanelOpen(true)
-    void runWorkflow({
-      nodes, edges, workflowName,
-      setExecutionState, appendExecutionEvent,
-      setNodeExecutionStatus, setLogPanelOpen,
-    })
+
+    void (async () => {
+      const ast = serializeToAST(nodes, edges, workflowName)
+      const startTime = Date.now()
+
+      // Map nodeId → latest output so we can pass it along with node_completed
+      const nodeOutputs = new Map<string, string>()
+
+      try {
+        const response = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflow: ast }),
+        })
+
+        if (!response.ok || !response.body) {
+          throw new Error(`Server error ${response.status}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          // SSE lines are delimited by \n\n; split on \n to process individually
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const raw = line.slice(6).trim()
+            if (!raw) continue
+
+            const event = JSON.parse(raw) as ExecutionEvent
+            appendExecutionEvent(event)
+
+            const nid = event.nodeId
+            switch (event.type) {
+              case 'node_started':
+                if (nid) setNodeExecutionStatus(nid, 'running')
+                break
+              case 'node_output':
+                if (nid && event.output !== undefined) nodeOutputs.set(nid, event.output)
+                break
+              case 'node_completed':
+                if (nid) setNodeExecutionStatus(nid, 'completed', nodeOutputs.get(nid))
+                break
+              case 'node_error':
+                if (nid) setNodeExecutionStatus(nid, 'error', event.message)
+                break
+              case 'workflow_completed':
+                setExecutionState('completed')
+                break
+              case 'workflow_error':
+                setExecutionState('error')
+                break
+            }
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        appendExecutionEvent({
+          id: crypto.randomUUID(),
+          type: 'workflow_error',
+          message: `Connection error: ${message}`,
+          timestamp: Date.now() - startTime,
+        })
+        setExecutionState('error')
+      }
+    })()
   }
 
   function handleExport() {
@@ -149,7 +255,8 @@ export function BottomToolDock() {
           className="pointer-events-auto overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] shadow-[var(--dock-shadow)]"
           style={{ minWidth: '13rem' }}
         >
-          <div className="max-h-64 overflow-y-auto">
+          {/* Open tabs */}
+          <div className="max-h-48 overflow-y-auto">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTabId
               return (
@@ -158,10 +265,23 @@ export function BottomToolDock() {
                   className={`group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors ${
                     isActive ? 'bg-[var(--color-surface2)]' : 'hover:bg-[var(--color-surface2)]'
                   }`}
-                  onClick={() => { switchTab(tab.id); setTabsOpen(false) }}
+                  onClick={() => {
+                    if (tab.dbId) {
+                      // URL-backed workflow: navigate to its route
+                      navigate(`/workflow/${tab.dbId}`)
+                    } else {
+                      switchTab(tab.id)
+                    }
+                    setTabsOpen(false)
+                  }}
                 >
                   <div className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${isActive ? 'bg-[var(--color-accent)]' : ''}`} />
                   <span className="flex-1 truncate text-xs text-[var(--color-text)]">{tab.workflowName}</span>
+                  {tab.dbId && (
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-muted)]">
+                      <path d="M5 1v3M5 4l2 1M1 7c0-1.1 1.8-2 4-2s4 .9 4 2v1c0 1.1-1.8 2-4 2S1 9.1 1 8V7z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  )}
                   {tabs.length > 1 && (
                     <button
                       onClick={(e) => { e.stopPropagation(); closeTab(tab.id) }}
@@ -176,14 +296,57 @@ export function BottomToolDock() {
               )
             })}
           </div>
+
+          {/* Saved workflows */}
+          <div className="border-t border-[var(--color-border)]">
+            <p className="px-3 pt-2 pb-1 text-[9px] uppercase tracking-widest text-[var(--color-muted)]">
+              Saved
+            </p>
+            <div className="max-h-40 overflow-y-auto">
+              {savedLoading && (
+                <p className="px-3 py-2 text-[11px] text-[var(--color-muted)]">Loading…</p>
+              )}
+              {!savedLoading && savedWorkflows.length === 0 && (
+                <p className="px-3 py-2 text-[11px] text-[var(--color-muted)]">No saved workflows yet</p>
+              )}
+              {!savedLoading && savedWorkflows.map((wf) => {
+                const alreadyOpen = tabs.some((t) => t.dbId === wf.id)
+                return (
+                  <div
+                    key={wf.id}
+                    className="group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors hover:bg-[var(--color-surface2)]"
+                    onClick={() => {
+                      navigate(`/workflow/${wf.id}`)
+                      setTabsOpen(false)
+                    }}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-muted)]">
+                      <path d="M5 1v3M5 4l2 1M1 7c0-1.1 1.8-2 4-2s4 .9 4 2v1c0 1.1-1.8 2-4 2S1 9.1 1 8V7z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    <span className="flex-1 truncate text-xs text-[var(--color-text)]">{wf.name}</span>
+                    {alreadyOpen
+                      ? <span className="text-[9px] text-[var(--color-accent)]">open</span>
+                      : <span className="text-[9px] text-[var(--color-muted)] opacity-0 group-hover:opacity-100">open</span>
+                    }
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="border-t border-[var(--color-border)] p-1">
             <button
-              onClick={() => { addTab(); setTabsOpen(false) }}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
+              onClick={handleNewWorkflow}
+              disabled={creating}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)] disabled:opacity-50"
             >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
+              {creating ? (
+                <Spinner />
+              ) : (
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+              )}
               New workflow
             </button>
           </div>
@@ -219,6 +382,31 @@ export function BottomToolDock() {
             <path d="M12.5 3.5v3.5H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </ToolBtn>
+
+        {/* Save */}
+        {onSave && (
+          <ToolBtn
+            title={saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : 'Save (⌘S)'}
+            onClick={onSave}
+            disabled={isRunning || saveStatus === 'saving' || saveStatus === 'saved'}
+            active={saveStatus === 'saved'}
+          >
+            {saveStatus === 'saving' ? (
+              <Spinner />
+            ) : saveStatus === 'saved' ? (
+              <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
+                <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z"
+                  stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
+                <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1"/>
+                <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1"/>
+              </svg>
+            )}
+          </ToolBtn>
+        )}
 
         <Divider />
 
@@ -321,6 +509,16 @@ export function BottomToolDock() {
                     <path d="M6.5 1v7.5M4 5.5l2.5 3 2.5-3M2 10h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   Export
+                </button>
+                <button
+                  onClick={() => { navigate('/workflows'); setMoreOpen(false) }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface2)]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M5 2H2.5A.5.5 0 002 2.5v8a.5.5 0 00.5.5H6M8 2h2.5a.5.5 0 01.5.5v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <path d="M8 9.5h4M10 7.5l2 2-2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  All Workflows
                 </button>
               </div>
             </div>

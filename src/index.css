@@ -67,10 +67,6 @@ body {
 
 #root {
   width: 100%;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 /* ── React Flow overrides ─────────────────────────────────── */

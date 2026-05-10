@@ -96,10 +96,8 @@ export function ExecutionPanel() {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-[var(--color-surface)] border-t border-[var(--color-border)] transition-transform duration-300 ease-in-out ${
-        isLogPanelOpen ? 'translate-y-0' : 'translate-y-full'
-      }`}
-      style={{ height: panelHeight }}
+      className="flex-shrink-0 flex flex-col bg-[var(--color-surface)] border-t border-[var(--color-border)] overflow-hidden transition-[height] duration-300 ease-in-out"
+      style={{ height: isLogPanelOpen ? panelHeight : 0 }}
     >
       {/* Resize handle */}
       <div
