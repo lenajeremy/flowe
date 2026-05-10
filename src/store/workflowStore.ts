@@ -15,6 +15,7 @@ import type {
   ExecutionEvent,
   WorkflowAST,
 } from '@/types/workflow'
+import type { WorkflowRun } from '@/lib/workflowApi'
 import { buildDemoWorkflow } from '@/lib/demoWorkflow'
 
 // ── Tab types ────────────────────────────────────────────────
@@ -105,6 +106,17 @@ interface WorkflowStore {
   // ── Global UI (not per-tab) ──
   isApiKeyModalOpen: boolean
   setApiKeyModalOpen: (open: boolean) => void
+
+  // ── Approval / run tracking ──
+  pendingApproval: { runId: string; nodeId: string; message: string } | null
+  setPendingApproval: (approval: { runId: string; nodeId: string; message: string } | null) => void
+
+  currentRunId: string | null
+  setCurrentRunId: (id: string | null) => void
+
+  // ── Run history ──
+  runHistory: WorkflowRun[]
+  setRunHistory: (runs: WorkflowRun[]) => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -386,6 +398,15 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   isApiKeyModalOpen: false,
   setApiKeyModalOpen: (open) => set({ isApiKeyModalOpen: open }),
+
+  pendingApproval: null,
+  setPendingApproval: (approval) => set({ pendingApproval: approval }),
+
+  currentRunId: null,
+  setCurrentRunId: (id) => set({ currentRunId: id }),
+
+  runHistory: [],
+  setRunHistory: (runs) => set({ runHistory: runs }),
 
   saveStatus: 'idle',
   setSaveStatus: (saveStatus) => set({ saveStatus }),

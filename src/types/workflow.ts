@@ -8,8 +8,11 @@ export type NodeType =
   | 'branch'
   | 'loop'
   | 'textOutput'
+  | 'httpRequest'
+  | 'emailSend'
+  | 'humanApproval'
 
-export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error'
+export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
 export type LLMModel =
   | 'gpt-4o'
@@ -48,6 +51,24 @@ export type FlowNodeData = {
   // Loop
   loopOverField?: string
   mode?: 'sequential' | 'concurrent'
+
+  // httpRequest
+  url?: string
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  requestHeaders?: string   // JSON string of key:value pairs
+  requestBody?: string      // template body
+
+  // emailSend
+  emailTo?: string
+  emailSubject?: string
+  emailBody?: string
+
+  // humanApproval
+  approvalMessage?: string
+  approvalTimeout?: number  // seconds, 0 = no timeout
+
+  // LLM structured output
+  outputSchema?: string     // JSON schema string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown
@@ -91,10 +112,12 @@ export type ExecutionEventType =
   | 'node_error'
   | 'workflow_completed'
   | 'workflow_error'
+  | 'node_waiting'   // humanApproval is waiting for review
 
 export interface ExecutionEvent {
   id: string
   type: ExecutionEventType
+  runId?: string
   nodeId?: string
   nodeLabel?: string
   nodeType?: NodeType

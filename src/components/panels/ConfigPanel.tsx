@@ -5,7 +5,23 @@ import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
 import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
 import { NODE_LABELS, NODE_ACCENT_COLORS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
-import type { LLMModel, FlowNode, FlowEdge } from '@/types/workflow'
+import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
+
+const HTTP_METHODS: Array<{ value: string; label: string }> = [
+  { value: 'GET',    label: 'GET'    },
+  { value: 'POST',   label: 'POST'   },
+  { value: 'PUT',    label: 'PUT'    },
+  { value: 'DELETE', label: 'DELETE' },
+  { value: 'PATCH',  label: 'PATCH'  },
+]
+
+const APPROVAL_TIMEOUTS: Array<{ value: string; label: string }> = [
+  { value: '0',     label: 'No timeout'  },
+  { value: '300',   label: '5 minutes'   },
+  { value: '900',   label: '15 minutes'  },
+  { value: '3600',  label: '1 hour'      },
+  { value: '86400', label: '24 hours'    },
+]
 
 const LLM_MODELS: Array<{ value: string; label: string }> = [
   { value: 'gpt-4o',            label: 'GPT-4o' },
@@ -211,27 +227,53 @@ export function ConfigPanel() {
   const nodeType = data.nodeType
   const upstreamNodes = getUpstreamNodes(nodeId, nodes, edges)
 
-  /** Insert token at the cursor position of whichever textarea is currently focused,
-   *  falling back to user prompt if neither is focused. */
+  /** Insert token at the cursor position of whichever textarea/input is currently focused,
+   *  falling back to user prompt (LLM) if neither is focused. */
   function insertToken(token: string) {
-    // Prefer whichever textarea is active
     const activeEl = document.activeElement
-    const targetRef =
-      activeEl === systemRef.current ? systemRef :
-      activeEl === userRef.current   ? userRef   :
-      userRef  // default to user prompt
 
-    const el = targetRef.current
+    // If a generic textarea/input is focused (httpRequest, emailSend, etc.), insert there
+    if (
+      activeEl instanceof HTMLTextAreaElement ||
+      activeEl instanceof HTMLInputElement
+    ) {
+      // Avoid inserting into the label field
+      if (activeEl.id !== 'cfg-label') {
+        const start = activeEl.selectionStart ?? activeEl.value.length
+        const end   = activeEl.selectionEnd   ?? activeEl.value.length
+        const newValue = activeEl.value.slice(0, start) + token + activeEl.value.slice(end)
+        activeEl.value = newValue
+        // Derive field name from the element's id mapping
+        const fieldMap: Record<string, string> = {
+          'cfg-http-url':      'url',
+          'cfg-http-body':     'requestBody',
+          'cfg-http-headers':  'requestHeaders',
+          'cfg-email-to':      'emailTo',
+          'cfg-email-subject': 'emailSubject',
+          'cfg-email-body':    'emailBody',
+          'cfg-approval-msg':  'approvalMessage',
+          'cfg-system':        'systemPrompt',
+          'cfg-user':          'userPrompt',
+        }
+        const field = fieldMap[activeEl.id]
+        if (field) {
+          updateNodeData(nodeId, { [field]: newValue })
+          requestAnimationFrame(() => {
+            activeEl.focus()
+            activeEl.setSelectionRange(start + token.length, start + token.length)
+          })
+          return
+        }
+      }
+    }
+
+    // Default: LLM user prompt
+    const el = userRef.current
     if (!el) return
-
     const start = el.selectionStart ?? el.value.length
     const end   = el.selectionEnd   ?? el.value.length
     const newValue = el.value.slice(0, start) + token + el.value.slice(end)
-
-    const field = el === systemRef.current ? 'systemPrompt' : 'userPrompt'
-    updateNodeData(nodeId, { [field]: newValue })
-
-    // Restore cursor after React re-render
+    updateNodeData(nodeId, { userPrompt: newValue })
     requestAnimationFrame(() => {
       el.focus()
       el.setSelectionRange(start + token.length, start + token.length)
@@ -381,6 +423,19 @@ export function ConfigPanel() {
                 className={inputClass}
               />
             </FormField>
+            <FormField label="Expected output schema (JSON)" htmlFor="cfg-schema">
+              <textarea
+                id="cfg-schema"
+                rows={3}
+                value={typeof data.outputSchema === 'string' ? data.outputSchema : ''}
+                onChange={(e) => updateNodeData(nodeId, { outputSchema: e.target.value })}
+                className={textareaClass}
+                placeholder={'{"sentiment": "string", "score": "number", "summary": "string"}'}
+              />
+              <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
+                If set, the AI is instructed to respond with valid JSON matching this schema.
+              </p>
+            </FormField>
           </>
         )}
 
@@ -449,6 +504,131 @@ export function ConfigPanel() {
               </p>
             )}
           </FormField>
+        )}
+
+        {/* httpRequest */}
+        {nodeType === 'httpRequest' && (
+          <>
+            <AvailableInputs upstreamNodes={upstreamNodes} onInsert={insertToken} />
+            <FormField label="Method" htmlFor="cfg-http-method">
+              <Select
+                id="cfg-http-method"
+                value={typeof data.method === 'string' ? data.method : 'GET'}
+                onChange={(v) => updateNodeData(nodeId, { method: v as FlowNodeData['method'] })}
+                options={HTTP_METHODS}
+              />
+            </FormField>
+            <FormField label="URL" htmlFor="cfg-http-url">
+              <input
+                id="cfg-http-url"
+                type="text"
+                value={typeof data.url === 'string' ? data.url : ''}
+                onChange={(e) => updateNodeData(nodeId, { url: e.target.value })}
+                className={inputClass}
+                placeholder="https://api.example.com/endpoint"
+              />
+              <p className="text-[10px] text-[var(--color-muted)] mt-1">
+                Template tokens like <code className="text-blue-400">{'{{nodeId.output}}'}</code> are supported.
+              </p>
+            </FormField>
+            <FormField label="Request Headers (JSON)" htmlFor="cfg-http-headers">
+              <textarea
+                id="cfg-http-headers"
+                rows={3}
+                value={typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}'}
+                onChange={(e) => updateNodeData(nodeId, { requestHeaders: e.target.value })}
+                className={textareaClass}
+                placeholder={'{"Authorization": "Bearer token", "Content-Type": "application/json"}'}
+              />
+            </FormField>
+            {(data.method === 'POST' || data.method === 'PUT' || data.method === 'PATCH') && (
+              <FormField label="Request Body" htmlFor="cfg-http-body">
+                <textarea
+                  id="cfg-http-body"
+                  rows={4}
+                  value={typeof data.requestBody === 'string' ? data.requestBody : ''}
+                  onChange={(e) => updateNodeData(nodeId, { requestBody: e.target.value })}
+                  className={textareaClass}
+                  placeholder={'{"key": "{{nodeId.output}}"}'}
+                />
+                <p className="text-[10px] text-[var(--color-muted)] mt-1">
+                  Template tokens are supported in the body.
+                </p>
+              </FormField>
+            )}
+          </>
+        )}
+
+        {/* emailSend */}
+        {nodeType === 'emailSend' && (
+          <>
+            <AvailableInputs upstreamNodes={upstreamNodes} onInsert={insertToken} />
+            <FormField label="To" htmlFor="cfg-email-to">
+              <input
+                id="cfg-email-to"
+                type="text"
+                value={typeof data.emailTo === 'string' ? data.emailTo : ''}
+                onChange={(e) => updateNodeData(nodeId, { emailTo: e.target.value })}
+                className={inputClass}
+                placeholder="recipient@example.com"
+              />
+            </FormField>
+            <FormField label="Subject" htmlFor="cfg-email-subject">
+              <input
+                id="cfg-email-subject"
+                type="text"
+                value={typeof data.emailSubject === 'string' ? data.emailSubject : ''}
+                onChange={(e) => updateNodeData(nodeId, { emailSubject: e.target.value })}
+                className={inputClass}
+                placeholder="Email subject…"
+              />
+            </FormField>
+            <FormField label="Body" htmlFor="cfg-email-body">
+              <textarea
+                id="cfg-email-body"
+                rows={5}
+                value={typeof data.emailBody === 'string' ? data.emailBody : ''}
+                onChange={(e) => updateNodeData(nodeId, { emailBody: e.target.value })}
+                className={textareaClass}
+                placeholder="Email body… template tokens supported."
+              />
+            </FormField>
+            <div className="mt-1 px-2.5 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)]">
+              <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
+                Requires <code className="text-amber-400">SENDGRID_API_KEY</code> env var on server.{' '}
+                In dev mode, emails are logged to the console.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* humanApproval */}
+        {nodeType === 'humanApproval' && (
+          <>
+            <FormField label="Approval Message" htmlFor="cfg-approval-msg">
+              <textarea
+                id="cfg-approval-msg"
+                rows={4}
+                value={typeof data.approvalMessage === 'string' ? data.approvalMessage : ''}
+                onChange={(e) => updateNodeData(nodeId, { approvalMessage: e.target.value })}
+                className={textareaClass}
+                placeholder="Please review and approve or reject this step."
+              />
+              <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
+                This message is shown to the reviewer. Downstream nodes receive{' '}
+                <code className="text-emerald-400">approved</code> or{' '}
+                <code className="text-red-400">rejected</code>.
+              </p>
+            </FormField>
+            <FormField label="Timeout" htmlFor="cfg-approval-timeout">
+              <Select
+                id="cfg-approval-timeout"
+                value={String(typeof data.approvalTimeout === 'number' ? data.approvalTimeout : 0)}
+                onChange={(v) => updateNodeData(nodeId, { approvalTimeout: Number(v) })}
+                options={APPROVAL_TIMEOUTS}
+              />
+            </FormField>
+          </>
         )}
       </div>
     </aside>

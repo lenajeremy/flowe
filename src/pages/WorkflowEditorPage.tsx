@@ -67,14 +67,14 @@ function ResizeHandle({
   return (
     <div className="flex-shrink-0 flex flex-col" style={{ width: '6px', position: 'relative' }}>
       <div
-        className="flex-1 cursor-col-resize hover:bg-[var(--color-accent)]/30 transition-colors"
-        style={{ background: 'var(--color-border)' }}
+        className="flex-1 cursor-col-resize hover:bg-white/10 transition-colors"
+        style={{ background: '#1a1a1a' }}
         onMouseDown={open ? onMouseDown : undefined}
       />
       <button
         onClick={onToggle}
-        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] transition-colors"
-        style={{ background: 'var(--color-border)' }}
+        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-subtle)] hover:text-white hover:bg-white/5 transition-colors"
+        style={{ background: '#1a1a1a' }}
         title={open ? 'Collapse panel' : 'Expand panel'}
       >
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -207,7 +207,7 @@ export function WorkflowEditorPage() {
   // ── Layout ────────────────────────────────────────────────
   return (
     <div
-      className="flex overflow-hidden bg-[var(--color-surface)] text-[var(--color-text)]"
+      className="flex overflow-hidden bg-black text-white"
       style={{ height: '100dvh' }}
     >
       {/* Left panel */}

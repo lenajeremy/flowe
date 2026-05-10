@@ -50,7 +50,7 @@ export function HomePage() {
 
   return (
     <div
-      className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-text)]"
+      className="min-h-screen bg-black text-white"
       style={{ fontFamily: 'var(--font-sans)' }}
     >
       <div className="mx-auto max-w-3xl px-6 py-16">
@@ -60,30 +60,31 @@ export function HomePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--color-accent)] transition-opacity hover:opacity-80"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white transition-opacity hover:opacity-80"
               title="Home"
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
                 <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z"
-                  stroke="white" strokeWidth="1.35" />
+                  stroke="black" strokeWidth="1.5" />
               </svg>
             </button>
-            <h1 className="text-xl font-semibold text-[var(--color-text)]">Workflows</h1>
+            <h1 className="text-xl font-bold text-white">Workflows</h1>
           </div>
 
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ boxShadow: '0 0 20px rgba(255,255,255,0.15)' }}
           >
             {creating ? (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="animate-spin">
-                <circle cx="6" cy="6" r="4.5" stroke="white" strokeWidth="1.5" strokeOpacity="0.3"/>
-                <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="6" cy="6" r="4.5" stroke="black" strokeWidth="1.5" strokeOpacity="0.3"/>
+                <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="black" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             ) : (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1v10M1 6h10" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1v9M1 5.5h9" stroke="black" strokeWidth="1.6" strokeLinecap="round"/>
               </svg>
             )}
             New workflow
@@ -100,13 +101,17 @@ export function HomePage() {
             Loading…
           </div>
         ) : workflows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] py-20 text-center">
-            <p className="text-sm text-[var(--color-muted)]">No workflows yet</p>
+          <div
+            className="flex flex-col items-center justify-center rounded-2xl py-20 text-center"
+            style={{ border: '1px dashed rgba(255,255,255,0.1)' }}
+          >
+            <p className="text-sm text-white/40">No workflows yet</p>
             <button
               onClick={handleCreate}
-              className="mt-3 text-sm text-[var(--color-accent)] hover:underline"
+              className="mt-4 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition-all hover:opacity-90"
+              style={{ boxShadow: '0 0 20px rgba(255,255,255,0.15)' }}
             >
-              Create your first workflow →
+              Create your first workflow
             </button>
           </div>
         ) : (
@@ -115,17 +120,28 @@ export function HomePage() {
               <div
                 key={wf.id}
                 onClick={() => navigate(`/workflow/${wf.id}`)}
-                className="group flex cursor-pointer items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 transition-colors hover:border-[var(--color-border2)] hover:bg-[var(--color-elevated)]"
+                className="group flex cursor-pointer items-center gap-4 rounded-xl px-4 py-3.5 transition-all duration-150"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.background = 'rgba(255,255,255,0.07)'
+                  el.style.border = '1px solid rgba(255,255,255,0.14)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.background = 'rgba(255,255,255,0.04)'
+                  el.style.border = '1px solid rgba(255,255,255,0.08)'
+                }}
               >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-[var(--color-surface2)]">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
                     <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z"
-                      stroke="var(--color-muted)" strokeWidth="1.35" />
+                      stroke="var(--color-muted)" strokeWidth="1.4" />
                   </svg>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-[var(--color-text)]">{wf.name}</p>
+                  <p className="truncate text-sm font-semibold text-white">{wf.name}</p>
                   <p className="text-[11px] text-[var(--color-muted)]">
                     Updated {formatDate(wf.updated_at)}
                   </p>
@@ -135,7 +151,7 @@ export function HomePage() {
                   <button
                     onClick={(e) => handleDelete(e, wf.id)}
                     disabled={deletingId === wf.id}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-40"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
                     title="Delete workflow"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

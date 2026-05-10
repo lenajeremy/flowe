@@ -181,6 +181,44 @@ async function executeNode(
       const incomingEdge = edges.find((e) => e.target === node.id)
       return incomingEdge ? (outputs.get(incomingEdge.source) ?? '(no input)') : '(no input)'
     }
+
+    case 'httpRequest': {
+      const method = typeof data.method === 'string' ? data.method : 'GET'
+      const url = substituteTemplates(typeof data.url === 'string' ? data.url : '', outputs)
+      let headers: Record<string, string> = {}
+      try {
+        headers = JSON.parse(typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}')
+      } catch {
+        // ignore malformed headers
+      }
+      const body = (method === 'POST' || method === 'PUT' || method === 'PATCH')
+        ? substituteTemplates(typeof data.requestBody === 'string' ? data.requestBody : '', outputs)
+        : undefined
+      const fetchOptions: RequestInit = {
+        method,
+        headers: { 'Content-Type': 'application/json', ...headers },
+        ...(body ? { body } : {}),
+      }
+      const res = await fetch(url, fetchOptions)
+      const text = await res.text()
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`)
+      return text
+    }
+
+    case 'emailSend': {
+      const emailTo = substituteTemplates(typeof data.emailTo === 'string' ? data.emailTo : '', outputs)
+      const emailSubject = substituteTemplates(typeof data.emailSubject === 'string' ? data.emailSubject : '', outputs)
+      const emailBody = substituteTemplates(typeof data.emailBody === 'string' ? data.emailBody : '', outputs)
+      // In dev/browser mode, log and return a stub response
+      console.info('[emailSend] dev mode — would send email', { to: emailTo, subject: emailSubject, body: emailBody })
+      return `Email sent to ${emailTo}: "${emailSubject}"`
+    }
+
+    case 'humanApproval': {
+      // In the browser executor, simulate an instant auto-approval stub
+      // A real implementation would pause execution and wait for an external event
+      return 'approved'
+    }
   }
 }
 

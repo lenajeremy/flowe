@@ -7,7 +7,8 @@ import { SaveIndicator } from '@/components/SaveIndicator'
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Inputs', items: ['textInput', 'imageInput'] },
   { category: 'AI', items: ['llm'] },
-  { category: 'Logic', items: ['branch', 'loop'] },
+  { category: 'Logic', items: ['branch', 'loop', 'humanApproval'] },
+  { category: 'Actions', items: ['httpRequest', 'emailSend'] },
   { category: 'Outputs', items: ['textOutput'] },
 ]
 
@@ -19,7 +20,7 @@ function PaletteItem({ type }: { type: NodeType }) {
         e.dataTransfer.setData('application/flowe-node-type', type)
         e.dataTransfer.effectAllowed = 'copy'
       }}
-      className="group relative flex cursor-grab items-center gap-2.5 overflow-hidden rounded-[7px] border border-[var(--color-border)] bg-[var(--color-surface2)] px-3 py-2.5 transition-colors hover:border-[var(--color-border2)] hover:bg-[var(--color-elevated)] active:cursor-grabbing"
+      className="group relative flex cursor-grab items-center gap-2.5 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 transition-colors hover:border-[var(--color-border2)] hover:bg-[var(--color-surface2)] active:cursor-grabbing"
     >
       {/* Accent left border */}
       <div
@@ -69,26 +70,26 @@ export function NodePalette() {
   )
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-surface)]">
+    <aside className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-black">
       <div className="border-b border-[var(--color-border)] px-3 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--color-text)] hover:bg-[var(--color-surface2)]">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="currentColor" strokeWidth="1.35" />
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
+            <svg width="12" height="12" viewBox="0 0 18 18" fill="none">
+              <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="black" strokeWidth="1.5" />
             </svg>
           </div>
 
-          <h1 className="truncate text-[15px] font-semibold text-[var(--color-text)]">{workflowName}</h1>
+          <h1 className="truncate text-[14px] font-semibold text-white">{workflowName}</h1>
           <SaveIndicator />
         </div>
       </div>
 
       <div className="overflow-y-auto">
         <section className="flex flex-col gap-4 p-3">
-          <h2 className="text-[12px] font-semibold text-[var(--color-text)]">Node Library</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">Node Library</h2>
           {PALETTE_GROUPS.map((group) => (
             <div key={group.category} className="flex flex-col gap-1.5">
-              <span className="text-[9px] text-[var(--color-muted)] uppercase tracking-widest px-0.5">
+              <span className="text-[9px] text-[var(--color-subtle)] uppercase tracking-widest px-0.5">
                 {group.category}
               </span>
               {group.items.map((type) => (
@@ -98,6 +99,6 @@ export function NodePalette() {
           ))}
         </section>
       </div>
-    </aside >
+    </aside>
   )
 }

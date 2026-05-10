@@ -7,7 +7,7 @@ import { listWorkflows, type SavedWorkflow } from '@/lib/workflowApi'
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 
 function Divider() {
-  return <div className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--color-border)]" />
+  return <div className="mx-1 h-4 w-px flex-shrink-0 bg-white/10" />
 }
 
 function ToolBtn({
@@ -26,8 +26,8 @@ function ToolBtn({
       title={title}
       className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         active
-          ? 'bg-[var(--color-accent)] text-white'
-          : 'text-[var(--color-muted)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]'
+          ? 'bg-white/15 text-white'
+          : 'text-[var(--color-muted)] hover:bg-white/10 hover:text-white'
       }`}
     >
       {children}
@@ -64,6 +64,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     resetNodeExecutionStatuses, clearExecutionLog,
     setExecutionState, appendExecutionEvent,
     setNodeExecutionStatus, setLogPanelOpen,
+    setPendingApproval, setCurrentRunId,
   } = useWorkflowStore(
     useShallow((s) => ({
       tabs: s.tabs,
@@ -86,6 +87,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       appendExecutionEvent: s.appendExecutionEvent,
       setNodeExecutionStatus: s.setNodeExecutionStatus,
       setLogPanelOpen: s.setLogPanelOpen,
+      setPendingApproval: s.setPendingApproval,
+      setCurrentRunId: s.setCurrentRunId,
     })),
   )
 
@@ -137,6 +140,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     clearExecutionLog()
     setExecutionState('running')
     setLogPanelOpen(true)
+    setPendingApproval(null)
+    setCurrentRunId(null)
 
     void (async () => {
       const ast = serializeToAST(nodes, edges, workflowName)
@@ -144,6 +149,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
       // Map nodeId → latest output so we can pass it along with node_completed
       const nodeOutputs = new Map<string, string>()
+      let activeRunId: string | null = null
 
       try {
         const response = await fetch('/api/run', {
@@ -180,6 +186,12 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
             const nid = event.nodeId
             switch (event.type) {
+              case 'workflow_started':
+                if (event.runId) {
+                  activeRunId = event.runId
+                  setCurrentRunId(event.runId)
+                }
+                break
               case 'node_started':
                 if (nid) setNodeExecutionStatus(nid, 'running')
                 break
@@ -191,6 +203,16 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                 break
               case 'node_error':
                 if (nid) setNodeExecutionStatus(nid, 'error', event.message)
+                break
+              case 'node_waiting':
+                if (nid) {
+                  setNodeExecutionStatus(nid, 'waiting' as Parameters<typeof setNodeExecutionStatus>[1])
+                  setPendingApproval({
+                    runId: activeRunId ?? '',
+                    nodeId: nid,
+                    message: event.message ?? 'Please review and approve or reject this step.',
+                  })
+                }
                 break
               case 'workflow_completed':
                 setExecutionState('completed')
@@ -355,7 +377,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Main pill */}
       <div
-        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-[var(--color-border)] bg-[var(--color-elevated)]/95 px-1 py-1 backdrop-blur"
+        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-white/10 bg-[#111111]/95 px-1 py-1 backdrop-blur"
         style={{ boxShadow: 'var(--dock-shadow)' }}
       >
         {/* Select */}
@@ -437,9 +459,10 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
           disabled={isRunning}
           className={`flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold transition-all ${
             isRunning
-              ? 'cursor-not-allowed bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-              : 'bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95'
+              ? 'cursor-not-allowed bg-white/10 text-white/40'
+              : 'bg-white text-black hover:opacity-90 active:scale-95'
           }`}
+          style={!isRunning ? { boxShadow: '0 0 16px rgba(255,255,255,0.2)' } : {}}
         >
           {isRunning ? <Spinner /> : (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">

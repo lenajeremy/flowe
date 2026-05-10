@@ -22,5 +22,29 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'loop', label: 'Loop', loopOverField: 'output.items', mode: 'sequential' }
     case 'textOutput':
       return { nodeType: 'textOutput', label: 'Text Output' }
+    case 'httpRequest':
+      return {
+        nodeType: 'httpRequest',
+        label: 'HTTP Request',
+        url: 'https://',
+        method: 'GET',
+        requestHeaders: '{}',
+        requestBody: '',
+      }
+    case 'emailSend':
+      return {
+        nodeType: 'emailSend',
+        label: 'Send Email',
+        emailTo: '',
+        emailSubject: '',
+        emailBody: '',
+      }
+    case 'humanApproval':
+      return {
+        nodeType: 'humanApproval',
+        label: 'Human Approval',
+        approvalMessage: 'Please review and approve or reject this step.',
+        approvalTimeout: 0,
+      }
   }
 }
