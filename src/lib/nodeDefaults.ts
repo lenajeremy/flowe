@@ -46,5 +46,9 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         approvalMessage: 'Please review and approve or reject this step.',
         approvalTimeout: 0,
       }
+    case 'webhookTrigger':
+      return { nodeType: 'webhookTrigger', label: 'Webhook Trigger' }
+    case 'scheduledTrigger':
+      return { nodeType: 'scheduledTrigger', label: 'Scheduled Trigger', interval: '1h' }
   }
 }

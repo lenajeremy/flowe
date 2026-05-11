@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { serializeToAST } from '@/lib/executor'
 import { listWorkflows, type SavedWorkflow } from '@/lib/workflowApi'
+import { consumeRunStream } from '@/lib/runStream'
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 
 function Divider() {
@@ -46,8 +47,10 @@ function Spinner() {
 
 export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const connectedRunRef = useRef<string | null>(null)
   const [tabsOpen, setTabsOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [savedWorkflows, setSavedWorkflows] = useState<SavedWorkflow[]>([])
@@ -59,12 +62,13 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     undo, redo,
     executionState, nodes, edges,
     workflowName, setWorkflowName,
-    saveStatus,
+    saveStatus, dbId,
     setApiKeyModalOpen, importWorkflowAsNewTab,
     resetNodeExecutionStatuses, clearExecutionLog,
     setExecutionState, appendExecutionEvent,
     setNodeExecutionStatus, setLogPanelOpen,
     setPendingApproval, setCurrentRunId,
+    versionsOpen, setVersionsOpen,
   } = useWorkflowStore(
     useShallow((s) => ({
       tabs: s.tabs,
@@ -79,6 +83,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       workflowName: s.workflowName,
       setWorkflowName: s.setWorkflowName,
       saveStatus: s.saveStatus,
+      dbId: s.dbId,
       setApiKeyModalOpen: s.setApiKeyModalOpen,
       importWorkflowAsNewTab: s.importWorkflowAsNewTab,
       resetNodeExecutionStatuses: s.resetNodeExecutionStatuses,
@@ -89,6 +94,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       setLogPanelOpen: s.setLogPanelOpen,
       setPendingApproval: s.setPendingApproval,
       setCurrentRunId: s.setCurrentRunId,
+      versionsOpen: s.versionsOpen,
+      setVersionsOpen: s.setVersionsOpen,
     })),
   )
 
@@ -104,6 +111,135 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  // Shared event handler factory — closes over store actions so all three stream
+  // consumers (manual run, external URL run, scheduled poll) share one code path.
+  // `initialFallback` is used as the runId for node_waiting when the event itself
+  // doesn't carry one; for manual runs it gets updated from workflow_started.
+  function makeEventHandler(initialFallback: string): (event: ExecutionEvent) => void {
+    const nodeOutputs = new Map<string, string>()
+    let fallback = initialFallback
+    return (event: ExecutionEvent) => {
+      appendExecutionEvent(event)
+      const nid = event.nodeId
+      switch (event.type) {
+        case 'workflow_started':
+          if (event.runId) { fallback = event.runId; setCurrentRunId(event.runId) }
+          break
+        case 'node_started':
+          if (nid) setNodeExecutionStatus(nid, 'running')
+          break
+        case 'node_output':
+          if (nid && event.output !== undefined) nodeOutputs.set(nid, event.output)
+          break
+        case 'node_completed':
+          if (nid) setNodeExecutionStatus(nid, 'completed', nodeOutputs.get(nid))
+          break
+        case 'node_error':
+          if (nid) setNodeExecutionStatus(nid, 'error', event.message)
+          break
+        case 'node_waiting':
+          if (nid) {
+            setNodeExecutionStatus(nid, 'waiting')
+            setPendingApproval({
+              runId: event.runId ?? fallback,
+              nodeId: nid,
+              message: event.message ?? 'Please review and approve or reject this step.',
+            })
+          }
+          break
+        case 'workflow_completed':
+          setExecutionState('completed')
+          break
+        case 'workflow_error':
+          setExecutionState('error')
+          break
+      }
+    }
+  }
+
+  // Auto-connect to a run stream when ?runId= is present in the URL (e.g. from webhook trigger page).
+  // We wait for dbId to be set (workflow loaded) so loadWorkflow() doesn't wipe execution state.
+  useEffect(() => {
+    const externalRunId = searchParams.get('runId')
+    if (!externalRunId || !dbId || connectedRunRef.current === externalRunId) return
+    connectedRunRef.current = externalRunId
+
+    resetNodeExecutionStatuses()
+    clearExecutionLog()
+    setExecutionState('running')
+    setLogPanelOpen(true)
+    setPendingApproval(null)
+    setCurrentRunId(externalRunId)
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/runs/${externalRunId}/stream`)
+        if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
+        await consumeRunStream(response.body.getReader(), makeEventHandler(externalRunId))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        appendExecutionEvent({
+          id: crypto.randomUUID(),
+          type: 'workflow_error',
+          message: `Stream error: ${message}`,
+          timestamp: 0,
+        })
+        setExecutionState('error')
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, dbId])
+
+  // Subscribe to workflow-level run-start events so the canvas updates immediately
+  // when a scheduled or webhook run fires — without polling and without a race condition.
+  useEffect(() => {
+    if (!dbId || isRunning) return
+
+    const controller = new AbortController()
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/workflows/${dbId}/events`, { signal: controller.signal })
+        if (!response.ok || !response.body) return
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const run_id = line.slice(6).trim()
+            if (!run_id || connectedRunRef.current === run_id) continue
+
+            connectedRunRef.current = run_id
+            resetNodeExecutionStatuses()
+            clearExecutionLog()
+            setExecutionState('running')
+            setLogPanelOpen(true)
+            setPendingApproval(null)
+            setCurrentRunId(run_id)
+
+            const streamRes = await fetch(`/api/runs/${run_id}/stream`)
+            if (!streamRes.ok || !streamRes.body) continue
+            await consumeRunStream(streamRes.body.getReader(), makeEventHandler(run_id))
+          }
+        }
+      } catch {
+        // connection closed or aborted — fine
+      }
+    })()
+
+    return () => controller.abort()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbId, isRunning])
 
   // Fetch saved workflows whenever the tabs popover opens
   useEffect(() => {
@@ -146,83 +282,15 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     void (async () => {
       const ast = serializeToAST(nodes, edges, workflowName)
       const startTime = Date.now()
-
-      // Map nodeId → latest output so we can pass it along with node_completed
-      const nodeOutputs = new Map<string, string>()
-      let activeRunId: string | null = null
-
       try {
         const response = await fetch('/api/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ workflow: ast }),
+          body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),
         })
-
-        if (!response.ok || !response.body) {
-          throw new Error(`Server error ${response.status}`)
-        }
-
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-
-          // SSE lines are delimited by \n\n; split on \n to process individually
-          const lines = buffer.split('\n')
-          buffer = lines.pop() ?? ''
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue
-            const raw = line.slice(6).trim()
-            if (!raw) continue
-
-            const event = JSON.parse(raw) as ExecutionEvent
-            appendExecutionEvent(event)
-
-            const nid = event.nodeId
-            switch (event.type) {
-              case 'workflow_started':
-                if (event.runId) {
-                  activeRunId = event.runId
-                  setCurrentRunId(event.runId)
-                }
-                break
-              case 'node_started':
-                if (nid) setNodeExecutionStatus(nid, 'running')
-                break
-              case 'node_output':
-                if (nid && event.output !== undefined) nodeOutputs.set(nid, event.output)
-                break
-              case 'node_completed':
-                if (nid) setNodeExecutionStatus(nid, 'completed', nodeOutputs.get(nid))
-                break
-              case 'node_error':
-                if (nid) setNodeExecutionStatus(nid, 'error', event.message)
-                break
-              case 'node_waiting':
-                if (nid) {
-                  setNodeExecutionStatus(nid, 'waiting' as Parameters<typeof setNodeExecutionStatus>[1])
-                  setPendingApproval({
-                    runId: activeRunId ?? '',
-                    nodeId: nid,
-                    message: event.message ?? 'Please review and approve or reject this step.',
-                  })
-                }
-                break
-              case 'workflow_completed':
-                setExecutionState('completed')
-                break
-              case 'workflow_error':
-                setExecutionState('error')
-                break
-            }
-          }
-        }
+        if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
+        // fallback '' — makeEventHandler updates it from the workflow_started event's runId
+        await consumeRunStream(response.body.getReader(), makeEventHandler(''))
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         appendExecutionEvent({
@@ -542,6 +610,17 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                     <path d="M8 9.5h4M10 7.5l2 2-2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   All Workflows
+                </button>
+                <button
+                  onClick={() => { setVersionsOpen(!versionsOpen); setMoreOpen(false) }}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-[var(--color-surface2)] ${versionsOpen ? 'text-[var(--color-accent)]' : 'text-[var(--color-text)]'}`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M6.5 4v2.5l1.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 2l2 2M11 2l-2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  {versionsOpen ? 'Hide Versions' : 'Version History'}
                 </button>
               </div>
             </div>

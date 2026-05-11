@@ -219,6 +219,12 @@ async function executeNode(
       // A real implementation would pause execution and wait for an external event
       return 'approved'
     }
+
+    case 'webhookTrigger':
+      return '{"trigger":"webhook"}'
+
+    case 'scheduledTrigger':
+      return `{"trigger":"scheduled","time":"${new Date().toISOString()}"}`
   }
 }
 

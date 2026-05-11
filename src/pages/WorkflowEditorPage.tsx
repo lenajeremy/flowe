@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { NodePalette } from '@/components/panels/NodePalette'
 import { ConfigPanel } from '@/components/panels/ConfigPanel'
+import { VersionsPanel } from '@/components/panels/VersionsPanel'
 import { Canvas } from '@/components/Canvas'
 import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
@@ -99,7 +100,7 @@ export function WorkflowEditorPage() {
     isConfigPanelOpen, setConfigPanelOpen,
     nodes, edges, workflowName, dbId,
     loadWorkflow, saveStatus, setSaveStatus,
-    executionState,
+    executionState, versionsOpen,
   } = useWorkflowStore(
     useShallow((s) => ({
       isApiKeyModalOpen: s.isApiKeyModalOpen,
@@ -114,6 +115,7 @@ export function WorkflowEditorPage() {
       saveStatus: s.saveStatus,
       setSaveStatus: s.setSaveStatus,
       executionState: s.executionState,
+      versionsOpen: s.versionsOpen,
     })),
   )
 
@@ -160,6 +162,74 @@ export function WorkflowEditorPage() {
   useEffect(() => {
     initialLoadDone.current = false
   }, [id])
+
+  // ── Schedule auto-sync ────────────────────────────────────────
+  // Auto-create the DB schedule record when a ScheduledTrigger node is dropped
+  // onto the canvas, and delete it when the node is removed.
+  const scheduleTrackInit = useRef(false)
+  const prevHadScheduledTrigger = useRef(false)
+  const pendingScheduleCreate = useRef(false)
+  const prevDbIdForSchedule = useRef<string | undefined>(undefined)
+
+  // Reset tracking state on workflow change
+  useEffect(() => {
+    scheduleTrackInit.current = false
+    prevHadScheduledTrigger.current = false
+    pendingScheduleCreate.current = false
+    prevDbIdForSchedule.current = undefined
+  }, [id])
+
+  // Detect node add / remove
+  useEffect(() => {
+    const hasScheduled = nodes.some((n) => n.type === 'scheduledTrigger')
+    if (!scheduleTrackInit.current) {
+      // Wait until the workflow is fully loaded (dbId set) before initializing.
+      // Without this guard, the transition from "empty store" → "loaded nodes" would
+      // be misread as a user dropping the node, triggering a spurious auto-POST that
+      // overwrites whatever schedule the user had already configured.
+      if (!dbId) return
+      scheduleTrackInit.current = true
+      prevHadScheduledTrigger.current = hasScheduled
+      return
+    }
+    const prev = prevHadScheduledTrigger.current
+    prevHadScheduledTrigger.current = hasScheduled
+    if (hasScheduled === prev) return
+
+    if (hasScheduled && !prev) {
+      // Node was added
+      if (dbId) {
+        void fetch(`/api/workflows/${dbId}/schedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
+        })
+      } else {
+        pendingScheduleCreate.current = true
+      }
+    } else {
+      // Node was removed
+      pendingScheduleCreate.current = false
+      if (dbId) {
+        void fetch(`/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, dbId])
+
+  // If dbId arrives after node was already added (new workflow flow)
+  useEffect(() => {
+    const prevId = prevDbIdForSchedule.current
+    prevDbIdForSchedule.current = dbId
+    if (dbId && !prevId && pendingScheduleCreate.current) {
+      pendingScheduleCreate.current = false
+      void fetch(`/api/workflows/${dbId}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
+      })
+    }
+  }, [dbId])
 
   // ── Save function ─────────────────────────────────────────
   const isSavingRef = useRef(false)
@@ -245,7 +315,23 @@ export function WorkflowEditorPage() {
 
       {isConfigPanelOpen && (
         <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: right.width }}>
-          <ConfigPanel />
+          {versionsOpen ? (
+            <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
+              <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
+                <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
+              </div>
+              {dbId ? (
+                <VersionsPanel workflowId={dbId} />
+              ) : (
+                <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
+                  <p className="text-[12px] text-[var(--color-muted)]">Save the workflow first to manage version history.</p>
+                </div>
+              )}
+            </aside>
+          ) : (
+            <ConfigPanel />
+          )}
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { ExecutionEvent } from '@/types/workflow'
@@ -168,8 +168,8 @@ export function ExecutionPanel() {
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
   const [isDragging, setIsDragging] = useState(false)
 
-  // ── Tab state: 'log' | 'history' ──
-  const [activeTab, setActiveTab] = useState<'log' | 'history'>('log')
+  // ── Tab state: 'log' | 'history' | 'state' ──
+  const [activeTab, setActiveTab] = useState<'log' | 'history' | 'state'>('log')
   const [historyRuns, setHistoryRuns] = useState<WorkflowRun[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [viewingRun, setViewingRun] = useState<WorkflowRun | null>(null)
@@ -251,6 +251,17 @@ export function ExecutionPanel() {
     }
   }
 
+  // Derive node output entries for the State tab
+  const nodeOutputEntries = useMemo(() => {
+    const seen = new Map<string, { nodeId: string; nodeLabel?: string; output: string }>()
+    for (const ev of executionLog) {
+      if (ev.type === 'node_output' && ev.nodeId) {
+        seen.set(ev.nodeId, { nodeId: ev.nodeId, nodeLabel: ev.nodeLabel, output: ev.output ?? '' })
+      }
+    }
+    return [...seen.values()]
+  }, [executionLog])
+
   // Decide which events to show in "Log" view
   const displayLog = executionLog
 
@@ -309,6 +320,16 @@ export function ExecutionPanel() {
           >
             History
           </button>
+          <button
+            onClick={() => setActiveTab('state')}
+            className={`rounded-full px-3 py-0.5 text-[10px] font-medium transition-colors ${
+              activeTab === 'state'
+                ? 'bg-white/15 text-white'
+                : 'text-[var(--color-muted)] hover:text-white'
+            }`}
+          >
+            State
+          </button>
         </div>
 
         <button
@@ -353,7 +374,31 @@ export function ExecutionPanel() {
       )}
 
       {/* Content area */}
-      {activeTab === 'log' ? (
+      {activeTab === 'state' ? (
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-2 p-3">
+            {nodeOutputEntries.length === 0 ? (
+              <p className="text-[11px] text-[var(--color-muted)]">
+                No outputs yet. Run the workflow to see state.
+              </p>
+            ) : (
+              nodeOutputEntries.map(({ nodeId, nodeLabel, output }) => (
+                <div
+                  key={nodeId}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                >
+                  <div className="mb-1 text-[10px] font-medium text-[var(--color-muted)]">
+                    {nodeLabel ?? nodeId}
+                  </div>
+                  <pre className="whitespace-pre-wrap break-all text-[11px] text-[var(--color-text)] font-mono max-h-32 overflow-y-auto">
+                    {output}
+                  </pre>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ) : activeTab === 'log' ? (
         <div className="flex-1 overflow-y-auto py-1">
           {displayLog.length === 0 ? (
             <div className="flex items-center justify-center h-full">

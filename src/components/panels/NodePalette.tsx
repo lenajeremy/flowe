@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { SaveIndicator } from '@/components/SaveIndicator'
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
+  { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
   { category: 'Inputs', items: ['textInput', 'imageInput'] },
   { category: 'AI', items: ['llm'] },
   { category: 'Logic', items: ['branch', 'loop', 'humanApproval'] },

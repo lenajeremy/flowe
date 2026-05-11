@@ -11,6 +11,8 @@ export type NodeType =
   | 'httpRequest'
   | 'emailSend'
   | 'humanApproval'
+  | 'webhookTrigger'
+  | 'scheduledTrigger'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -66,6 +68,9 @@ export type FlowNodeData = {
   // humanApproval
   approvalMessage?: string
   approvalTimeout?: number  // seconds, 0 = no timeout
+
+  // scheduledTrigger
+  interval?: '5m' | '15m' | '30m' | '1h' | '6h' | '12h' | '24h'
 
   // LLM structured output
   outputSchema?: string     // JSON schema string

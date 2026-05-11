@@ -96,12 +96,12 @@ body {
 }
 
 .react-flow__handle {
-  width: 8px !important;
-  height: 8px !important;
+  width: 14px !important;
+  height: 14px !important;
   border-radius: 50% !important;
-  border: 1.5px solid var(--color-border2) !important;
+  border: 2px solid var(--color-border2) !important;
   background: var(--color-elevated) !important;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .react-flow__handle:hover,

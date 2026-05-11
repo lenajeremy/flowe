@@ -23,7 +23,7 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
 
   return (
     <div
-      className={`relative flex select-none flex-col overflow-hidden rounded-2xl transition-shadow ${statusClass}`}
+      className={`relative flex select-none flex-col rounded-2xl transition-shadow ${statusClass}`}
       style={{
         width: 260,
         aspectRatio: '16/9',

@@ -87,7 +87,7 @@ interface WorkflowStore {
 
   setNodeExecutionStatus: (
     nodeId: string,
-    status: 'idle' | 'running' | 'completed' | 'error',
+    status: 'idle' | 'running' | 'completed' | 'error' | 'waiting',
     output?: string,
   ) => void
   resetNodeExecutionStatuses: () => void
@@ -117,6 +117,13 @@ interface WorkflowStore {
   // ── Run history ──
   runHistory: WorkflowRun[]
   setRunHistory: (runs: WorkflowRun[]) => void
+
+  // ── Version import ──
+  importWorkflowVersion: (nodes: unknown[], edges: unknown[]) => void
+
+  // ── Versions panel ──
+  versionsOpen: boolean
+  setVersionsOpen: (open: boolean) => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -422,4 +429,33 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       ),
     })
   },
+
+  importWorkflowVersion: (rawNodes, rawEdges) =>
+    set((state) => {
+      if (!state.tabs.find((t) => t.id === state.activeTabId)) return {}
+      // Map raw AST nodes → FlowNode shape (same as loadWorkflow does)
+      const nodes: FlowNode[] = (rawNodes as Array<{ id: string; type: string; position: { x: number; y: number }; data: FlowNodeData }>).map((n) => ({
+        id: n.id,
+        type: n.type,
+        position: n.position,
+        data: n.data,
+      }))
+      const edges: FlowEdge[] = (rawEdges as Array<{ id: string; source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null }>).map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        ...(e.sourceHandle != null ? { sourceHandle: e.sourceHandle } : {}),
+        ...(e.targetHandle != null ? { targetHandle: e.targetHandle } : {}),
+      }))
+      return {
+        nodes,
+        edges,
+        history: pushHistory(state.history, state.nodes, state.edges),
+        future: [],
+        selectedNodeId: null,
+      }
+    }),
+
+  versionsOpen: false,
+  setVersionsOpen: (open) => set({ versionsOpen: open }),
 }))

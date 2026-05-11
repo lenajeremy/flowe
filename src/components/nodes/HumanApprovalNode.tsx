@@ -42,20 +42,28 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
         )}
       </div>
       <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} id="approved" style={{ top: '35%' }} />
-      <div
-        className="absolute text-[9px] font-medium text-emerald-400 pointer-events-none"
-        style={{ right: '-26px', top: 'calc(35% - 6px)' }}
-      >
-        ✓
+
+      {/* Approve path */}
+      <div className="absolute pointer-events-none flex items-center gap-1" style={{ right: '-52px', top: 'calc(35% - 8px)' }}>
+        <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wide">Approve</span>
       </div>
-      <Handle type="source" position={Position.Right} id="rejected" style={{ top: '65%' }} />
-      <div
-        className="absolute text-[9px] font-medium text-red-400 pointer-events-none"
-        style={{ right: '-26px', top: 'calc(65% - 6px)' }}
-      >
-        ✗
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="approved"
+        style={{ top: '35%', background: 'rgba(16,185,129,0.25)', borderColor: 'rgb(16,185,129)' }}
+      />
+
+      {/* Reject path */}
+      <div className="absolute pointer-events-none flex items-center gap-1" style={{ right: '-46px', top: 'calc(65% - 8px)' }}>
+        <span className="text-[9px] font-semibold text-red-400 uppercase tracking-wide">Reject</span>
       </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="rejected"
+        style={{ top: '65%', background: 'rgba(239,68,68,0.25)', borderColor: 'rgb(239,68,68)' }}
+      />
     </NodeBase>
   )
 }

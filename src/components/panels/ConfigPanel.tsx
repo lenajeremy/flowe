@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
@@ -13,6 +13,23 @@ const HTTP_METHODS: Array<{ value: string; label: string }> = [
   { value: 'PUT',    label: 'PUT'    },
   { value: 'DELETE', label: 'DELETE' },
   { value: 'PATCH',  label: 'PATCH'  },
+]
+
+const FREQUENCY_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'hourly',  label: 'Every hour'  },
+  { value: 'daily',   label: 'Every day'   },
+  { value: 'weekly',  label: 'Every week'  },
+  { value: 'monthly', label: 'Every month' },
+]
+
+const WEEKDAY_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '0', label: 'Sunday'    },
+  { value: '1', label: 'Monday'    },
+  { value: '2', label: 'Tuesday'   },
+  { value: '3', label: 'Wednesday' },
+  { value: '4', label: 'Thursday'  },
+  { value: '5', label: 'Friday'    },
+  { value: '6', label: 'Saturday'  },
 ]
 
 const APPROVAL_TIMEOUTS: Array<{ value: string; label: string }> = [
@@ -133,9 +150,16 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
   )
 }
 
+// ── Tracked focus state for token insertion ──────────────────
+interface FocusedField {
+  el: HTMLTextAreaElement | HTMLInputElement
+  /** The FlowNodeData key that this element maps to */
+  field: string
+}
+
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
-  const { nodes, edges, selectedNodeId, updateNodeData, executionState, executionLog } = useWorkflowStore(
+  const { nodes, edges, selectedNodeId, updateNodeData, executionState, executionLog, dbId } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
@@ -143,14 +167,159 @@ export function ConfigPanel() {
       updateNodeData: s.updateNodeData,
       executionState: s.executionState,
       executionLog: s.executionLog,
+      dbId: s.dbId,
     })),
   )
 
-  // Refs to textareas so we can insert at cursor position
+  // Refs to textareas so we can insert at cursor position (LLM node)
   const systemRef = useRef<HTMLTextAreaElement>(null)
   const userRef   = useRef<HTMLTextAreaElement>(null)
 
+  /**
+   * Tracks the last field that had focus, including the cursor offsets at the
+   * moment focus moved away. This is captured via onBlur so that when an
+   * "Available Input" button is clicked (which steals focus from the field),
+   * insertToken still knows where to write.
+   */
+  const lastFocusedRef = useRef<FocusedField & { start: number; end: number } | null>(null)
+
+  function handleFieldFocus(el: HTMLTextAreaElement | HTMLInputElement, field: string) {
+    // Update on every focus so the ref always holds the current element.
+    lastFocusedRef.current = {
+      el,
+      field,
+      start: el.selectionStart ?? el.value.length,
+      end:   el.selectionEnd   ?? el.value.length,
+    }
+  }
+
+  function handleFieldBlur(el: HTMLTextAreaElement | HTMLInputElement, field: string) {
+    // Capture the cursor position at the moment focus leaves the field,
+    // because by the time the button's onClick fires, selectionStart is gone.
+    lastFocusedRef.current = {
+      el,
+      field,
+      start: el.selectionStart ?? el.value.length,
+      end:   el.selectionEnd   ?? el.value.length,
+    }
+  }
+
+  // ── Webhook URL state ────────────────────────────────────────
+  const [webhookUrl, setWebhookUrl] = useState<string | null>(null)
+  const [webhookLoading, setWebhookLoading] = useState(false)
+
+  const fetchWebhook = useCallback(async () => {
+    if (!dbId) return
+    setWebhookLoading(true)
+    try {
+      const r = await fetch(`/api/workflows/${dbId}/webhook`)
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const wh = await r.json() as { token: string }
+      setWebhookUrl(`${window.location.origin}/trigger/${wh.token}`)
+    } catch {
+      // ignore
+    } finally {
+      setWebhookLoading(false)
+    }
+  }, [dbId])
+
+  // ── Schedule timezone helpers ────────────────────────────────
+  function utcToLocal(utcHHMM: string): string {
+    const [h, m] = utcHHMM.split(':').map(Number)
+    const d = new Date()
+    d.setUTCHours(h, m, 0, 0)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+  function localToUtc(localHHMM: string): string {
+    const [h, m] = localHHMM.split(':').map(Number)
+    const d = new Date()
+    d.setHours(h, m, 0, 0)
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+  }
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  // ── Schedule state ───────────────────────────────────────────
+  const [schedFrequency, setSchedFrequency] = useState('daily')
+  const [schedTime, setSchedTime] = useState('09:00') // stored in local time
+  const [schedDayOfWeek, setSchedDayOfWeek] = useState(1)   // Monday
+  const [schedDayOfMonth, setSchedDayOfMonth] = useState(1)
+  const [schedRepeat, setSchedRepeat] = useState(true)
+  const [schedSaving, setSchedSaving] = useState(false)
+  const [schedNextRun, setSchedNextRun] = useState<string | null>(null)
+
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null
+
+  // Clear the tracked focus whenever the user switches to a different node
+  useEffect(() => {
+    lastFocusedRef.current = null
+  }, [selectedNodeId])
+
+  useEffect(() => {
+    if (selectedNode?.data.nodeType === 'webhookTrigger') {
+      fetchWebhook()
+    }
+  }, [selectedNode?.data.nodeType, fetchWebhook])
+
+  useEffect(() => {
+    if (selectedNode?.data.nodeType !== 'scheduledTrigger' || !dbId) return
+    fetch(`/api/workflows/${dbId}/schedule`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((s: { frequency?: string; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
+        if (!s) return
+        if (s.frequency)    setSchedFrequency(s.frequency)
+        if (s.run_time)     setSchedTime(utcToLocal(s.run_time))
+        if (s.day_of_week != null)  setSchedDayOfWeek(s.day_of_week)
+        if (s.day_of_month != null) setSchedDayOfMonth(s.day_of_month)
+        if (s.repeat != null)       setSchedRepeat(s.repeat)
+        if (s.next_run_at)  setSchedNextRun(s.next_run_at)
+      })
+      .catch(() => {})
+  }, [selectedNode?.data.nodeType, dbId])
+
+  async function saveSchedule(overrides?: Partial<{ frequency: string; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }>) {
+    if (!dbId || !selectedNodeId) return
+    setSchedSaving(true)
+    const localTime = overrides?.run_time ?? schedTime
+    const payload = {
+      frequency:    overrides?.frequency    ?? schedFrequency,
+      run_time:     localToUtc(localTime),
+      day_of_week:  overrides?.day_of_week  ?? schedDayOfWeek,
+      day_of_month: overrides?.day_of_month ?? schedDayOfMonth,
+      repeat:       overrides?.repeat       ?? schedRepeat,
+    }
+    try {
+      const r = await fetch(`/api/workflows/${dbId}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (r.ok) {
+        const s = await r.json() as { next_run_at?: string; frequency: string; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }
+        if (s.next_run_at) setSchedNextRun(s.next_run_at)
+        // Push schedule data into node so the canvas node stays in sync
+        updateNodeData(selectedNodeId, {
+          scheduleFrequency:  s.frequency,
+          scheduleRunTime:    s.run_time,
+          scheduleDayOfWeek:  s.day_of_week,
+          scheduleDayOfMonth: s.day_of_month,
+          scheduleRepeat:     s.repeat,
+          scheduleNextRunAt:  s.next_run_at,
+        } as Parameters<typeof updateNodeData>[1])
+      }
+    } catch { /* ignore */ } finally {
+      setSchedSaving(false)
+    }
+  }
+
+  async function handleRegenerateWebhook() {
+    if (!dbId) return
+    try {
+      await fetch(`/api/workflows/${dbId}/webhook`, { method: 'DELETE' })
+      await fetchWebhook()
+    } catch {
+      // best-effort
+    }
+  }
 
   if (!selectedNode) {
     const triggerCount = nodes.filter((node) => node.data.nodeType === 'textInput' || node.data.label.toLowerCase().includes('trigger')).length
@@ -227,47 +396,69 @@ export function ConfigPanel() {
   const nodeType = data.nodeType
   const upstreamNodes = getUpstreamNodes(nodeId, nodes, edges)
 
-  /** Insert token at the cursor position of whichever textarea/input is currently focused,
-   *  falling back to user prompt (LLM) if neither is focused. */
+  /** Insert token at the cursor position of the last-focused field.
+   *
+   *  Strategy: clicking the "Available Input" button steals focus away from the
+   *  field the user was editing, so `document.activeElement` is the button by
+   *  the time this runs.  Instead we rely on `lastFocusedRef`, which is written
+   *  both onFocus and onBlur for every insertable field, so it always contains
+   *  the last field the user touched together with the exact cursor offsets
+   *  captured at blur time.
+   *
+   *  We also keep the old `document.activeElement` path as a secondary fallback
+   *  (handles the edge case where the user clicks a chip without ever having
+   *  clicked away from a field in the same render cycle).
+   */
   function insertToken(token: string) {
-    const activeEl = document.activeElement
+    // ── 1. Try the tracked last-focused field (primary path) ──
+    const tracked = lastFocusedRef.current
+    if (tracked && tracked.field && tracked.el) {
+      const { el, field, start, end } = tracked
+      const newValue = el.value.slice(0, start) + token + el.value.slice(end)
+      const cursorPos = start + token.length
+      updateNodeData(nodeId, { [field]: newValue })
+      requestAnimationFrame(() => {
+        el.focus()
+        el.setSelectionRange(cursorPos, cursorPos)
+      })
+      // Advance the stored cursor so repeated inserts chain correctly
+      lastFocusedRef.current = { el, field, start: cursorPos, end: cursorPos }
+      return
+    }
 
-    // If a generic textarea/input is focused (httpRequest, emailSend, etc.), insert there
+    // ── 2. Fallback: check document.activeElement (e.g. still-focused field) ──
+    const activeEl = document.activeElement
     if (
-      activeEl instanceof HTMLTextAreaElement ||
-      activeEl instanceof HTMLInputElement
+      (activeEl instanceof HTMLTextAreaElement || activeEl instanceof HTMLInputElement) &&
+      activeEl.id !== 'cfg-label'
     ) {
-      // Avoid inserting into the label field
-      if (activeEl.id !== 'cfg-label') {
+      const fieldMap: Record<string, string> = {
+        'cfg-http-url':      'url',
+        'cfg-http-body':     'requestBody',
+        'cfg-http-headers':  'requestHeaders',
+        'cfg-email-to':      'emailTo',
+        'cfg-email-subject': 'emailSubject',
+        'cfg-email-body':    'emailBody',
+        'cfg-approval-msg':  'approvalMessage',
+        'cfg-system':        'systemPrompt',
+        'cfg-user':          'userPrompt',
+      }
+      const field = fieldMap[activeEl.id]
+      if (field) {
         const start = activeEl.selectionStart ?? activeEl.value.length
         const end   = activeEl.selectionEnd   ?? activeEl.value.length
         const newValue = activeEl.value.slice(0, start) + token + activeEl.value.slice(end)
-        activeEl.value = newValue
-        // Derive field name from the element's id mapping
-        const fieldMap: Record<string, string> = {
-          'cfg-http-url':      'url',
-          'cfg-http-body':     'requestBody',
-          'cfg-http-headers':  'requestHeaders',
-          'cfg-email-to':      'emailTo',
-          'cfg-email-subject': 'emailSubject',
-          'cfg-email-body':    'emailBody',
-          'cfg-approval-msg':  'approvalMessage',
-          'cfg-system':        'systemPrompt',
-          'cfg-user':          'userPrompt',
-        }
-        const field = fieldMap[activeEl.id]
-        if (field) {
-          updateNodeData(nodeId, { [field]: newValue })
-          requestAnimationFrame(() => {
-            activeEl.focus()
-            activeEl.setSelectionRange(start + token.length, start + token.length)
-          })
-          return
-        }
+        const cursorPos = start + token.length
+        updateNodeData(nodeId, { [field]: newValue })
+        requestAnimationFrame(() => {
+          activeEl.focus()
+          activeEl.setSelectionRange(cursorPos, cursorPos)
+        })
+        return
       }
     }
 
-    // Default: LLM user prompt
+    // ── 3. Last resort: LLM user prompt ──────────────────────
     const el = userRef.current
     if (!el) return
     const start = el.selectionStart ?? el.value.length
@@ -386,6 +577,8 @@ export function ConfigPanel() {
                 rows={4}
                 value={typeof data.systemPrompt === 'string' ? data.systemPrompt : ''}
                 onChange={(e) => updateNodeData(nodeId, { systemPrompt: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'systemPrompt')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'systemPrompt')}
                 className={textareaClass}
                 placeholder="You are a helpful assistant…"
               />
@@ -397,6 +590,8 @@ export function ConfigPanel() {
                 rows={4}
                 value={typeof data.userPrompt === 'string' ? data.userPrompt : ''}
                 onChange={(e) => updateNodeData(nodeId, { userPrompt: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'userPrompt')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'userPrompt')}
                 className={textareaClass}
                 placeholder="{{nodeId.output}}"
               />
@@ -524,6 +719,8 @@ export function ConfigPanel() {
                 type="text"
                 value={typeof data.url === 'string' ? data.url : ''}
                 onChange={(e) => updateNodeData(nodeId, { url: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'url')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'url')}
                 className={inputClass}
                 placeholder="https://api.example.com/endpoint"
               />
@@ -537,6 +734,8 @@ export function ConfigPanel() {
                 rows={3}
                 value={typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}'}
                 onChange={(e) => updateNodeData(nodeId, { requestHeaders: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'requestHeaders')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'requestHeaders')}
                 className={textareaClass}
                 placeholder={'{"Authorization": "Bearer token", "Content-Type": "application/json"}'}
               />
@@ -548,6 +747,8 @@ export function ConfigPanel() {
                   rows={4}
                   value={typeof data.requestBody === 'string' ? data.requestBody : ''}
                   onChange={(e) => updateNodeData(nodeId, { requestBody: e.target.value })}
+                  onFocus={(e) => handleFieldFocus(e.currentTarget, 'requestBody')}
+                  onBlur={(e)  => handleFieldBlur(e.currentTarget,  'requestBody')}
                   className={textareaClass}
                   placeholder={'{"key": "{{nodeId.output}}"}'}
                 />
@@ -569,6 +770,8 @@ export function ConfigPanel() {
                 type="text"
                 value={typeof data.emailTo === 'string' ? data.emailTo : ''}
                 onChange={(e) => updateNodeData(nodeId, { emailTo: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailTo')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailTo')}
                 className={inputClass}
                 placeholder="recipient@example.com"
               />
@@ -579,6 +782,8 @@ export function ConfigPanel() {
                 type="text"
                 value={typeof data.emailSubject === 'string' ? data.emailSubject : ''}
                 onChange={(e) => updateNodeData(nodeId, { emailSubject: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailSubject')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailSubject')}
                 className={inputClass}
                 placeholder="Email subject…"
               />
@@ -589,6 +794,8 @@ export function ConfigPanel() {
                 rows={5}
                 value={typeof data.emailBody === 'string' ? data.emailBody : ''}
                 onChange={(e) => updateNodeData(nodeId, { emailBody: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailBody')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailBody')}
                 className={textareaClass}
                 placeholder="Email body… template tokens supported."
               />
@@ -611,6 +818,8 @@ export function ConfigPanel() {
                 rows={4}
                 value={typeof data.approvalMessage === 'string' ? data.approvalMessage : ''}
                 onChange={(e) => updateNodeData(nodeId, { approvalMessage: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'approvalMessage')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'approvalMessage')}
                 className={textareaClass}
                 placeholder="Please review and approve or reject this step."
               />
@@ -629,6 +838,133 @@ export function ConfigPanel() {
               />
             </FormField>
           </>
+        )}
+
+        {/* webhookTrigger */}
+        {nodeType === 'webhookTrigger' && (
+          <div className="flex flex-col gap-3">
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3">
+              <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider mb-2">Webhook URL</p>
+              {webhookLoading ? (
+                <p className="text-[11px] text-[var(--color-muted)]">Loading…</p>
+              ) : webhookUrl ? (
+                <>
+                  <p className="text-[10px] font-mono text-emerald-400 break-all leading-relaxed">
+                    POST {webhookUrl}
+                  </p>
+                  <button
+                    onClick={() => void navigator.clipboard.writeText(webhookUrl)}
+                    className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1 text-[10px] text-[var(--color-text)] transition-colors hover:border-[var(--color-border2)]"
+                  >
+                    Copy URL
+                  </button>
+                </>
+              ) : (
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  {dbId ? 'Failed to load webhook URL.' : 'Save the workflow first to generate a webhook URL.'}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => void handleRegenerateWebhook()}
+              disabled={webhookLoading || !dbId}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface2)] px-3 py-1.5 text-[11px] text-[var(--color-text)] transition-colors hover:border-[var(--color-border2)] disabled:opacity-40"
+            >
+              {webhookLoading ? 'Regenerating…' : 'Regenerate webhook token'}
+            </button>
+          </div>
+        )}
+
+        {/* scheduledTrigger */}
+        {nodeType === 'scheduledTrigger' && (
+          <div className="flex flex-col gap-3">
+            {/* Frequency */}
+            <FormField label="Frequency" htmlFor="cfg-sched-freq">
+              <Select
+                id="cfg-sched-freq"
+                value={schedFrequency}
+                onChange={(v) => { setSchedFrequency(v); void saveSchedule({ frequency: v }) }}
+                options={FREQUENCY_OPTIONS}
+              />
+            </FormField>
+
+            {/* Time (not shown for hourly) */}
+            {schedFrequency !== 'hourly' && (
+              <FormField label={`Time (${userTz})`} htmlFor="cfg-sched-time">
+                <input
+                  id="cfg-sched-time"
+                  type="time"
+                  value={schedTime}
+                  onChange={(e) => setSchedTime(e.target.value)}
+                  onBlur={(e) => void saveSchedule({ run_time: e.target.value })}
+                  className={inputClass}
+                />
+              </FormField>
+            )}
+
+            {/* Day of week (weekly only) */}
+            {schedFrequency === 'weekly' && (
+              <FormField label="Day of week" htmlFor="cfg-sched-dow">
+                <Select
+                  id="cfg-sched-dow"
+                  value={String(schedDayOfWeek)}
+                  onChange={(v) => { setSchedDayOfWeek(Number(v)); void saveSchedule({ day_of_week: Number(v) }) }}
+                  options={WEEKDAY_OPTIONS}
+                />
+              </FormField>
+            )}
+
+            {/* Day of month (monthly only) */}
+            {schedFrequency === 'monthly' && (
+              <FormField label="Day of month" htmlFor="cfg-sched-dom">
+                <input
+                  id="cfg-sched-dom"
+                  type="number"
+                  min={1}
+                  max={28}
+                  value={schedDayOfMonth}
+                  onChange={(e) => setSchedDayOfMonth(Number(e.target.value))}
+                  onBlur={() => void saveSchedule({ day_of_month: schedDayOfMonth })}
+                  className={inputClass}
+                />
+              </FormField>
+            )}
+
+            {/* Repeat toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-2.5">
+              <span className="text-[11px] text-[var(--color-text)]">Repeat</span>
+              <button
+                onClick={() => { setSchedRepeat((r) => { const next = !r; void saveSchedule({ repeat: next }); return next }) }}
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${schedRepeat ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border2)]'}`}
+              >
+                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${schedRepeat ? 'translate-x-4' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            {/* Next run info */}
+            {schedNextRun && (
+              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-2.5">
+                <p className="text-[10px] text-[var(--color-muted)]">Next run</p>
+                <p className="text-[11px] text-[var(--color-text)] mt-0.5">
+                  {new Date(schedNextRun).toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            {schedSaving && <p className="text-[10px] text-[var(--color-muted)]">Saving…</p>}
+
+            {/* Remove schedule */}
+            <button
+              onClick={async () => {
+                if (!dbId) return
+                await fetch(`/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
+                setSchedNextRun(null)
+              }}
+              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors text-left"
+            >
+              Remove schedule
+            </button>
+          </div>
         )}
       </div>
     </aside>

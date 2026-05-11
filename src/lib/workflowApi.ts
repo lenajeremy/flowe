@@ -69,19 +69,17 @@ export async function getRun(runId: string): Promise<WorkflowRun> {
 // ── Approvals ────────────────────────────────────────────────
 
 export async function approveRun(runId: string, nodeId: string): Promise<void> {
-  const res = await fetch(`/api/runs/${runId}/approve`, {
+  const res = await fetch(`/api/runs/${runId}/node/${nodeId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ node_id: nodeId, decision: 'approve' }),
   })
   if (!res.ok) throw new Error(`Failed to approve run: ${res.status}`)
 }
 
 export async function rejectRun(runId: string, nodeId: string): Promise<void> {
-  const res = await fetch(`/api/runs/${runId}/approve`, {
+  const res = await fetch(`/api/runs/${runId}/node/${nodeId}/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ node_id: nodeId, decision: 'reject' }),
   })
   if (!res.ok) throw new Error(`Failed to reject run: ${res.status}`)
 }
@@ -97,13 +95,13 @@ export interface ApiKey {
 }
 
 export async function listApiKeys(): Promise<ApiKey[]> {
-  const res = await fetch('/api/keys')
+  const res = await fetch('/api/apikeys')
   if (!res.ok) throw new Error(`Failed to list API keys: ${res.status}`)
   return res.json() as Promise<ApiKey[]>
 }
 
 export async function createApiKey(name: string): Promise<{ id: string; name: string; key: string; prefix: string }> {
-  const res = await fetch('/api/keys', {
+  const res = await fetch('/api/apikeys', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -113,6 +111,6 @@ export async function createApiKey(name: string): Promise<{ id: string; name: st
 }
 
 export async function deleteApiKey(id: string): Promise<void> {
-  const res = await fetch(`/api/keys/${id}`, { method: 'DELETE' })
+  const res = await fetch(`/api/apikeys/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`Failed to delete API key: ${res.status}`)
 }
