@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listWorkflows, deleteWorkflow, type SavedWorkflow } from '@/lib/workflowApi'
+import { API } from '@/lib/config'
 
 // Workflow list lives at /workflows; editor at /workflow/:id
 
@@ -25,7 +26,7 @@ export function HomePage() {
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch('/api/workflows', {
+      const res = await fetch(`${API}/api/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),

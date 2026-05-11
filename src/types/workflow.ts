@@ -68,6 +68,7 @@ export type FlowNodeData = {
   // humanApproval
   approvalMessage?: string
   approvalTimeout?: number  // seconds, 0 = no timeout
+  approvalEmail?: string    // optional email to notify when approval is needed
 
   // scheduledTrigger
   interval?: '5m' | '15m' | '30m' | '1h' | '6h' | '12h' | '24h'

@@ -4,6 +4,7 @@ import { LandingPage } from '@/pages/LandingPage'
 import { HomePage } from '@/pages/HomePage'
 import { WorkflowEditorPage } from '@/pages/WorkflowEditorPage'
 import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
+import { RunDetailPage } from '@/pages/RunDetailPage'
 
 function App() {
   // Apply saved / system theme once on mount so all pages see correct CSS vars
@@ -24,6 +25,7 @@ function App() {
       <Route path="/workflows" element={<HomePage />} />
       <Route path="/workflow/:id" element={<WorkflowEditorPage />} />
       <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
+      <Route path="/run/:runId" element={<RunDetailPage />} />
     </Routes>
   )
 }

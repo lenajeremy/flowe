@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import type { SavedWorkflow } from '@/lib/workflowApi'
+import { API } from '@/lib/config'
 
 // ── Feature primitives ────────────────────────────────────────
 
@@ -280,7 +281,7 @@ export function LandingPage() {
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch('/api/workflows', {
+      const res = await fetch(`${API}/api/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),

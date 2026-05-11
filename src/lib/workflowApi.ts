@@ -1,4 +1,5 @@
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
+import { API } from '@/lib/config'
 
 // Matches models.Workflow from the Go server
 export interface SavedWorkflow {
@@ -15,7 +16,7 @@ export async function saveWorkflow(
   dbId?: string,
 ): Promise<SavedWorkflow> {
   const method = dbId ? 'PUT' : 'POST'
-  const url = dbId ? `/api/workflows/${dbId}` : '/api/workflows'
+  const url = dbId ? `${API}/api/workflows/${dbId}` : `${API}/api/workflows`
   const res = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -26,19 +27,19 @@ export async function saveWorkflow(
 }
 
 export async function listWorkflows(): Promise<SavedWorkflow[]> {
-  const res = await fetch('/api/workflows')
+  const res = await fetch(`${API}/api/workflows`)
   if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`)
   return res.json() as Promise<SavedWorkflow[]>
 }
 
 export async function getWorkflow(id: string): Promise<SavedWorkflow> {
-  const res = await fetch(`/api/workflows/${id}`)
+  const res = await fetch(`${API}/api/workflows/${id}`)
   if (!res.ok) throw new Error(`Failed to get workflow: ${res.status}`)
   return res.json() as Promise<SavedWorkflow>
 }
 
 export async function deleteWorkflow(id: string): Promise<void> {
-  const res = await fetch(`/api/workflows/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API}/api/workflows/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`Failed to delete workflow: ${res.status}`)
 }
 
@@ -47,6 +48,7 @@ export async function deleteWorkflow(id: string): Promise<void> {
 export interface WorkflowRun {
   id: string
   workflow_id: string
+  workflow_name?: string
   status: 'running' | 'completed' | 'error'
   error_msg?: string
   events?: ExecutionEvent[]
@@ -55,13 +57,13 @@ export interface WorkflowRun {
 }
 
 export async function listRuns(workflowId: string): Promise<WorkflowRun[]> {
-  const res = await fetch(`/api/workflows/${workflowId}/runs`)
+  const res = await fetch(`${API}/api/workflows/${workflowId}/runs`)
   if (!res.ok) throw new Error(`Failed to list runs: ${res.status}`)
   return res.json() as Promise<WorkflowRun[]>
 }
 
 export async function getRun(runId: string): Promise<WorkflowRun> {
-  const res = await fetch(`/api/runs/${runId}`)
+  const res = await fetch(`${API}/api/runs/${runId}`)
   if (!res.ok) throw new Error(`Failed to get run: ${res.status}`)
   return res.json() as Promise<WorkflowRun>
 }
@@ -69,7 +71,7 @@ export async function getRun(runId: string): Promise<WorkflowRun> {
 // ── Approvals ────────────────────────────────────────────────
 
 export async function approveRun(runId: string, nodeId: string): Promise<void> {
-  const res = await fetch(`/api/runs/${runId}/node/${nodeId}/approve`, {
+  const res = await fetch(`${API}/api/runs/${runId}/node/${nodeId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   })
@@ -77,7 +79,7 @@ export async function approveRun(runId: string, nodeId: string): Promise<void> {
 }
 
 export async function rejectRun(runId: string, nodeId: string): Promise<void> {
-  const res = await fetch(`/api/runs/${runId}/node/${nodeId}/reject`, {
+  const res = await fetch(`${API}/api/runs/${runId}/node/${nodeId}/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   })
@@ -95,13 +97,13 @@ export interface ApiKey {
 }
 
 export async function listApiKeys(): Promise<ApiKey[]> {
-  const res = await fetch('/api/apikeys')
+  const res = await fetch(`${API}/api/apikeys`)
   if (!res.ok) throw new Error(`Failed to list API keys: ${res.status}`)
   return res.json() as Promise<ApiKey[]>
 }
 
 export async function createApiKey(name: string): Promise<{ id: string; name: string; key: string; prefix: string }> {
-  const res = await fetch('/api/apikeys', {
+  const res = await fetch(`${API}/api/apikeys`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -111,6 +113,6 @@ export async function createApiKey(name: string): Promise<{ id: string; name: st
 }
 
 export async function deleteApiKey(id: string): Promise<void> {
-  const res = await fetch(`/api/apikeys/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API}/api/apikeys/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`Failed to delete API key: ${res.status}`)
 }

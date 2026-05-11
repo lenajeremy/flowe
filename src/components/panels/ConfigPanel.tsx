@@ -6,6 +6,7 @@ import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
 import { NODE_LABELS, NODE_ACCENT_COLORS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
+import { API } from '@/lib/config'
 
 const HTTP_METHODS: Array<{ value: string; label: string }> = [
   { value: 'GET',    label: 'GET'    },
@@ -212,7 +213,7 @@ export function ConfigPanel() {
     if (!dbId) return
     setWebhookLoading(true)
     try {
-      const r = await fetch(`/api/workflows/${dbId}/webhook`)
+      const r = await fetch(`${API}/api/workflows/${dbId}/webhook`)
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const wh = await r.json() as { token: string }
       setWebhookUrl(`${window.location.origin}/trigger/${wh.token}`)
@@ -262,7 +263,7 @@ export function ConfigPanel() {
 
   useEffect(() => {
     if (selectedNode?.data.nodeType !== 'scheduledTrigger' || !dbId) return
-    fetch(`/api/workflows/${dbId}/schedule`)
+    fetch(`${API}/api/workflows/${dbId}/schedule`)
       .then((r) => r.ok ? r.json() : null)
       .then((s: { frequency?: string; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
         if (!s) return
@@ -288,7 +289,7 @@ export function ConfigPanel() {
       repeat:       overrides?.repeat       ?? schedRepeat,
     }
     try {
-      const r = await fetch(`/api/workflows/${dbId}/schedule`, {
+      const r = await fetch(`${API}/api/workflows/${dbId}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -314,7 +315,7 @@ export function ConfigPanel() {
   async function handleRegenerateWebhook() {
     if (!dbId) return
     try {
-      await fetch(`/api/workflows/${dbId}/webhook`, { method: 'DELETE' })
+      await fetch(`${API}/api/workflows/${dbId}/webhook`, { method: 'DELETE' })
       await fetchWebhook()
     } catch {
       // best-effort
@@ -829,6 +830,21 @@ export function ConfigPanel() {
                 <code className="text-red-400">rejected</code>.
               </p>
             </FormField>
+            <FormField label="Notification Email" htmlFor="cfg-approval-email">
+              <input
+                id="cfg-approval-email"
+                type="email"
+                value={typeof data.approvalEmail === 'string' ? data.approvalEmail : ''}
+                onChange={(e) => updateNodeData(nodeId, { approvalEmail: e.target.value })}
+                onFocus={(e) => handleFieldFocus(e.currentTarget, 'approvalEmail')}
+                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'approvalEmail')}
+                className={inputClass}
+                placeholder="you@email.com"
+              />
+              <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
+                When approval is needed, an email is sent with the content to review and a direct link to approve or reject.
+              </p>
+            </FormField>
             <FormField label="Timeout" htmlFor="cfg-approval-timeout">
               <Select
                 id="cfg-approval-timeout"
@@ -957,7 +973,7 @@ export function ConfigPanel() {
             <button
               onClick={async () => {
                 if (!dbId) return
-                await fetch(`/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
+                await fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
                 setSchedNextRun(null)
               }}
               className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors text-left"

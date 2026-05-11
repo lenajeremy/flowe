@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { ExecutionEvent } from '@/types/workflow'
@@ -349,29 +350,50 @@ export function ExecutionPanel() {
       )}
 
       {/* Approval banner */}
-      {pendingApproval && (
-        <div
-          className="flex items-center gap-4 px-4 py-3 border-b flex-shrink-0"
-          style={{ background: 'rgba(236,72,153,0.1)', borderColor: 'rgba(236,72,153,0.2)' }}
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-pink-400">Approval Required</p>
-            <p className="text-xs text-white/60 mt-0.5 truncate">{pendingApproval.message}</p>
+      {pendingApproval && (() => {
+        // Find the output of the node immediately before the waiting node
+        const waitingIdx = executionLog.findLastIndex((e) => e.type === 'node_waiting' && e.nodeId === pendingApproval.nodeId)
+        const prevOutput = waitingIdx > 0
+          ? [...executionLog].slice(0, waitingIdx).reverse().find((e) => e.type === 'node_output')?.output
+          : undefined
+        return (
+          <div
+            className="flex flex-col gap-3 px-4 py-3 border-b flex-shrink-0"
+            style={{ background: 'rgba(236,72,153,0.1)', borderColor: 'rgba(236,72,153,0.2)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-pink-400">Approval Required</p>
+                <p className="text-xs text-white/60 mt-0.5">{pendingApproval.message}</p>
+              </div>
+              <Link
+                to={`/run/${pendingApproval.runId}`}
+                target="_blank"
+                className="flex-shrink-0 text-[11px] text-pink-400 hover:text-pink-300 underline underline-offset-2 transition-colors"
+              >
+                Full run ↗
+              </Link>
+              <button
+                onClick={() => void handleApprove()}
+                className="flex-shrink-0 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-400 transition-colors"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => void handleReject()}
+                className="flex-shrink-0 rounded-full bg-red-500/80 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+            {prevOutput && (
+              <pre className="text-[11px] text-[var(--color-text)] bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-lg px-3 py-2 whitespace-pre-wrap break-words max-h-40 overflow-y-auto leading-relaxed">
+                {prevOutput}
+              </pre>
+            )}
           </div>
-          <button
-            onClick={() => void handleApprove()}
-            className="flex-shrink-0 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-400 transition-colors"
-          >
-            Approve
-          </button>
-          <button
-            onClick={() => void handleReject()}
-            className="flex-shrink-0 rounded-full bg-red-500/80 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition-colors"
-          >
-            Reject
-          </button>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Content area */}
       {activeTab === 'state' ? (

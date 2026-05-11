@@ -5,6 +5,7 @@ import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
+import { API } from '@/lib/config'
 
 export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null)
@@ -16,7 +17,7 @@ export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
 
   useEffect(() => {
     if (!dbId) return
-    fetch(`/api/workflows/${dbId}/webhook`)
+    fetch(`${API}/api/workflows/${dbId}/webhook`)
       .then((r) => { if (!r.ok) throw new Error(); return r.json() })
       .then((wh: { token: string }) => {
         setWebhookUrl(`${window.location.origin}/trigger/${wh.token}`)

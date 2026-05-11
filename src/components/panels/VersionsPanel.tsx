@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { FlowNode, FlowEdge } from '@/types/workflow'
+import { API } from '@/lib/config'
 
 interface WorkflowVersion {
   id: string
@@ -25,7 +26,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
 
   const load = useCallback(() => {
     setLoading(true)
-    fetch(`/api/workflows/${workflowId}/versions`)
+    fetch(`${API}/api/workflows/${workflowId}/versions`)
       .then((r) => r.json())
       .then(setVersions)
       .catch(() => {})
@@ -38,7 +39,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
 
   async function saveVersion() {
     setSaving(true)
-    await fetch(`/api/workflows/${workflowId}/versions`, {
+    await fetch(`${API}/api/workflows/${workflowId}/versions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),

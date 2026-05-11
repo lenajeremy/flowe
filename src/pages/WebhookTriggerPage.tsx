@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { API } from '@/lib/config'
 
 type PageState = 'loading' | 'ready' | 'triggering' | 'done' | 'error'
 
@@ -15,7 +16,7 @@ export function WebhookTriggerPage() {
 
   useEffect(() => {
     if (!token) { setPageState('error'); setErrorMsg('Missing token'); return }
-    fetch(`/api/webhooks/${token}`)
+    fetch(`${API}/api/webhooks/${token}`)
       .then((r) => {
         if (!r.ok) throw new Error('Webhook not found')
         return r.json() as Promise<{ workflow_name: string; workflow_id: string }>
@@ -47,7 +48,7 @@ export function WebhookTriggerPage() {
     try {
       let body: Record<string, unknown> = {}
       try { body = JSON.parse(payload) as Record<string, unknown> } catch { /* ignore */ }
-      const res = await fetch(`/api/webhooks/${token}`, {
+      const res = await fetch(`${API}/api/webhooks/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

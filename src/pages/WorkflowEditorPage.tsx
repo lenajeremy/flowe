@@ -12,6 +12,7 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
 import { serializeToAST } from '@/lib/executor'
+import { API } from '@/lib/config'
 
 // ── Resize logic (unchanged from original App.tsx) ───────────
 
@@ -199,7 +200,7 @@ export function WorkflowEditorPage() {
     if (hasScheduled && !prev) {
       // Node was added
       if (dbId) {
-        void fetch(`/api/workflows/${dbId}/schedule`, {
+        void fetch(`${API}/api/workflows/${dbId}/schedule`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
@@ -211,7 +212,7 @@ export function WorkflowEditorPage() {
       // Node was removed
       pendingScheduleCreate.current = false
       if (dbId) {
-        void fetch(`/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
+        void fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -223,7 +224,7 @@ export function WorkflowEditorPage() {
     prevDbIdForSchedule.current = dbId
     if (dbId && !prevId && pendingScheduleCreate.current) {
       pendingScheduleCreate.current = false
-      void fetch(`/api/workflows/${dbId}/schedule`, {
+      void fetch(`${API}/api/workflows/${dbId}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
