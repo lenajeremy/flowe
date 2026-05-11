@@ -12,6 +12,8 @@ export const NODE_ACCENT_COLORS: Record<NodeType, string> = {
   humanApproval:    '#ec4899',
   webhookTrigger:   '#10b981',
   scheduledTrigger: '#a855f7',
+  notion:           '#6b7280',
+  linear:           '#5e6ad2',
 }
 
 // Hex values matching the CSS vars above
@@ -27,6 +29,8 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   humanApproval:    '#ec4899',
   webhookTrigger:   '#10b981',
   scheduledTrigger: '#a855f7',
+  notion:           '#6b7280',
+  linear:           '#5e6ad2',
 }
 
 // SVG path data for node icons (16×16 viewBox, stroke-only)
@@ -42,6 +46,8 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   humanApproval:    'M8 2a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM3 14c0-2.8 2.2-5 5-5s5 2.2 5 5M10.5 9.5l1.5 1.5 3-3',
   webhookTrigger:   'M2 8c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6M8 5v3l2 2M14 2l-2.5 2.5',
   scheduledTrigger: 'M8 2a6 6 0 100 12A6 6 0 008 2zM8 5v3l2.5 1.5',
+  notion:           'M3 2.5h7l3 3V14H3V2.5zM10 2.5V5.5H13M5.5 7h5M5.5 9.5h5M5.5 12h3',
+  linear:           'M3 3h10v10H3zM3 7h10M7 3v10',
 }
 
 export const NODE_LABELS: Record<NodeType, string> = {
@@ -56,6 +62,8 @@ export const NODE_LABELS: Record<NodeType, string> = {
   humanApproval:    'Human Approval',
   webhookTrigger:   'Webhook Trigger',
   scheduledTrigger: 'Scheduled Trigger',
+  notion:           'Notion',
+  linear:           'Linear',
 }
 
 export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
@@ -70,4 +78,6 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   humanApproval:    'Wait for human review',
   webhookTrigger:   'Trigger via HTTP webhook',
   scheduledTrigger: 'Run on a schedule',
+  notion:           'Pages & databases',
+  linear:           'Issues & projects',
 }

@@ -10,6 +10,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'AI', items: ['llm'] },
   { category: 'Logic', items: ['branch', 'loop', 'humanApproval'] },
   { category: 'Actions', items: ['httpRequest', 'emailSend'] },
+  { category: 'Integrations', items: ['notion', 'linear'] },
   { category: 'Outputs', items: ['textOutput'] },
 ]
 

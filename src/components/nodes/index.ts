@@ -9,6 +9,8 @@ import { EmailSendNode }        from './EmailSendNode'
 import { HumanApprovalNode }    from './HumanApprovalNode'
 import { WebhookTriggerNode }   from './WebhookTriggerNode'
 import { ScheduledTriggerNode } from './ScheduledTriggerNode'
+import { NotionNode }           from './NotionNode'
+import { LinearNode }           from './LinearNode'
 
 // Must be defined at module scope — never inside a component body
 export const nodeTypes = {
@@ -23,4 +25,6 @@ export const nodeTypes = {
   humanApproval:    HumanApprovalNode,
   webhookTrigger:   WebhookTriggerNode,
   scheduledTrigger: ScheduledTriggerNode,
+  notion:           NotionNode,
+  linear:           LinearNode,
 }

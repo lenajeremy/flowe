@@ -283,6 +283,12 @@ async function executeNode(
 
     case 'scheduledTrigger':
       return `{"trigger":"scheduled","time":"${new Date().toISOString()}"}`
+
+    case 'notion':
+      return JSON.stringify({ status: 'ok', note: 'Notion operations run via backend. Use the Run button.' })
+
+    case 'linear':
+      return JSON.stringify({ status: 'ok', note: 'Linear operations run via backend. Use the Run button.' })
   }
 }
 

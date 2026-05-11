@@ -13,6 +13,8 @@ export type NodeType =
   | 'humanApproval'
   | 'webhookTrigger'
   | 'scheduledTrigger'
+  | 'notion'
+  | 'linear'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -75,6 +77,26 @@ export type FlowNodeData = {
 
   // LLM structured output
   outputSchema?: string     // JSON schema string
+
+  // notion / linear shared
+  integrationToken?: string    // API token — stored in node config
+  integrationOp?: string       // operation key e.g. "create_page"
+
+  // notion
+  notionDatabaseId?: string
+  notionPageId?: string
+  notionTitle?: string         // supports {{nodeId.output}} templates
+  notionContent?: string       // supports {{nodeId.output}} templates
+  notionFilter?: string        // JSON filter string
+
+  // linear
+  linearTeamId?: string
+  linearIssueId?: string
+  linearTitle?: string         // supports {{nodeId.output}} templates
+  linearDescription?: string   // supports {{nodeId.output}} templates
+  linearPriority?: string      // "0"|"1"|"2"|"3"|"4"
+  linearCommentBody?: string   // supports {{nodeId.output}} templates
+  linearLimit?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

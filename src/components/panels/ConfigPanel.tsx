@@ -933,6 +933,264 @@ export function ConfigPanel() {
           </div>
         )}
 
+        {/* Notion */}
+        {nodeType === 'notion' && (
+          <div className="flex flex-col gap-3">
+            {/* Operation */}
+            <FormField label="Operation" htmlFor="cfg-notion-op">
+              <Select
+                id="cfg-notion-op"
+                value={typeof data.integrationOp === 'string' ? data.integrationOp : 'create_page'}
+                onChange={(val) => updateNodeData(nodeId, { integrationOp: val })}
+                options={[
+                  { value: 'create_page', label: 'Create Page' },
+                  { value: 'query_database', label: 'Query Database' },
+                  { value: 'append_blocks', label: 'Append Blocks to Page' },
+                ]}
+              />
+            </FormField>
+
+            {/* API Token */}
+            <FormField label="Notion API Token" htmlFor="cfg-notion-token">
+              <input
+                id="cfg-notion-token"
+                type="password"
+                value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
+                onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
+                className={inputClass}
+                placeholder="secret_..."
+              />
+            </FormField>
+            <p className="text-[10px] text-[var(--color-muted)] -mt-2">
+              Get from notion.so → Settings → Integrations → New integration
+            </p>
+
+            {/* create_page fields */}
+            {(data.integrationOp === 'create_page' || !data.integrationOp) && (
+              <>
+                <FormField label="Database ID" htmlFor="cfg-notion-db">
+                  <input
+                    id="cfg-notion-db"
+                    type="text"
+                    value={typeof data.notionDatabaseId === 'string' ? data.notionDatabaseId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionDatabaseId: e.target.value })}
+                    className={inputClass}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  />
+                </FormField>
+                <FormField label="Title" htmlFor="cfg-notion-title">
+                  <input
+                    id="cfg-notion-title"
+                    type="text"
+                    value={typeof data.notionTitle === 'string' ? data.notionTitle : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionTitle: e.target.value })}
+                    className={inputClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+                <FormField label="Content" htmlFor="cfg-notion-content">
+                  <textarea
+                    id="cfg-notion-content"
+                    rows={3}
+                    value={typeof data.notionContent === 'string' ? data.notionContent : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionContent: e.target.value })}
+                    className={textareaClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+              </>
+            )}
+
+            {/* query_database fields */}
+            {data.integrationOp === 'query_database' && (
+              <>
+                <FormField label="Database ID" htmlFor="cfg-notion-db-q">
+                  <input
+                    id="cfg-notion-db-q"
+                    type="text"
+                    value={typeof data.notionDatabaseId === 'string' ? data.notionDatabaseId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionDatabaseId: e.target.value })}
+                    className={inputClass}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  />
+                </FormField>
+                <FormField label="Filter (JSON, optional)" htmlFor="cfg-notion-filter">
+                  <textarea
+                    id="cfg-notion-filter"
+                    rows={3}
+                    value={typeof data.notionFilter === 'string' ? data.notionFilter : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionFilter: e.target.value })}
+                    className={textareaClass}
+                    placeholder='{"property":"Status","select":{"equals":"Done"}}'
+                  />
+                </FormField>
+              </>
+            )}
+
+            {/* append_blocks fields */}
+            {data.integrationOp === 'append_blocks' && (
+              <>
+                <FormField label="Page ID" htmlFor="cfg-notion-page">
+                  <input
+                    id="cfg-notion-page"
+                    type="text"
+                    value={typeof data.notionPageId === 'string' ? data.notionPageId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionPageId: e.target.value })}
+                    className={inputClass}
+                    placeholder="{{prev-node.output}} or page ID"
+                  />
+                </FormField>
+                <FormField label="Content" htmlFor="cfg-notion-content-ap">
+                  <textarea
+                    id="cfg-notion-content-ap"
+                    rows={3}
+                    value={typeof data.notionContent === 'string' ? data.notionContent : ''}
+                    onChange={(e) => updateNodeData(nodeId, { notionContent: e.target.value })}
+                    className={textareaClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Linear */}
+        {nodeType === 'linear' && (
+          <div className="flex flex-col gap-3">
+            {/* Operation */}
+            <FormField label="Operation" htmlFor="cfg-linear-op">
+              <Select
+                id="cfg-linear-op"
+                value={typeof data.integrationOp === 'string' ? data.integrationOp : 'create_issue'}
+                onChange={(val) => updateNodeData(nodeId, { integrationOp: val })}
+                options={[
+                  { value: 'create_issue', label: 'Create Issue' },
+                  { value: 'get_issues', label: 'Get Issues' },
+                  { value: 'create_comment', label: 'Create Comment' },
+                ]}
+              />
+            </FormField>
+
+            {/* API Token */}
+            <FormField label="Linear API Key" htmlFor="cfg-linear-token">
+              <input
+                id="cfg-linear-token"
+                type="password"
+                value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
+                onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
+                className={inputClass}
+                placeholder="lin_api_..."
+              />
+            </FormField>
+            <p className="text-[10px] text-[var(--color-muted)] -mt-2">
+              Get from linear.app → Settings → API → Personal API keys
+            </p>
+
+            {/* create_issue fields */}
+            {(data.integrationOp === 'create_issue' || !data.integrationOp) && (
+              <>
+                <FormField label="Team ID" htmlFor="cfg-linear-team">
+                  <input
+                    id="cfg-linear-team"
+                    type="text"
+                    value={typeof data.linearTeamId === 'string' ? data.linearTeamId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearTeamId: e.target.value })}
+                    className={inputClass}
+                    placeholder="Team ID from Linear"
+                  />
+                </FormField>
+                <FormField label="Title" htmlFor="cfg-linear-title">
+                  <input
+                    id="cfg-linear-title"
+                    type="text"
+                    value={typeof data.linearTitle === 'string' ? data.linearTitle : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearTitle: e.target.value })}
+                    className={inputClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+                <FormField label="Description" htmlFor="cfg-linear-desc">
+                  <textarea
+                    id="cfg-linear-desc"
+                    rows={3}
+                    value={typeof data.linearDescription === 'string' ? data.linearDescription : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearDescription: e.target.value })}
+                    className={textareaClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+                <FormField label="Priority" htmlFor="cfg-linear-priority">
+                  <Select
+                    id="cfg-linear-priority"
+                    value={typeof data.linearPriority === 'string' ? data.linearPriority : '3'}
+                    onChange={(val) => updateNodeData(nodeId, { linearPriority: val })}
+                    options={[
+                      { value: '0', label: 'No Priority' },
+                      { value: '1', label: 'Urgent' },
+                      { value: '2', label: 'High' },
+                      { value: '3', label: 'Medium' },
+                      { value: '4', label: 'Low' },
+                    ]}
+                  />
+                </FormField>
+              </>
+            )}
+
+            {/* get_issues fields */}
+            {data.integrationOp === 'get_issues' && (
+              <>
+                <FormField label="Team ID (optional)" htmlFor="cfg-linear-team-g">
+                  <input
+                    id="cfg-linear-team-g"
+                    type="text"
+                    value={typeof data.linearTeamId === 'string' ? data.linearTeamId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearTeamId: e.target.value })}
+                    className={inputClass}
+                    placeholder="Leave blank for all teams"
+                  />
+                </FormField>
+                <FormField label="Limit" htmlFor="cfg-linear-limit">
+                  <input
+                    id="cfg-linear-limit"
+                    type="number"
+                    value={typeof data.linearLimit === 'string' ? data.linearLimit : '25'}
+                    onChange={(e) => updateNodeData(nodeId, { linearLimit: e.target.value })}
+                    className={inputClass}
+                    placeholder="25"
+                  />
+                </FormField>
+              </>
+            )}
+
+            {/* create_comment fields */}
+            {data.integrationOp === 'create_comment' && (
+              <>
+                <FormField label="Issue ID" htmlFor="cfg-linear-issue">
+                  <input
+                    id="cfg-linear-issue"
+                    type="text"
+                    value={typeof data.linearIssueId === 'string' ? data.linearIssueId : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearIssueId: e.target.value })}
+                    className={inputClass}
+                    placeholder="{{prev-node.output}} or issue ID"
+                  />
+                </FormField>
+                <FormField label="Comment" htmlFor="cfg-linear-comment">
+                  <textarea
+                    id="cfg-linear-comment"
+                    rows={3}
+                    value={typeof data.linearCommentBody === 'string' ? data.linearCommentBody : ''}
+                    onChange={(e) => updateNodeData(nodeId, { linearCommentBody: e.target.value })}
+                    className={textareaClass}
+                    placeholder="{{llm-1.output}}"
+                  />
+                </FormField>
+              </>
+            )}
+          </div>
+        )}
+
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (
           <div className="flex flex-col gap-3">
