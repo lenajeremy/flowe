@@ -20,6 +20,37 @@ export interface ExecutorStore {
   setLogPanelOpen: (open: boolean) => void
 }
 
+// ── Vision helpers ────────────────────────────────────────────
+
+interface ImageRef {
+  mediaType: string  // e.g. "image/jpeg"
+  data: string       // raw base64 (no prefix)
+}
+
+/** Parse data URLs referenced in the prompt template, replace them with
+ *  "[attached image]" in a local copy of outputs, and return extracted refs. */
+function extractImageRefs(
+  promptTemplate: string,
+  outputs: Map<string, string>,
+): { images: ImageRef[]; patchedOutputs: Map<string, string> } {
+  const patched = new Map(outputs)
+  const images: ImageRef[] = []
+  const re = /\{\{([\w-]+)\.output\}\}/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(promptTemplate)) !== null) {
+    const nodeId = m[1]
+    const val = patched.get(nodeId) ?? ''
+    if (!val.startsWith('data:image/')) continue
+    // data:image/jpeg;base64,<data>
+    const withoutScheme = val.slice('data:'.length)
+    const sep = withoutScheme.indexOf(';base64,')
+    if (sep === -1) continue
+    images.push({ mediaType: withoutScheme.slice(0, sep), data: withoutScheme.slice(sep + ';base64,'.length) })
+    patched.set(nodeId, '[attached image]')
+  }
+  return { images, patchedOutputs: patched }
+}
+
 // ── API calls ────────────────────────────────────────────────
 
 async function callAnthropic(
@@ -29,7 +60,20 @@ async function callAnthropic(
   temperature: number,
   maxTokens: number,
   apiKey: string,
+  images: ImageRef[] = [],
 ): Promise<string> {
+  type ContentBlock =
+    | { type: 'text'; text: string }
+    | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+
+  const content: ContentBlock[] = [
+    ...images.map((img): ContentBlock => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType, data: img.data },
+    })),
+    { type: 'text', text: userPrompt },
+  ]
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -43,7 +87,7 @@ async function callAnthropic(
       max_tokens: maxTokens,
       temperature,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: 'user', content: images.length > 0 ? content : userPrompt }],
     }),
   })
 
@@ -65,7 +109,22 @@ async function callOpenAI(
   temperature: number,
   maxTokens: number,
   apiKey: string,
+  images: ImageRef[] = [],
 ): Promise<string> {
+  type OAIBlock =
+    | { type: 'text'; text: string }
+    | { type: 'image_url'; image_url: { url: string } }
+
+  const userContent: string | OAIBlock[] = images.length > 0
+    ? [
+        ...images.map((img): OAIBlock => ({
+          type: 'image_url',
+          image_url: { url: `data:${img.mediaType};base64,${img.data}` },
+        })),
+        { type: 'text', text: userPrompt },
+      ]
+    : userPrompt
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -78,7 +137,7 @@ async function callOpenAI(
       max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: userContent },
       ],
     }),
   })
@@ -140,7 +199,7 @@ async function executeNode(
     case 'imageInput':
       return typeof data.imageUrl === 'string' && data.imageUrl
         ? data.imageUrl
-        : '(no image URL)'
+        : '(no image)'
 
     case 'llm': {
       const model = typeof data.model === 'string' ? data.model : 'gpt-4o'
@@ -148,20 +207,19 @@ async function executeNode(
         typeof data.systemPrompt === 'string' ? data.systemPrompt : '',
         outputs,
       )
-      const userPrompt = substituteTemplates(
-        typeof data.userPrompt === 'string' ? data.userPrompt : '',
-        outputs,
-      )
+      const userPromptTemplate = typeof data.userPrompt === 'string' ? data.userPrompt : ''
+      const { images, patchedOutputs } = extractImageRefs(userPromptTemplate, outputs)
+      const userPrompt = substituteTemplates(userPromptTemplate, patchedOutputs)
       const temperature = typeof data.temperature === 'number' ? data.temperature : 0.7
       const maxTokens = typeof data.maxTokens === 'number' ? data.maxTokens : 1024
       const keys = getApiKeys()
 
       if (isAnthropicModel(model)) {
         if (!keys.anthropic) throw new Error('Anthropic API key not set. Click the key icon in the toolbar.')
-        return callAnthropic(model, systemPrompt, userPrompt, temperature, maxTokens, keys.anthropic)
+        return callAnthropic(model, systemPrompt, userPrompt, temperature, maxTokens, keys.anthropic, images)
       } else {
         if (!keys.openai) throw new Error('OpenAI API key not set. Click the key icon in the toolbar.')
-        return callOpenAI(model, systemPrompt, userPrompt, temperature, maxTokens, keys.openai)
+        return callOpenAI(model, systemPrompt, userPrompt, temperature, maxTokens, keys.openai, images)
       }
     }
 

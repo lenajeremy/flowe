@@ -544,16 +544,58 @@ export function ConfigPanel() {
 
         {/* ImageInput */}
         {nodeType === 'imageInput' && (
-          <FormField label="Image URL" htmlFor="cfg-imageurl">
-            <input
-              id="cfg-imageurl"
-              type="url"
-              value={typeof data.imageUrl === 'string' ? data.imageUrl : ''}
-              onChange={(e) => updateNodeData(nodeId, { imageUrl: e.target.value })}
-              className={inputClass}
-              placeholder="https://…"
-            />
-          </FormField>
+          <div className="flex flex-col gap-2">
+            {/* Preview */}
+            {typeof data.imageUrl === 'string' && data.imageUrl && (
+              <div className="relative rounded-xl overflow-hidden border border-[var(--color-border)]">
+                <img
+                  src={data.imageUrl as string}
+                  alt="preview"
+                  className="w-full max-h-48 object-cover"
+                />
+                <button
+                  onClick={() => updateNodeData(nodeId, { imageUrl: '' })}
+                  className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white/70 hover:text-white hover:bg-black/80 transition-colors"
+                  title="Remove image"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Upload button */}
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--color-border)] px-4 py-4 text-[12px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-border2)] hover:text-[var(--color-text)]">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1v8M4 4l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1 10v1.5A1.5 1.5 0 002.5 13h9a1.5 1.5 0 001.5-1.5V10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              {typeof data.imageUrl === 'string' && data.imageUrl ? 'Replace image' : 'Upload image'}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = (ev) => {
+                    const result = ev.target?.result
+                    if (typeof result === 'string') {
+                      updateNodeData(nodeId, { imageUrl: result })
+                    }
+                  }
+                  reader.readAsDataURL(file)
+                  // reset so same file can be re-selected
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            <p className="text-[10px] text-[var(--color-muted)]">
+              JPEG, PNG, GIF, WebP · Sent to the LLM as a vision input
+            </p>
+          </div>
         )}
 
         {/* LLM */}
