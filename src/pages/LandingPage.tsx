@@ -56,7 +56,7 @@ function Edge({ x1,y1,x2,y2,color='rgba(255,255,255,0.15)' }: { x1:number; y1:nu
 }
 
 function MockCanvas() {
-  const W = 700, H = 220
+  const H = 220
   // node centre-right connection points (approximate)
   const nodes = [
     { label:'Every Monday', sub:'Scheduled Trigger', color:C.schedule, x:10,  y:85,  w:130 },
