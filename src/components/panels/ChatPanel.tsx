@@ -46,12 +46,13 @@ export function ChatPanel() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const { nodes, edges, dbId, importWorkflowVersion } = useWorkflowStore(
+  const { nodes, edges, dbId, importWorkflowVersion, applyPatch } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
       dbId: s.dbId,
       importWorkflowVersion: s.importWorkflowVersion,
+      applyPatch: s.applyPatch,
     })),
   )
 
@@ -119,8 +120,15 @@ export function ChatPanel() {
         body: JSON.stringify({
           prompt: text,
           history: historySnapshot,
-          currentNodes: nodes.map((n) => ({ id: n.id, type: n.type, label: n.data.label, position: n.position })),
-          currentEdges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target })),
+          currentNodes: nodes.map(({ id, type, position, data }) => ({
+            id, type, position,
+            data: { ...data, executionStatus: undefined, executionOutput: undefined },
+          })),
+          currentEdges: edges.map(({ id, source, target, sourceHandle, targetHandle }) => ({
+            id, source, target,
+            ...(sourceHandle ? { sourceHandle } : {}),
+            ...(targetHandle ? { targetHandle } : {}),
+          })),
         }),
         signal: controller.signal,
       })
@@ -162,6 +170,19 @@ export function ChatPanel() {
               const parsed = JSON.parse(data)
               if (parsed.nodes && parsed.edges) {
                 importWorkflowVersion(parsed.nodes, parsed.edges)
+                setMessages((m) =>
+                  m.map((msg) => msg.id === assistantId ? { ...msg, workflowApplied: true } : msg),
+                )
+              }
+            } catch { /* ignore */ }
+            break
+          }
+
+          case 'patch': {
+            try {
+              const parsed = JSON.parse(data)
+              if (Array.isArray(parsed.operations) && parsed.operations.length > 0) {
+                applyPatch(parsed.operations)
                 setMessages((m) =>
                   m.map((msg) => msg.id === assistantId ? { ...msg, workflowApplied: true } : msg),
                 )
@@ -223,7 +244,7 @@ export function ChatPanel() {
       setIsGenerating(false)
       abortRef.current = null
     }
-  }, [input, isGenerating, messages, nodes, edges, importWorkflowVersion, saveChat])
+  }, [input, isGenerating, messages, nodes, edges, importWorkflowVersion, applyPatch, saveChat])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {

@@ -18,6 +18,13 @@ import type {
 import type { WorkflowRun } from '@/lib/workflowApi'
 import { buildDemoWorkflow } from '@/lib/demoWorkflow'
 
+export type PatchOp =
+  | { op: 'add_node'; node: Record<string, unknown> }
+  | { op: 'remove_node'; node_id: string }
+  | { op: 'add_edge'; edge: Record<string, unknown> }
+  | { op: 'remove_edge'; edge_id: string }
+  | { op: 'update_node'; node_id: string; data: Partial<FlowNodeData> }
+
 // ── Tab types ────────────────────────────────────────────────
 
 export interface TabMeta {
@@ -120,6 +127,9 @@ interface WorkflowStore {
 
   // ── Version import ──
   importWorkflowVersion: (nodes: unknown[], edges: unknown[]) => void
+
+  // ── Patch ──
+  applyPatch: (ops: PatchOp[]) => void
 
   // ── Versions panel ──
   versionsOpen: boolean
@@ -458,4 +468,42 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   versionsOpen: false,
   setVersionsOpen: (open) => set({ versionsOpen: open }),
+
+  applyPatch: (ops) =>
+    set((state) => {
+      let nodes = [...state.nodes]
+      let edges = [...state.edges]
+
+      for (const op of ops) {
+        switch (op.op) {
+          case 'add_node': {
+            const n = op.node as { id: string; type: string; position: { x: number; y: number }; data: FlowNodeData }
+            if (!nodes.find((x) => x.id === n.id)) nodes = [...nodes, { id: n.id, type: n.type, position: n.position, data: n.data }]
+            break
+          }
+          case 'remove_node':
+            nodes = nodes.filter((n) => n.id !== op.node_id)
+            edges = edges.filter((e) => e.source !== op.node_id && e.target !== op.node_id)
+            break
+          case 'add_edge': {
+            const e = op.edge as { id: string; source: string; target: string; sourceHandle?: string; targetHandle?: string }
+            if (!edges.find((x) => x.id === e.id)) edges = [...edges, { id: e.id, source: e.source, target: e.target, ...(e.sourceHandle ? { sourceHandle: e.sourceHandle } : {}), ...(e.targetHandle ? { targetHandle: e.targetHandle } : {}) }]
+            break
+          }
+          case 'remove_edge':
+            edges = edges.filter((e) => e.id !== op.edge_id)
+            break
+          case 'update_node':
+            nodes = nodes.map((n) => n.id === op.node_id ? { ...n, data: { ...n.data, ...op.data } } : n)
+            break
+        }
+      }
+
+      return {
+        nodes,
+        edges,
+        history: pushHistory(state.history, state.nodes, state.edges),
+        future: [],
+      }
+    }),
 }))
