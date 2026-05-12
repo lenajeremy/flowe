@@ -3,20 +3,20 @@ import { useState } from 'react'
 import type { SavedWorkflow } from '@/lib/workflowApi'
 import { API } from '@/lib/config'
 
-// ─── colour palette (mirrors the real node accent colours) ───
+// ─── colours ──────────────────────────────────────────────────
 const C = {
   schedule: '#8b5cf6',
   webhook:  '#f59e0b',
-  http:     '#22c55e',
   llm:      '#3b82f6',
   branch:   '#f97316',
   loop:     '#14b8a6',
   email:    '#f59e0b',
   approval: '#ec4899',
-  output:   '#6b7280',
+  http:     '#22c55e',
+  notion:   '#ffffff',
+  linear:   '#5e6ad2',
 }
 
-// ─── tiny helpers ─────────────────────────────────────────────
 function Dot({ color }: { color: string }) {
   return <span style={{ display:'inline-block', width:7, height:7, borderRadius:'50%', background:color, flexShrink:0 }} />
 }
@@ -29,17 +29,14 @@ function Check() {
   )
 }
 
-// ─── Mock canvas (node graph screenshot) ─────────────────────
-function MockNode({
-  label, sub, color, x, y, width = 130,
-}: { label: string; sub: string; color: string; x: number; y: number; width?: number }) {
+// ─── Mock canvas ──────────────────────────────────────────────
+function MockNode({ label, sub, color, x, y, width = 130 }: { label: string; sub: string; color: string; x: number; y: number; width?: number }) {
   return (
     <div style={{
       position:'absolute', left:x, top:y, width,
       background:'rgba(18,18,20,0.95)',
       border:`1px solid rgba(255,255,255,0.10)`,
-      borderRadius:10,
-      padding:'7px 10px',
+      borderRadius:10, padding:'7px 10px',
       borderLeft:`3px solid ${color}`,
       boxShadow:'0 4px 16px rgba(0,0,0,0.5)',
     }}>
@@ -49,104 +46,279 @@ function MockNode({
   )
 }
 
-function Edge({ x1,y1,x2,y2,color='rgba(255,255,255,0.15)' }: { x1:number; y1:number; x2:number; y2:number; color?:string }) {
+function Edge({ x1,y1,x2,y2 }: { x1:number; y1:number; x2:number; y2:number }) {
   const cx1 = x1 + (x2-x1)*0.5
   const cx2 = x2 - (x2-x1)*0.5
-  return <path d={`M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}`} stroke={color} strokeWidth="1.5" fill="none" opacity="0.7"/>
+  return <path d={`M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}`} stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" opacity="0.7"/>
 }
 
+type NodeState = 'idle' | 'running' | 'done'
+
 function MockCanvas() {
-  const H = 220
-  // node centre-right connection points (approximate)
-  const nodes = [
-    { label:'Every Monday', sub:'Scheduled Trigger', color:C.schedule, x:10,  y:85,  w:130 },
-    { label:'Fetch HN Stories', sub:'HTTP GET',       color:C.http,     x:170, y:20,  w:130 },
-    { label:'Extract 5 Stories', sub:'LLM · Haiku',  color:C.llm,      x:330, y:20,  w:130 },
-    { label:'For Each Story', sub:'Loop',             color:C.loop,     x:490, y:85,  w:120 },
-    { label:'Draft Post', sub:'LLM · Sonnet',         color:C.llm,      x:330, y:140, w:120 },
-    { label:'Review Post', sub:'Human Approval',      color:C.approval, x:490, y:140, w:125 },
-    { label:'Queue Post', sub:'Send Email',            color:C.email,    x:615, y:50,  w:115 },
+  const W = 520, H = 420
+  const NW = 190, NH = 54
+
+  const layout = [
+    { id:0, label:'Every Monday 9am', sub:'Scheduled trigger', color:C.schedule, x:16,  y:158 },
+    { id:1, label:'Fetch top stories', sub:'Web request',       color:C.http,     x:274, y:16  },
+    { id:2, label:'Summarise with AI', sub:'AI · Claude',       color:C.llm,      x:274, y:94  },
+    { id:3, label:'For each story',    sub:'Loop',              color:C.loop,     x:274, y:172 },
+    { id:4, label:'Write post draft',  sub:'AI · Claude',       color:C.llm,      x:274, y:250 },
+    { id:5, label:'Human review',      sub:'Approval',          color:C.approval, x:274, y:328 },
   ]
-  // edges: [fromIdx, toIdx] using right-mid of source → left-mid of target
-  const edges = [
-    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[3,6],
-  ]
-  function mid(n: typeof nodes[0]) { return { x: n.x + (n.w??130), y: n.y + 28 } }
-  function lft(n: typeof nodes[0]) { return { x: n.x,              y: n.y + 28 } }
+
+  const [states, setStates] = useState<NodeState[]>(Array(6).fill('idle'))
+  const [animating, setAnimating] = useState(false)
+
+  function handleRun() {
+    if (animating) return
+    setAnimating(true)
+    setStates(Array(6).fill('idle'))
+
+    // [startDelay, runDuration] per node
+    const timings = [[0,550],[700,850],[1650,950],[2700,800],[3600,1050],[4750,750]]
+    timings.forEach(([start, dur], i) => {
+      setTimeout(() => {
+        setStates(prev => { const s = [...prev] as NodeState[]; s[i] = 'running'; return s })
+        setTimeout(() => {
+          setStates(prev => { const s = [...prev] as NodeState[]; s[i] = 'done'; return s })
+          if (i === timings.length - 1) setAnimating(false)
+        }, dur)
+      }, start)
+    })
+  }
+
+  function rm(n: typeof layout[0]) { return { x: n.x + NW,     y: n.y + NH / 2 } }
+  function lm(n: typeof layout[0]) { return { x: n.x,          y: n.y + NH / 2 } }
+  function bm(n: typeof layout[0]) { return { x: n.x + NW / 2, y: n.y + NH     } }
+  function tm(n: typeof layout[0]) { return { x: n.x + NW / 2, y: n.y          } }
+
+  function edgeStroke(sourceId: number) {
+    return states[sourceId] === 'done' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.09)'
+  }
 
   return (
     <div style={{
-      position:'relative', width:'100%', height:H, overflow:'hidden',
+      position:'relative', width:'100%', borderRadius:18,
+      border:'1px solid rgba(255,255,255,0.08)',
       background:'#0d0d0f',
-      backgroundImage:'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
-      backgroundSize:'22px 22px',
-      borderRadius:16,
-      border:'1px solid rgba(255,255,255,0.07)',
+      backgroundImage:'radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px)',
+      backgroundSize:'24px 24px',
+      overflow:'hidden',
     }}>
-      <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', overflow:'visible' }}>
-        {edges.map(([a,b],i) => {
-          const s = mid(nodes[a]), t = lft(nodes[b])
-          return <Edge key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} />
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display:'block' }} preserveAspectRatio="xMidYMid meet">
+
+        {/* trigger → each right-col node */}
+        {layout.slice(1).map((target, i) => {
+          const src = rm(layout[0])
+          const dst = lm(target)
+          const cx1 = src.x + (dst.x - src.x) * 0.6
+          const cx2 = dst.x - (dst.x - src.x) * 0.25
+          return (
+            <path key={`t${i}`}
+              d={`M${src.x},${src.y} C${cx1},${src.y} ${cx2},${dst.y} ${dst.x},${dst.y}`}
+              stroke={edgeStroke(0)} strokeWidth="1.5" fill="none"
+              style={{ transition:'stroke 0.4s' }}
+            />
+          )
+        })}
+
+        {/* vertical chain */}
+        {layout.slice(1, -1).map((node, i) => {
+          const next = layout[i + 2]
+          const src = bm(node)
+          const dst = tm(next)
+          return (
+            <path key={`v${i}`}
+              d={`M${src.x},${src.y} C${src.x},${src.y+18} ${dst.x},${dst.y-18} ${dst.x},${dst.y}`}
+              stroke={edgeStroke(node.id)} strokeWidth="1.5" fill="none"
+              style={{ transition:'stroke 0.4s' }}
+            />
+          )
+        })}
+
+        {/* nodes */}
+        {layout.map((n) => {
+          const st = states[n.id]
+          const cx = n.x + NW - 16
+          const cy = n.y + NH / 2
+          return (
+            <g key={n.id}>
+              {/* pulse ring */}
+              {st === 'running' && (
+                <rect x={n.x-3} y={n.y-3} width={NW+6} height={NH+6} rx={13}
+                  fill="none" stroke={n.color} strokeWidth="1.5">
+                  <animate attributeName="opacity" values="0.15;0.65;0.15" dur="1s" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-width" values="1;2.5;1" dur="1s" repeatCount="indefinite"/>
+                </rect>
+              )}
+
+              {/* card */}
+              <rect x={n.x} y={n.y} width={NW} height={NH} rx={10}
+                fill={st === 'idle' ? 'rgba(14,14,18,0.98)' : 'rgba(20,20,26,0.99)'}
+                stroke={st === 'running' ? `${n.color}70` : st === 'done' ? `${n.color}40` : 'rgba(255,255,255,0.08)'}
+                strokeWidth="1"
+                style={{ transition:'stroke 0.35s, fill 0.35s' }}
+              />
+              {/* accent bar */}
+              <rect x={n.x} y={n.y+8} width={3} height={NH-16} rx={2}
+                fill={n.color} opacity={st === 'idle' ? 0.35 : 1}
+                style={{ transition:'opacity 0.35s' }}
+              />
+              {/* label */}
+              <text x={n.x+16} y={n.y+23} fontSize={12} fontWeight="600" fontFamily="inherit"
+                fill={st === 'idle' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.9)'}
+                style={{ transition:'fill 0.35s' }}>
+                {n.label}
+              </text>
+              {/* sub */}
+              <text x={n.x+16} y={n.y+39} fontSize={10} fontFamily="inherit"
+                fill={st === 'idle' ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.32)'}
+                style={{ transition:'fill 0.35s' }}>
+                {n.sub}
+              </text>
+
+              {/* done: checkmark */}
+              {st === 'done' && (
+                <>
+                  <circle cx={cx} cy={cy} r={6} fill="rgba(52,211,153,0.15)" stroke="#34d399" strokeWidth="1.2"/>
+                  <path d={`M${cx-3},${cy} l2.2,2.2 l4,-4`} stroke="#34d399" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+                </>
+              )}
+
+              {/* running: spinner */}
+              {st === 'running' && (
+                <circle cx={cx} cy={cy} r={5.5} fill="none"
+                  stroke={n.color} strokeWidth="1.5"
+                  strokeDasharray="8 16" strokeLinecap="round">
+                  <animateTransform attributeName="transform" type="rotate"
+                    from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`}
+                    dur="0.75s" repeatCount="indefinite"/>
+                </circle>
+              )}
+            </g>
+          )
         })}
       </svg>
-      {nodes.map((n,i) => (
-        <MockNode key={i} {...n} width={n.w} />
-      ))}
-      {/* running pulse on "Draft Post" node */}
+
+      {/* Run button */}
+      <button
+        onClick={handleRun}
+        disabled={animating}
+        style={{
+          position:'absolute', bottom:14, right:14, zIndex:2,
+          display:'flex', alignItems:'center', gap:6,
+          background: animating ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)',
+          border:'1px solid rgba(255,255,255,0.14)',
+          borderRadius:8, padding:'6px 13px',
+          fontSize:11, fontWeight:600,
+          color: animating ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.85)',
+          cursor: animating ? 'default' : 'pointer',
+          backdropFilter:'blur(8px)',
+          transition:'all 0.2s',
+        }}
+      >
+        {animating ? (
+          <>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="animate-spin">
+              <circle cx="5" cy="5" r="3.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25"/>
+              <path d="M8.5 5A3.5 3.5 0 0 0 5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Running…
+          </>
+        ) : (
+          <>
+            <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+              <path d="M1.5 1.5l6 3.5-6 3.5V1.5z" fill="currentColor"/>
+            </svg>
+            {states.some(s => s === 'done') ? 'Run again' : 'Run'}
+          </>
+        )}
+      </button>
+
       <div style={{
-        position:'absolute', left:330, top:140, width:120, height:56,
-        borderRadius:10, border:`1px solid ${C.llm}60`,
-        boxShadow:`0 0 16px ${C.llm}30`,
+        position:'absolute', bottom:0, left:0, right:0, height:36, zIndex:1,
+        background:'linear-gradient(to bottom, transparent, rgba(13,13,15,0.65))',
         pointerEvents:'none',
       }}/>
     </div>
   )
 }
 
-// ─── Execution panel mock ────────────────────────────────────
-const EXEC_EVENTS = [
-  { type:'done',    label:'Every Monday',       out:'{"trigger":"scheduled"}' },
-  { type:'done',    label:'Fetch HN Stories',   out:'{"hits":[...50 stories]}' },
-  { type:'done',    label:'Extract 5 Stories',  out:'["Show HN: Opus 5...","Ask HN:...","..."]' },
-  { type:'running', label:'Draft Post [1/5]',   out:null },
-]
-
-function ExecPanel() {
+// ─── AI Builder mock ──────────────────────────────────────────
+function AIChatMock() {
   return (
     <div style={{
       background:'rgba(10,10,12,0.97)',
       border:'1px solid rgba(255,255,255,0.08)',
       borderRadius:14, overflow:'hidden',
-      fontFamily:'inherit',
     }}>
-      {/* header */}
+      <div style={{ padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:8 }}>
+        <div style={{ width:7, height:7, borderRadius:'50%', background:'#3b82f6' }} />
+        <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.5)', letterSpacing:'0.06em' }}>AI Builder</span>
+      </div>
+      <div style={{ padding:'14px', display:'flex', flexDirection:'column', gap:10 }}>
+        {/* user message */}
+        <div style={{ display:'flex', justifyContent:'flex-end' }}>
+          <div style={{ background:'rgba(255,255,255,0.08)', borderRadius:12, padding:'8px 12px', maxWidth:'80%', fontSize:12, color:'rgba(255,255,255,0.8)', lineHeight:1.5 }}>
+            Every morning, pull the top posts from our Notion database, summarise them with AI, and email me a digest
+          </div>
+        </div>
+        {/* thinking */}
+        <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:10, color:'rgba(255,255,255,0.3)' }}>
+          <div style={{ width:14, height:14, borderRadius:'50%', background:'rgba(59,130,246,0.15)', flexShrink:0 }} className="animate-pulse"/>
+          Designing workflow...
+        </div>
+        {/* assistant */}
+        <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:12, padding:'10px 12px', fontSize:12, color:'rgba(255,255,255,0.65)', lineHeight:1.6 }}>
+          Done! I've built a 4-step workflow: a daily 8am trigger pulls your Notion database, an AI step summarises each post, then sends you a clean email digest. Just add your Notion token to get started.
+        </div>
+        {/* applied badge */}
+        <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(52,211,153,0.08)', border:'1px solid rgba(52,211,153,0.2)', borderRadius:8, padding:'5px 10px', fontSize:11, color:'#34d399', alignSelf:'flex-start' }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.5L5 9l4.5-6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Workflow applied to canvas
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Execution panel mock ─────────────────────────────────────
+function ExecPanel() {
+  const events = [
+    { done:true,  label:'8am trigger fired',       note:'Monday, 9 Jun' },
+    { done:true,  label:'Fetched Notion database',  note:'12 pages found' },
+    { done:true,  label:'AI summarised content',    note:'3 key takeaways' },
+    { done:false, label:'Sending email digest',     note:null },
+  ]
+  return (
+    <div style={{
+      background:'rgba(10,10,12,0.97)',
+      border:'1px solid rgba(255,255,255,0.08)',
+      borderRadius:14, overflow:'hidden',
+    }}>
       <div style={{ padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.5)', letterSpacing:'0.08em', textTransform:'uppercase' }}>Execution Log</span>
+        <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.5)', letterSpacing:'0.08em', textTransform:'uppercase' }}>Live Run</span>
         <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:10, color:'#fbbf24', background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.2)', borderRadius:20, padding:'2px 8px' }}>
           <span style={{ width:5, height:5, borderRadius:'50%', background:'#fbbf24', display:'inline-block' }} className="animate-pulse"/>
           Running
         </span>
       </div>
-      {/* events */}
       <div style={{ padding:'8px 0' }}>
-        {EXEC_EVENTS.map((ev,i) => (
-          <div key={i} style={{ padding:'8px 14px', borderBottom: i < EXEC_EVENTS.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: ev.out ? 4 : 0 }}>
-              {ev.type === 'done' ? (
+        {events.map((ev,i) => (
+          <div key={i} style={{ padding:'8px 14px', borderBottom: i < events.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: ev.note ? 3 : 0 }}>
+              {ev.done ? (
                 <span style={{ width:16, height:16, borderRadius:'50%', background:'rgba(52,211,153,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2 3-3" stroke="#34d399" strokeWidth="1.3" strokeLinecap="round"/></svg>
                 </span>
               ) : (
                 <span style={{ width:16, height:16, borderRadius:'50%', background:'rgba(59,130,246,0.15)', flexShrink:0 }} className="animate-pulse"/>
               )}
-              <span style={{ fontSize:12, color: ev.type==='done' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.9)', fontWeight: ev.type==='running' ? 500 : 400 }}>
-                {ev.label}
-              </span>
+              <span style={{ fontSize:12, color: ev.done ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.9)', fontWeight: ev.done ? 400 : 500 }}>{ev.label}</span>
             </div>
-            {ev.out && (
-              <div style={{ marginLeft:24, fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.3)', background:'rgba(255,255,255,0.03)', borderRadius:6, padding:'4px 8px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
-                {ev.out}
-              </div>
+            {ev.note && (
+              <div style={{ marginLeft:24, fontSize:10, color:'rgba(255,255,255,0.3)' }}>{ev.note}</div>
             )}
           </div>
         ))}
@@ -155,47 +327,36 @@ function ExecPanel() {
   )
 }
 
-// ─── Run detail mock ─────────────────────────────────────────
-function RunDetailMock() {
+// ─── Approval mock ────────────────────────────────────────────
+function ApprovalMock() {
   return (
-    <div style={{
-      background:'rgba(10,10,12,0.97)',
-      border:'1px solid rgba(255,255,255,0.08)',
-      borderRadius:14, overflow:'hidden',
-    }}>
-      {/* approval banner */}
+    <div style={{ background:'rgba(10,10,12,0.97)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }}>
       <div style={{ padding:'12px 14px', background:'rgba(236,72,153,0.07)', borderBottom:'1px solid rgba(236,72,153,0.15)' }}>
-        <div style={{ fontSize:11, fontWeight:600, color:'#ec4899', marginBottom:4 }}>Approval Required</div>
-        <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:10 }}>Review this LinkedIn draft. Approve to queue it for publishing.</div>
-        <div style={{ fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.55)', background:'rgba(255,255,255,0.04)', borderRadius:6, padding:'6px 8px', marginBottom:10, lineHeight:1.6 }}>
-          Every AI feature you ship today is one API outage away from<br/>being completely broken. That's not a hypothetical…
+        <div style={{ fontSize:11, fontWeight:600, color:'#ec4899', marginBottom:4 }}>Your review is needed</div>
+        <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:10 }}>The AI drafted this post. Approve to send it — or reject to discard.</div>
+        <div style={{ fontSize:11, color:'rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.04)', borderRadius:6, padding:'8px 10px', marginBottom:10, lineHeight:1.65 }}>
+          Three things I learned shipping AI features this year — and why human oversight still matters more than the model you pick…
         </div>
         <div style={{ display:'flex', gap:6 }}>
-          <div style={{ flex:1, background:'#10b981', borderRadius:7, padding:'5px 0', textAlign:'center', fontSize:10, fontWeight:600, color:'white' }}>Approve</div>
-          <div style={{ flex:1, background:'rgba(239,68,68,0.7)', borderRadius:7, padding:'5px 0', textAlign:'center', fontSize:10, fontWeight:600, color:'white' }}>Reject</div>
+          <div style={{ flex:1, background:'#10b981', borderRadius:7, padding:'6px 0', textAlign:'center', fontSize:11, fontWeight:600, color:'white' }}>Approve &amp; Send</div>
+          <div style={{ flex:1, background:'rgba(239,68,68,0.7)', borderRadius:7, padding:'6px 0', textAlign:'center', fontSize:11, fontWeight:600, color:'white' }}>Reject</div>
         </div>
       </div>
-      {/* node cards */}
       {[
-        { label:'Fetch HN Stories', status:'completed', out:'{"hits":[...]}' },
-        { label:'Extract 5 Stories', status:'completed', out:'["Show HN: Opus 5","Ask HN:..."]' },
-        { label:'Draft Post [1/5]', status:'waiting', out:null },
+        { label:'Fetched top 5 posts', note:'from Notion database' },
+        { label:'AI summarised each one', note:'3 sentences per post' },
+        { label:'Drafted LinkedIn post', note:'waiting for your approval' },
       ].map((c,i) => (
-        <div key={i} style={{ padding:'8px 14px', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: c.out ? 4 : 0 }}>
-            <span style={{ fontSize:11, color:'rgba(255,255,255,0.7)' }}>{c.label}</span>
-            <span style={{ fontSize:9, padding:'2px 6px', borderRadius:20, background: c.status==='completed' ? 'rgba(52,211,153,0.12)' : 'rgba(236,72,153,0.12)', color: c.status==='completed' ? '#34d399' : '#ec4899', fontWeight:600 }}>
-              {c.status}
-            </span>
-          </div>
-          {c.out && <div style={{ fontSize:9.5, fontFamily:'monospace', color:'rgba(255,255,255,0.3)' }}>{c.out}</div>}
+        <div key={i} style={{ padding:'8px 14px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontSize:11, color:'rgba(255,255,255,0.6)' }}>{c.label}</span>
+          <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)' }}>{c.note}</span>
         </div>
       ))}
     </div>
   )
 }
 
-// ─── Nav ─────────────────────────────────────────────────────
+// ─── Nav ──────────────────────────────────────────────────────
 function Nav({ onOpen }: { onOpen: () => void }) {
   const navigate = useNavigate()
   return (
@@ -221,7 +382,7 @@ function Nav({ onOpen }: { onOpen: () => void }) {
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate()
   const [creating, setCreating] = useState(false)
@@ -251,22 +412,14 @@ export function LandingPage() {
       <section className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
         <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
           <div>
-            <div
-              className="mb-6 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] text-white/50"
-              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)' }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Visual AI workflow builder
-            </div>
-
-            <h1 className="mb-6 text-[3.25rem] font-bold leading-[1.08] tracking-tight lg:text-[4rem]">
-              Build AI pipelines<br/>that actually ship
+            <h1 className="mb-5 text-[3.5rem] font-bold leading-[1.06] tracking-tight lg:text-[4.25rem]">
+              Build workflows<br/>
+              <span style={{ color:'rgba(255,255,255,0.38)' }}>that do the work<br/>for you</span>
             </h1>
 
             <p className="mb-10 max-w-lg text-[1.0625rem] leading-relaxed text-white/50">
-              Drag nodes onto a canvas, connect them, hit run. Scheduled triggers,
-              webhooks, LLMs, HTTP calls, loops, branching, human approval — all wired together
-              with live execution streaming and full run logs.
+              Describe what you want to automate and AI builds it for you — or drag and drop it yourself.
+              Schedule it, connect your tools, and let it run on its own.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -286,118 +439,135 @@ export function LandingPage() {
                     <path d="M5.5 1v9M1 5.5h9" stroke="black" strokeWidth="1.6" strokeLinecap="round"/>
                   </svg>
                 )}
-                New workflow
+                Start for free
               </button>
               <button
                 onClick={() => navigate('/workflows')}
                 className="rounded-full px-6 py-3 text-sm font-semibold text-white/60 transition-all hover:text-white"
                 style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)' }}
               >
-                View all workflows
+                See my workflows
               </button>
             </div>
           </div>
 
-          {/* Canvas mock */}
           <div>
             <MockCanvas />
-            <p className="mt-3 text-center text-[11px] text-white/20">Weekly LinkedIn Content Pipeline — live in the editor</p>
+            <p className="mt-3 text-center text-[11px] text-white/20">Weekly content pipeline — built in minutes, runs automatically</p>
           </div>
         </div>
       </section>
 
-      {/* ── Triggers ── */}
+      {/* ── AI Builder ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Triggers</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">3 ways to start a workflow</h2>
-        <p className="mb-12 text-white/40 max-w-lg">Every run starts from a trigger. Pick what fits your use-case — no polling, no cron jobs to manage.</p>
+        <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">AI Builder</p>
+            <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
+              Just describe what you want
+            </h2>
+            <p className="mb-8 text-[14px] leading-relaxed text-white/40">
+              Tell the AI what you want to automate in plain English. It figures out the steps,
+              builds the workflow on the canvas in front of you, and explains what you need to fill in.
+              Go back and forth to tweak it — the AI remembers the conversation.
+            </p>
+            <ul className="flex flex-col gap-3">
+              {[
+                'No technical knowledge needed',
+                'AI designs the full workflow for you',
+                'Watch it appear on the canvas in real time',
+                'Refine it through conversation',
+                'Conversation saved so you can pick up later',
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-2.5 text-[13px] text-white/50">
+                  <Check />{f}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <AIChatMock />
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">How it works</p>
+        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">From idea to running in minutes</h2>
+        <p className="mb-12 text-white/40 max-w-lg">No setup, no configuration files, no engineering team required.</p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[
             {
-              color: C.schedule,
-              name: 'Scheduled',
-              desc: 'Run on a calendar — hourly, daily, weekly, or monthly at a specific time. The scheduler fires automatically; no external cron needed.',
-              details: ['Hourly, daily, weekly, monthly', 'Set exact run time (HH:MM)', 'Day-of-week and day-of-month', 'Enable / disable without deleting'],
+              step: '1',
+              color: '#3b82f6',
+              name: 'Describe or drag',
+              desc: 'Type what you want to automate and let AI build it — or drag steps from the panel and connect them yourself. Either way takes minutes.',
             },
             {
-              color: C.webhook,
-              name: 'Webhook',
-              desc: 'Get a unique HTTPS endpoint. POST any JSON payload to it and the workflow starts instantly with that payload available to all downstream nodes.',
-              details: ['Unique token-secured URL', 'Full JSON payload forwarded', 'Trigger page for non-devs', 'View trigger history'],
+              step: '2',
+              color: '#8b5cf6',
+              name: 'Connect your tools',
+              desc: 'Add your Notion workspace, Linear team, or any other service you use. Paste a token and you\'re done — no complicated setup.',
             },
             {
-              color: '#818cf8',
-              name: 'API Key',
-              desc: 'Trigger workflows programmatically from your own backend. Create API keys from the settings panel and hit the REST endpoint with a Bearer token.',
-              details: ['Bearer token auth', 'Pass structured input', 'Async — get run ID back', 'Key-level access control'],
+              step: '3',
+              color: '#10b981',
+              name: 'Run automatically',
+              desc: 'Set a schedule, use a link to trigger it from anywhere, or let something else kick it off. Watch it run live and get notified when it\'s done.',
             },
-          ].map((t) => (
+          ].map((s) => (
             <div
-              key={t.name}
+              key={s.step}
               className="flex flex-col rounded-2xl p-6"
-              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderTop:`2px solid ${t.color}` }}
+              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderTop:`2px solid ${s.color}` }}
             >
-              <div className="mb-3 flex items-center gap-2">
-                <Dot color={t.color} />
-                <span className="text-sm font-semibold text-white">{t.name} Trigger</span>
+              <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold" style={{ background:`${s.color}20`, color:s.color }}>
+                {s.step}
               </div>
-              <p className="mb-5 text-[13px] leading-relaxed text-white/40">{t.desc}</p>
-              <ul className="mt-auto flex flex-col gap-2">
-                {t.details.map((d) => (
-                  <li key={d} className="flex items-center gap-2 text-[12px] text-white/40">
-                    <Check />{d}
-                  </li>
-                ))}
-              </ul>
+              <div className="mb-2 text-sm font-semibold text-white">{s.name}</div>
+              <p className="text-[13px] leading-relaxed text-white/40">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Node types ── */}
+      {/* ── What you can build ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Nodes</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">Everything you need in one canvas</h2>
-        <p className="mb-12 text-white/40 max-w-lg">Drag any node type onto the canvas and connect them. Each node has a focused config panel — no JSON, no YAML.</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Use cases</p>
+        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">What people are building</h2>
+        <p className="mb-12 text-white/40 max-w-lg">From simple daily tasks to multi-step AI pipelines — if you can describe it, you can automate it.</p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               color: C.llm,
-              name: 'LLM',
-              desc: 'Call Claude or GPT-4 with a system + user prompt. Use {{nodeId.output}} to pass outputs from any previous node. Supports JSON schema for structured output.',
-              tags: ['Claude Sonnet / Haiku / Opus', 'GPT-4o / GPT-4o-mini', 'Temperature & token control', 'Structured JSON output'],
+              name: 'Content pipelines',
+              desc: 'Pull articles or posts from a source every morning, have AI summarise them, and send a digest to your inbox or team Slack.',
             },
             {
-              color: C.http,
-              name: 'HTTP Request',
-              desc: 'Make any GET / POST / PUT / DELETE request to any external API. Set headers, body, and interpolate upstream outputs into the URL or body.',
-              tags: ['GET, POST, PUT, DELETE, PATCH', 'Custom headers', 'Template body with {{vars}}', 'Full response forwarded'],
+              color: C.notion,
+              name: 'Notion automations',
+              desc: 'Create new pages, log entries, or update databases in Notion automatically — triggered by a schedule or an external event.',
             },
             {
-              color: C.branch,
-              name: 'Branch',
-              desc: 'Conditionally route execution. Write a plain-English condition — the branch node uses Claude Haiku to evaluate it and picks the true or false path.',
-              tags: ['Natural-language conditions', 'LLM-evaluated (Haiku)', 'Two output handles: true / false', 'Regex fallback if no API key'],
-            },
-            {
-              color: C.loop,
-              name: 'Loop',
-              desc: 'Iterate over any JSON array — API results, extracted lists, CSV rows. The full loop body executes once per item with the current item injected.',
-              tags: ['Iterate over JSON arrays', 'Dot-path field extraction', 'Preserves upstream outputs', 'Results collected as array'],
+              color: C.linear,
+              name: 'Issue tracking',
+              desc: 'Automatically create Linear issues from incoming requests, categorise them with AI, and notify your team — no manual triage.',
             },
             {
               color: C.approval,
-              name: 'Human Approval',
-              desc: 'Pause a workflow and wait for a human decision. Optional email notification with the upstream content and a direct link to the approve / reject page.',
-              tags: ['Sends notification email', 'Linked run detail page', 'Approve or reject buttons', 'Configurable timeout'],
+              name: 'Review & approval flows',
+              desc: 'Let AI draft something — a post, a reply, a report — then pause for your review before anything actually gets sent.',
+            },
+            {
+              color: C.schedule,
+              name: 'Scheduled reports',
+              desc: 'Aggregate data from multiple sources on a schedule, have AI write a summary, and deliver it wherever you need it.',
             },
             {
               color: C.email,
-              name: 'Send Email',
-              desc: 'Send a fully composed email via Resend. Recipient, subject, and body all support {{nodeId.output}} template variables so every email is dynamic.',
-              tags: ['Resend-powered delivery', 'To / Subject / Body fields', 'Template variable support', 'Delivery status in logs'],
+              name: 'Smart email responses',
+              desc: 'Receive a webhook from a form or service, have AI craft a personalised reply, review it, and send it automatically.',
             },
           ].map((n) => (
             <div
@@ -409,40 +579,82 @@ export function LandingPage() {
                 <Dot color={n.color} />
                 <span className="text-sm font-semibold text-white">{n.name}</span>
               </div>
-              <p className="mb-4 text-[12.5px] leading-relaxed text-white/40">{n.desc}</p>
-              <div className="mt-auto flex flex-wrap gap-1.5">
-                {n.tags.map((t) => (
-                  <span key={t} className="rounded-md px-2 py-0.5 text-[10px] text-white/40"
-                    style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.07)' }}>
-                    {t}
-                  </span>
-                ))}
-              </div>
+              <p className="text-[12.5px] leading-relaxed text-white/40">{n.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Execution ── */}
+      {/* ── Integrations ── */}
+      <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Integrations</p>
+        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">Works with the tools you already use</h2>
+        <p className="mb-12 text-white/40 max-w-lg">Connect once, use everywhere in your workflows.</p>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              color: C.notion,
+              name: 'Notion',
+              actions: ['Create pages', 'Query databases', 'Append content'],
+            },
+            {
+              color: C.linear,
+              name: 'Linear',
+              actions: ['Create issues', 'List & filter issues', 'Post comments'],
+            },
+            {
+              color: C.email,
+              name: 'Email',
+              actions: ['Send to anyone', 'Dynamic subject & body', 'Triggered by AI output'],
+            },
+            {
+              color: C.http,
+              name: 'Any website or app',
+              actions: ['Call any web service', 'Send data anywhere', 'Receive incoming events'],
+            },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className="flex flex-col rounded-2xl p-5"
+              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderTop:`2px solid ${t.color}` }}
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <Dot color={t.color} />
+                <span className="text-sm font-semibold text-white">{t.name}</span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {t.actions.map((a) => (
+                  <li key={a} className="flex items-center gap-2 text-[12px] text-white/40">
+                    <Check />{a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Live execution ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
           <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Execution</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Live runs</p>
             <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
-              Watch every node run in real time
+              See exactly what's happening, as it happens
             </h2>
             <p className="mb-8 text-[14px] leading-relaxed text-white/40">
-              Hit Run. A live execution panel streams events over SSE as the workflow progresses —
-              each node lights up when it starts, shows its output when done, and turns red on error.
-              No refresh needed.
+              When a workflow runs, every step lights up as it completes.
+              You can see what each step did and what it passed to the next one —
+              so you always know what your automation is doing.
             </p>
             <ul className="flex flex-col gap-3">
               {[
-                'Server-Sent Events — no polling',
-                'Output shown per node as it completes',
-                'Scheduled runs auto-appear on the canvas',
-                'Full run saved to history on completion',
-                'Cancel in-flight runs at any time',
+                'Watch each step complete in real time',
+                'See what every step produced',
+                'Scheduled runs start automatically',
+                'Full history saved for every run',
+                'Stop a run at any time',
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-[13px] text-white/50">
                   <Check />{f}
@@ -457,25 +669,24 @@ export function LandingPage() {
       {/* ── Human approval ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
-          <RunDetailMock />
+          <ApprovalMock />
           <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Human-in-the-loop</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Human in the loop</p>
             <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
-              Approve or reject before anything ships
+              Always review before anything goes out
             </h2>
             <p className="mb-8 text-[14px] leading-relaxed text-white/40">
-              Drop a Human Approval node anywhere in the graph. The workflow pauses, sends a
-              notification email with what the AI produced, and waits. A unique run detail page
-              shows every node's output — approve or reject from there, on any device.
+              Add a review step anywhere in your workflow. The automation pauses, shows you what
+              the AI produced, and waits for your OK. Approve and it continues — reject and it stops.
+              Works on any device, no login required.
             </p>
             <ul className="flex flex-col gap-3">
               {[
-                'Email notification with upstream AI output',
-                'Run detail page — shareable link',
-                'Shows every node output in order',
-                'Approve / Reject buttons on the page',
-                'Workflow resumes or skips based on decision',
-                'Configurable timeout (auto-reject on expiry)',
+                'Get notified by email when your review is needed',
+                'See everything the automation did before asking',
+                'One click to approve or reject',
+                'Works on phone, tablet, or desktop',
+                'Auto-cancels if you don\'t respond in time',
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-[13px] text-white/50">
                   <Check />{f}
@@ -486,65 +697,64 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── Template variables ── */}
+      {/* ── Triggers ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-        <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
-          <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Data flow</p>
-            <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
-              Wire outputs into any field
-            </h2>
-            <p className="mb-8 text-[14px] leading-relaxed text-white/40">
-              Every node's output is accessible to all downstream nodes via{' '}
-              <code className="rounded px-1.5 py-0.5 text-[12px] text-white/70" style={{ background:'rgba(255,255,255,0.08)' }}>
-                {'{{nodeId.output}}'}
-              </code>
-              . Use them in LLM prompts, HTTP request bodies, email bodies, branch conditions — anywhere there's a text field.
-              An <em>Insert</em> button next to every field shows available variables.
-            </p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Triggers</p>
+        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">3 ways to start a workflow</h2>
+        <p className="mb-12 text-white/40 max-w-lg">Choose how your automation starts — and change it any time.</p>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[
+            {
+              color: C.schedule,
+              name: 'On a schedule',
+              desc: 'Run every hour, every day, every Monday morning — whatever fits your routine. Set it once and forget about it.',
+              details: ['Hourly, daily, weekly options', 'Pick the exact time', 'Pause without deleting', 'Runs automatically in the background'],
+            },
+            {
+              color: C.webhook,
+              name: 'From a link',
+              desc: 'Get a unique link you can share or embed anywhere. Anyone with the link can trigger the workflow — great for forms, buttons, or other services.',
+              details: ['Shareable trigger link', 'Passes along any data sent', 'Works with any external tool', 'See every time it was used'],
+            },
+            {
+              color: '#818cf8',
+              name: 'Programmatically',
+              desc: 'If you or your team does have a technical setup, trigger workflows from your own systems using a secure key. Get the run ID back to track it.',
+              details: ['Secure access key', 'Pass in custom data', 'Returns immediately with run ID', 'Full run history available'],
+            },
+          ].map((t) => (
             <div
-              className="rounded-xl p-5 font-mono text-[12px] leading-relaxed"
-              style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)' }}
+              key={t.name}
+              className="flex flex-col rounded-2xl p-6"
+              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderTop:`2px solid ${t.color}` }}
             >
-              <div className="text-white/30 mb-2 text-[10px] not-italic font-sans uppercase tracking-wider">LLM · User Prompt</div>
-              <div className="text-white/70">
-                Write a LinkedIn post about this story:<br/><br/>
-                <span style={{ background:'rgba(59,130,246,0.2)', color:'#93c5fd', borderRadius:4, padding:'1px 5px' }}>{'{{loop-1.output}}'}</span>
-                <br/><br/>
-                Make it personal and end with a concrete takeaway.
+              <div className="mb-3 flex items-center gap-2">
+                <Dot color={t.color} />
+                <span className="text-sm font-semibold text-white">{t.name}</span>
               </div>
+              <p className="mb-5 text-[13px] leading-relaxed text-white/40">{t.desc}</p>
+              <ul className="mt-auto flex flex-col gap-2">
+                {t.details.map((d) => (
+                  <li key={d} className="flex items-center gap-2 text-[12px] text-white/40">
+                    <Check />{d}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-          <div className="flex flex-col gap-4">
-            {[
-              { from:'http-1', to:'llm-extract', field:'User Prompt', example:'Here are the top stories: {{http-1.output}}' },
-              { from:'llm-extract', to:'loop-1', field:'Loop source', example:'Iterates over the JSON array returned by llm-extract' },
-              { from:'loop-1', to:'llm-draft', field:'User Prompt', example:'Write a post about: {{loop-1.output}}' },
-              { from:'llm-draft', to:'email-1', field:'Email Body', example:'Approved post:\n\n{{llm-draft.output}}' },
-            ].map((row) => (
-              <div key={row.from} className="rounded-xl p-4" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-mono text-white/30">{row.from}</span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="rgba(255,255,255,0.2)" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                  <span className="text-[10px] font-mono text-white/30">{row.to}</span>
-                  <span className="ml-auto text-[9px] text-white/25 uppercase tracking-wider">{row.field}</span>
-                </div>
-                <div className="text-[11px] font-mono text-white/40">{row.example}</div>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* ── Bottom CTA ── */}
+      {/* ── CTA ── */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <div
           className="flex flex-col items-start justify-between gap-6 rounded-2xl px-8 py-8 sm:flex-row sm:items-center"
           style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', boxShadow:'0 0 60px rgba(255,255,255,0.02) inset' }}
         >
           <div>
-            <h2 className="text-[1.75rem] font-bold text-white">Start building your first workflow</h2>
-            <p className="mt-1 text-sm text-white/40">No config files. No YAML. Just a canvas.</p>
+            <h2 className="text-[1.75rem] font-bold text-white">Start automating today</h2>
+            <p className="mt-1 text-sm text-white/40">Describe your first workflow to the AI and it'll be ready in seconds.</p>
           </div>
           <button
             onClick={handleCreate}
@@ -552,7 +762,7 @@ export function LandingPage() {
             className="flex-shrink-0 rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-all hover:opacity-90 disabled:opacity-50"
             style={{ boxShadow:'0 0 24px rgba(255,255,255,0.18)' }}
           >
-            {creating ? 'Creating…' : 'New workflow →'}
+            {creating ? 'Creating…' : 'Get started →'}
           </button>
         </div>
       </section>
@@ -568,7 +778,7 @@ export function LandingPage() {
             </div>
             <span className="text-sm font-semibold text-white">workflow-ai</span>
           </div>
-          <p className="text-[12px] text-white/20">AI should be one step in a workflow engine, not the whole thing.</p>
+          <p className="text-[12px] text-white/20">Automation for everyone — not just engineers.</p>
         </div>
       </footer>
     </div>
