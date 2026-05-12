@@ -52,6 +52,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const connectedRunRef = useRef<string | null>(null)
+  const runAbortRef = useRef<AbortController | null>(null)
   const [tabsOpen, setTabsOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [savedWorkflows, setSavedWorkflows] = useState<SavedWorkflow[]>([])
@@ -271,6 +272,13 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     }
   }
 
+  function handleStop() {
+    runAbortRef.current?.abort()
+    runAbortRef.current = null
+    setExecutionState('idle')
+    resetNodeExecutionStatuses()
+  }
+
   function handleRun() {
     if (isRunning) return
     resetNodeExecutionStatuses()
@@ -280,6 +288,9 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     setPendingApproval(null)
     setCurrentRunId(null)
 
+    const controller = new AbortController()
+    runAbortRef.current = controller
+
     void (async () => {
       const ast = serializeToAST(nodes, edges, workflowName)
       const startTime = Date.now()
@@ -288,11 +299,12 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),
+          signal: controller.signal,
         })
         if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
-        // fallback '' — makeEventHandler updates it from the workflow_started event's runId
         await consumeRunStream(response.body.getReader(), makeEventHandler(''))
       } catch (err) {
+        if ((err as Error).name === 'AbortError') return
         const message = err instanceof Error ? err.message : String(err)
         appendExecutionEvent({
           id: crypto.randomUUID(),
@@ -301,6 +313,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
           timestamp: Date.now() - startTime,
         })
         setExecutionState('error')
+      } finally {
+        runAbortRef.current = null
       }
     })()
   }
@@ -522,24 +536,29 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
         <Divider />
 
-        {/* Run */}
-        <button
-          onClick={handleRun}
-          disabled={isRunning}
-          className={`flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold transition-all ${
-            isRunning
-              ? 'cursor-not-allowed bg-white/10 text-white/40'
-              : 'bg-white text-black hover:opacity-90 active:scale-95'
-          }`}
-          style={!isRunning ? { boxShadow: '0 0 16px rgba(255,255,255,0.2)' } : {}}
-        >
-          {isRunning ? <Spinner /> : (
+        {/* Run / Stop */}
+        {isRunning ? (
+          <button
+            onClick={handleStop}
+            className="flex h-8 items-center gap-1.5 rounded-full bg-red-500/15 px-3.5 text-[11px] font-semibold text-red-400 ring-1 ring-red-500/30 transition-all hover:bg-red-500/25 active:scale-95"
+          >
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor">
+              <rect x="1" y="1" width="7" height="7" rx="1.5"/>
+            </svg>
+            Stop
+          </button>
+        ) : (
+          <button
+            onClick={handleRun}
+            className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[11px] font-semibold text-black transition-all hover:opacity-90 active:scale-95"
+            style={{ boxShadow: '0 0 16px rgba(255,255,255,0.2)' }}
+          >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
               <path d="M2 1.5l7 3.5-7 3.5V1.5z"/>
             </svg>
-          )}
-          {isRunning ? 'Running…' : executionState === 'completed' ? 'Re-run' : 'Run'}
-        </button>
+            {executionState === 'completed' ? 'Re-run' : 'Run'}
+          </button>
+        )}
 
         <Divider />
 

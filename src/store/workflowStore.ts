@@ -69,6 +69,7 @@ interface WorkflowStore {
   onConnect: (connection: Connection) => void
   addNode: (node: FlowNode) => void
   deleteNodesById: (ids: string[]) => void
+  deleteEdgesById: (ids: string[]) => void
 
   history: HistoryEntry[]
   future: HistoryEntry[]
@@ -77,6 +78,10 @@ interface WorkflowStore {
 
   selectedNodeId: string | null
   setSelectedNodeId: (id: string | null) => void
+  selectedEdgeId: string | null
+  setSelectedEdgeId: (id: string | null) => void
+  selectedNodeIds: string[]
+  setSelectedNodeIds: (ids: string[]) => void
 
   updateNodeData: (nodeId: string, partial: Partial<FlowNodeData>) => void
 
@@ -342,6 +347,18 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         nodes: state.nodes.filter((n) => !idSet.has(n.id)),
         edges: state.edges.filter((e) => !idSet.has(e.source) && !idSet.has(e.target)),
         selectedNodeId: idSet.has(state.selectedNodeId ?? '') ? null : state.selectedNodeId,
+        selectedNodeIds: state.selectedNodeIds.filter((id) => !idSet.has(id)),
+        history: pushHistory(state.history, state.nodes, state.edges),
+        future: [],
+      }
+    }),
+
+  deleteEdgesById: (ids) =>
+    set((state) => {
+      const idSet = new Set(ids)
+      return {
+        edges: state.edges.filter((e) => !idSet.has(e.id)),
+        selectedEdgeId: idSet.has(state.selectedEdgeId ?? '') ? null : state.selectedEdgeId,
         history: pushHistory(state.history, state.nodes, state.edges),
         future: [],
       }
@@ -349,6 +366,10 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   selectedNodeId: null,
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  selectedEdgeId: null,
+  setSelectedEdgeId: (id) => set({ selectedEdgeId: id }),
+  selectedNodeIds: [],
+  setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
 
   updateNodeData: (nodeId, partial) =>
     set((state) => ({

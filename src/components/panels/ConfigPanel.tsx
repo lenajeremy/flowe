@@ -160,11 +160,12 @@ interface FocusedField {
 
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
-  const { nodes, edges, selectedNodeId, updateNodeData, executionState, executionLog, dbId } = useWorkflowStore(
+  const { nodes, edges, selectedNodeId, selectedNodeIds, updateNodeData, executionState, executionLog, dbId } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
       selectedNodeId: s.selectedNodeId,
+      selectedNodeIds: s.selectedNodeIds,
       updateNodeData: s.updateNodeData,
       executionState: s.executionState,
       executionLog: s.executionLog,
@@ -322,7 +323,7 @@ export function ConfigPanel() {
     }
   }
 
-  if (!selectedNode) {
+  if (!selectedNode || selectedNodeIds.length > 1) {
     const triggerCount = nodes.filter((node) => node.data.nodeType === 'textInput' || node.data.label.toLowerCase().includes('trigger')).length
     const aiCount = nodes.filter((node) => node.data.nodeType === 'llm').length
     const actionCount = nodes.filter((node) => node.data.nodeType === 'textOutput').length

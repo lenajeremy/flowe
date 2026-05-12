@@ -5,6 +5,7 @@ import {
   BackgroundVariant,
   useReactFlow,
   type Node,
+  type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nodeTypes } from './nodes'
@@ -38,21 +39,27 @@ export function Canvas({ theme }: CanvasProps) {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
     setSelectedNodeId, selectedNodeId,
-    addNode, deleteNodesById,
+    selectedEdgeId, setSelectedEdgeId,
+    setSelectedNodeIds,
+    addNode, deleteNodesById, deleteEdgesById,
     executionState,
     undo, redo,
     setConfigPanelOpen,
   } = useWorkflowStore(
     useShallow((s) => ({
-      nodes: s.nodes,  // still needed for animatedEdges + MiniMap
+      nodes: s.nodes,
       edges: s.edges,
       onNodesChange: s.onNodesChange,
       onEdgesChange: s.onEdgesChange,
       onConnect: s.onConnect,
       setSelectedNodeId: s.setSelectedNodeId,
       selectedNodeId: s.selectedNodeId,
+      selectedEdgeId: s.selectedEdgeId,
+      setSelectedEdgeId: s.setSelectedEdgeId,
+      setSelectedNodeIds: s.setSelectedNodeIds,
       addNode: s.addNode,
       deleteNodesById: s.deleteNodesById,
+      deleteEdgesById: s.deleteEdgesById,
       executionState: s.executionState,
       undo: s.undo,
       redo: s.redo,
@@ -68,7 +75,6 @@ export function Canvas({ theme }: CanvasProps) {
       const tag = (document.activeElement as HTMLElement)?.tagName
       const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
 
-      // Undo / Redo — skip when typing
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         if (inInput) return
         e.preventDefault()
@@ -77,11 +83,14 @@ export function Canvas({ theme }: CanvasProps) {
         return
       }
 
-      // Delete / Backspace — skip when typing
       if (e.key !== 'Delete' && e.key !== 'Backspace') return
       if (inInput) return
       e.preventDefault()
 
+      if (selectedEdgeId) {
+        deleteEdgesById([selectedEdgeId])
+        return
+      }
       if (!selectedNodeId) return
       if (e.shiftKey) {
         deleteNodesById(getDownstreamIds(selectedNodeId, edges))
@@ -92,25 +101,54 @@ export function Canvas({ theme }: CanvasProps) {
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [edges, selectedNodeId, deleteNodesById, undo, redo])
+  }, [edges, selectedNodeId, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo])
 
   // ── Animated edges ────────────────────────────────────────
   const animatedEdges = useMemo(
-    () => edges.map((e) => ({ ...e, animated: executionState === 'running' })),
-    [edges, executionState],
+    () => edges.map((e) => ({
+      ...e,
+      animated: executionState === 'running',
+      selected: e.id === selectedEdgeId,
+      style: e.id === selectedEdgeId
+        ? { stroke: 'var(--color-accent)', strokeWidth: 2 }
+        : undefined,
+    })),
+    [edges, executionState, selectedEdgeId],
   )
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
       setSelectedNodeId(node.id)
+      setSelectedEdgeId(null)
       setConfigPanelOpen(true)
     },
-    [setSelectedNodeId, setConfigPanelOpen],
+    [setSelectedNodeId, setSelectedEdgeId, setConfigPanelOpen],
+  )
+
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      setSelectedEdgeId(edge.id)
+      setSelectedNodeId(null)
+    },
+    [setSelectedEdgeId, setSelectedNodeId],
+  )
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: { nodes: Node[] }) => {
+      const ids = selectedNodes.map((n) => n.id)
+      setSelectedNodeIds(ids)
+      if (ids.length !== 1) setSelectedNodeId(null)
+    },
+    [setSelectedNodeIds, setSelectedNodeId],
   )
 
   const onPaneClick = useCallback(
-    () => setSelectedNodeId(null),
-    [setSelectedNodeId],
+    () => {
+      setSelectedNodeId(null)
+      setSelectedEdgeId(null)
+      setSelectedNodeIds([])
+    },
+    [setSelectedNodeId, setSelectedEdgeId, setSelectedNodeIds],
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -140,13 +178,18 @@ export function Canvas({ theme }: CanvasProps) {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onSelectionChange={onSelectionChange}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         deleteKeyCode={null}
+        selectionOnDrag
+        panOnDrag={[1, 2]}
+        selectionMode={'partial' as never}
         colorMode={theme}
         style={{ background: 'var(--color-canvas)' }}
       >
