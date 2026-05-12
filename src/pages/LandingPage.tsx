@@ -442,7 +442,7 @@ export function LandingPage() {
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">AI Builder</p>
-            <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
+            <h2 className="mb-4 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">
               Just describe what you want
             </h2>
             <p className="mb-8 text-[14px] leading-relaxed text-white/40">
@@ -471,7 +471,7 @@ export function LandingPage() {
       {/* ── How it works ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">How it works</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">From idea to running in minutes</h2>
+        <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">From idea to running in minutes</h2>
         <p className="mb-12 text-white/40 max-w-lg">No setup, no configuration files, no engineering team required.</p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -513,7 +513,7 @@ export function LandingPage() {
       {/* ── What you can build ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Use cases</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">What people are building</h2>
+        <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">What people are building</h2>
         <p className="mb-12 text-white/40 max-w-lg">From simple daily tasks to multi-step AI pipelines — if you can describe it, you can automate it.</p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -567,7 +567,7 @@ export function LandingPage() {
       {/* ── Integrations ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Integrations</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">Works with the tools you already use</h2>
+        <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">Works with the tools you already use</h2>
         <p className="mb-12 text-white/40 max-w-lg">Connect once, use everywhere in your workflows.</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -619,7 +619,7 @@ export function LandingPage() {
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Live runs</p>
-            <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
+            <h2 className="mb-4 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">
               See exactly what's happening, as it happens
             </h2>
             <p className="mb-8 text-[14px] leading-relaxed text-white/40">
@@ -651,7 +651,7 @@ export function LandingPage() {
           <ApprovalMock />
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Human in the loop</p>
-            <h2 className="mb-4 text-[2rem] font-bold tracking-tight">
+            <h2 className="mb-4 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">
               Always review before anything goes out
             </h2>
             <p className="mb-8 text-[14px] leading-relaxed text-white/40">
@@ -679,7 +679,7 @@ export function LandingPage() {
       {/* ── Triggers ── */}
       <section className="mx-auto max-w-6xl px-6 py-20" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Triggers</p>
-        <h2 className="mb-3 text-[2rem] font-bold tracking-tight">3 ways to start a workflow</h2>
+        <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">3 ways to start a workflow</h2>
         <p className="mb-12 text-white/40 max-w-lg">Choose how your automation starts — and change it any time.</p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -732,7 +732,7 @@ export function LandingPage() {
           style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', boxShadow:'0 0 60px rgba(255,255,255,0.02) inset' }}
         >
           <div>
-            <h2 className="text-[1.75rem] font-bold text-white">Start automating today</h2>
+            <h2 className="text-[1.35rem] font-bold text-white sm:text-[1.6rem]">Start automating today</h2>
             <p className="mt-1 text-sm text-white/40">Describe your first workflow to the AI and it'll be ready in seconds.</p>
           </div>
           <button
