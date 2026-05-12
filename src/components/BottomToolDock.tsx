@@ -71,6 +71,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     setNodeExecutionStatus, setLogPanelOpen,
     setPendingApproval, setCurrentRunId,
     versionsOpen, setVersionsOpen,
+    activeTool, setActiveTool,
   } = useWorkflowStore(
     useShallow((s) => ({
       tabs: s.tabs,
@@ -98,6 +99,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       setCurrentRunId: s.setCurrentRunId,
       versionsOpen: s.versionsOpen,
       setVersionsOpen: s.setVersionsOpen,
+      activeTool: s.activeTool,
+      setActiveTool: s.setActiveTool,
     })),
   )
 
@@ -464,9 +467,17 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
         style={{ boxShadow: 'var(--dock-shadow)' }}
       >
         {/* Select */}
-        <ToolBtn title="Select" active>
+        <ToolBtn title="Select (V)" onClick={() => setActiveTool('select')} active={activeTool === 'select'}>
           <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
             <path d="M3.5 2l9 5.5-5 .8-2.2 4.7L3.5 2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+          </svg>
+        </ToolBtn>
+
+        {/* Hand */}
+        <ToolBtn title="Hand (H)" onClick={() => setActiveTool('hand')} active={activeTool === 'hand'}>
+          <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+            <path d="M6 1.5v6M9 3v4.5M3 5v3.5M12 5.5v2.5a4 4 0 01-4 4H6a4 4 0 01-4-4V7.5a1 1 0 012 0V9" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 5.5a1 1 0 00-2 0M9 3a1 1 0 00-2 0M6 1.5a1 1 0 00-2 0" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round"/>
           </svg>
         </ToolBtn>
 

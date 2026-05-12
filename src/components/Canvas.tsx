@@ -45,6 +45,7 @@ export function Canvas({ theme }: CanvasProps) {
     executionState,
     undo, redo,
     setConfigPanelOpen,
+    activeTool,
   } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
@@ -64,16 +65,21 @@ export function Canvas({ theme }: CanvasProps) {
       undo: s.undo,
       redo: s.redo,
       setConfigPanelOpen: s.setConfigPanelOpen,
+      activeTool: s.activeTool,
     })),
   )
 
   const rfInstance = useReactFlow()
+  const { setActiveTool } = useWorkflowStore(useShallow((s) => ({ setActiveTool: s.setActiveTool })))
 
   // ── Keyboard handler ─────────────────────────────────────
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const tag = (document.activeElement as HTMLElement)?.tagName
       const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
+
+      if (!inInput && e.key === 'v') { setActiveTool('select'); return }
+      if (!inInput && e.key === 'h') { setActiveTool('hand'); return }
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         if (inInput) return
@@ -187,11 +193,12 @@ export function Canvas({ theme }: CanvasProps) {
         fitView
         fitViewOptions={{ padding: 0.2 }}
         deleteKeyCode={null}
-        selectionOnDrag
-        panOnDrag={[1, 2]}
+        panOnDrag={activeTool === 'hand' ? true : [1, 2]}
+        selectionOnDrag={activeTool === 'select'}
         selectionMode={'partial' as never}
+        panOnScroll={false}
         colorMode={theme}
-        style={{ background: 'var(--color-canvas)' }}
+        style={{ background: 'var(--color-canvas)', cursor: activeTool === 'hand' ? 'grab' : 'default' }}
       >
         <Background
           variant={BackgroundVariant.Dots}

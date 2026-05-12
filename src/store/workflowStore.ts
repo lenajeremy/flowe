@@ -139,6 +139,10 @@ interface WorkflowStore {
   // ── Versions panel ──
   versionsOpen: boolean
   setVersionsOpen: (open: boolean) => void
+
+  // ── Active canvas tool ──
+  activeTool: 'select' | 'hand'
+  setActiveTool: (tool: 'select' | 'hand') => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -489,6 +493,9 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   versionsOpen: false,
   setVersionsOpen: (open) => set({ versionsOpen: open }),
+
+  activeTool: 'hand',
+  setActiveTool: (tool) => set({ activeTool: tool }),
 
   applyPatch: (ops) =>
     set((state) => {
