@@ -391,9 +391,9 @@ export function LandingPage() {
       <section className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
         <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
           <div>
-            <h1 className="mb-5 text-[3.5rem] font-bold leading-[1.06] tracking-tight lg:text-[4.25rem]">
-              Build workflows<br/>
-              <span style={{ color:'rgba(255,255,255,0.38)' }}>that do the work<br/>for you</span>
+            <h1 className="mb-5 text-[2.25rem] font-bold leading-[1.1] tracking-tight sm:text-[2.75rem] lg:text-[3.25rem]">
+              Build workflows{' '}
+              <span style={{ color:'rgba(255,255,255,0.38)' }}>that do the work for you</span>
             </h1>
 
             <p className="mb-10 max-w-lg text-[1.0625rem] leading-relaxed text-white/50">
