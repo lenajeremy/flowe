@@ -30,27 +30,6 @@ function Check() {
 }
 
 // ─── Mock canvas ──────────────────────────────────────────────
-function MockNode({ label, sub, color, x, y, width = 130 }: { label: string; sub: string; color: string; x: number; y: number; width?: number }) {
-  return (
-    <div style={{
-      position:'absolute', left:x, top:y, width,
-      background:'rgba(18,18,20,0.95)',
-      border:`1px solid rgba(255,255,255,0.10)`,
-      borderRadius:10, padding:'7px 10px',
-      borderLeft:`3px solid ${color}`,
-      boxShadow:'0 4px 16px rgba(0,0,0,0.5)',
-    }}>
-      <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.85)', marginBottom:2 }}>{label}</div>
-      <div style={{ fontSize:9.5, color:'rgba(255,255,255,0.35)' }}>{sub}</div>
-    </div>
-  )
-}
-
-function Edge({ x1,y1,x2,y2 }: { x1:number; y1:number; x2:number; y2:number }) {
-  const cx1 = x1 + (x2-x1)*0.5
-  const cx2 = x2 - (x2-x1)*0.5
-  return <path d={`M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}`} stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" opacity="0.7"/>
-}
 
 type NodeState = 'idle' | 'running' | 'done'
 
