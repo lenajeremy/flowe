@@ -20,6 +20,7 @@ interface ChatMessage {
 interface StoredMessage {
   role: 'user' | 'assistant'
   content: string
+  thinking?: string
   workflowApplied?: boolean
 }
 
@@ -28,7 +29,7 @@ interface StoredMessage {
 function toStored(msgs: ChatMessage[]): StoredMessage[] {
   return msgs
     .filter((m) => !m.loading && m.content)
-    .map(({ role, content, workflowApplied }) => ({ role, content, workflowApplied }))
+    .map(({ role, content, thinking, workflowApplied }) => ({ role, content, thinking, workflowApplied }))
 }
 
 function fromStored(msgs: StoredMessage[]): ChatMessage[] {
