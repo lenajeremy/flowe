@@ -78,6 +78,9 @@ export type FlowNodeData = {
   // LLM structured output
   outputSchema?: string     // JSON schema string
 
+  // LLM web tools
+  enableWebSearch?: boolean  // gives the LLM web_search + read_url tools
+
   // notion / linear shared
   integrationToken?: string    // API token — stored in node config
   integrationOp?: string       // operation key e.g. "create_page"

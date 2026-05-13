@@ -675,6 +675,26 @@ export function ConfigPanel() {
                 If set, the AI is instructed to respond with valid JSON matching this schema.
               </p>
             </FormField>
+
+            {/* Web search toggle */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <div className="relative mt-0.5 shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={data.enableWebSearch === true}
+                  onChange={(e) => updateNodeData(nodeId, { enableWebSearch: e.target.checked })}
+                />
+                <div className={`w-8 h-4.5 rounded-full transition-colors ${data.enableWebSearch ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`} />
+                <div className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${data.enableWebSearch ? 'translate-x-3.5' : ''}`} />
+              </div>
+              <div>
+                <p className="text-[13px] font-medium leading-none mb-1">Web search</p>
+                <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
+                  Gives this model <code className="text-[var(--color-accent)]">web_search</code> and <code className="text-[var(--color-accent)]">read_url</code> tools. Requires <code>BRAVE_API_KEY</code> for search; URL reading works without a key.
+                </p>
+              </div>
+            </label>
           </>
         )}
 

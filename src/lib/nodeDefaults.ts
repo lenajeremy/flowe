@@ -15,6 +15,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         userPrompt: '{{previousNode.output}}',
         temperature: 0.7,
         maxTokens: 1024,
+        enableWebSearch: true,
       }
     case 'branch':
       return { nodeType: 'branch', label: 'Branch', condition: '' }

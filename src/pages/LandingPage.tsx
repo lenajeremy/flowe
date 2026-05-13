@@ -24,12 +24,12 @@ function MockCanvas() {
   const NW = 190, NH = 54
 
   const layout = [
-    { id:0, label:'Every Monday 9am', sub:'Scheduled trigger', color:C.schedule, x:16,  y:158 },
-    { id:1, label:'Fetch top stories', sub:'Web request',       color:C.http,     x:274, y:16  },
-    { id:2, label:'Summarise with AI', sub:'AI · Claude',       color:C.llm,      x:274, y:94  },
-    { id:3, label:'For each story',    sub:'Loop',              color:C.loop,     x:274, y:172 },
-    { id:4, label:'Write post draft',  sub:'AI · Claude',       color:C.llm,      x:274, y:250 },
-    { id:5, label:'Human review',      sub:'Approval',          color:C.approval, x:274, y:328 },
+    { id:0, label:'Every Monday 9am',    sub:'Scheduled trigger', color:C.schedule, x:16,  y:158 },
+    { id:1, label:'Search the web',      sub:'AI · web_search',   color:C.llm,      x:274, y:16  },
+    { id:2, label:'Read top articles',   sub:'AI · read_url',     color:C.llm,      x:274, y:94  },
+    { id:3, label:'Summarise findings',  sub:'AI · Claude',       color:C.llm,      x:274, y:172 },
+    { id:4, label:'Write newsletter',    sub:'AI · GPT-4o',       color:C.llm,      x:274, y:250 },
+    { id:5, label:'Human review',        sub:'Approval',          color:C.approval, x:274, y:328 },
   ]
 
   const [states, setStates] = useState<NodeState[]>(Array(6).fill('idle'))
@@ -162,15 +162,15 @@ function AIChatMock() {
       <div style={{ padding:'14px', display:'flex', flexDirection:'column', gap:10 }}>
         <div style={{ display:'flex', justifyContent:'flex-end' }}>
           <div style={{ background:'rgba(255,255,255,0.08)', borderRadius:12, padding:'8px 12px', maxWidth:'80%', fontSize:12, color:'rgba(255,255,255,0.8)', lineHeight:1.5 }}>
-            Every morning, pull the top posts from our Notion database, summarise them with AI, and email me a digest
+            Every Friday, find the top AI news from this week, write a short summary, and email it to my team
           </div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:10, color:'rgba(255,255,255,0.3)' }}>
           <div style={{ width:14, height:14, borderRadius:'50%', background:'rgba(59,130,246,0.15)', flexShrink:0 }} className="animate-pulse"/>
-          Designing workflow...
+          Searching the web, reading articles...
         </div>
         <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:12, padding:'10px 12px', fontSize:12, color:'rgba(255,255,255,0.65)', lineHeight:1.6 }}>
-          Done! I've built a 4-step workflow: a daily 8am trigger pulls your Notion database, an AI step summarises each post, then sends you a clean email digest. Just add your Notion token to get started.
+          Done! Every Friday at 5pm, an AI searches for this week's top AI news, reads the full articles, writes a short digest, then emails it to your team automatically.
         </div>
         <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(52,211,153,0.08)', border:'1px solid rgba(52,211,153,0.2)', borderRadius:8, padding:'5px 10px', fontSize:11, color:'#34d399', alignSelf:'flex-start' }}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.5L5 9l4.5-6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -334,7 +334,7 @@ export function LandingPage() {
 
           <div>
             <MockCanvas />
-            <p className="mt-3 text-center text-[11px] text-white/20">Weekly content pipeline — built by AI, runs automatically</p>
+            <p className="mt-3 text-center text-[11px] text-white/20">Weekly research pipeline — AI searches, reads, and writes. You just approve.</p>
           </div>
         </div>
       </section>
@@ -392,8 +392,8 @@ export function LandingPage() {
             </p>
             <div className="flex flex-col gap-3">
               {[
+                ['Every Monday, search for the top news in my industry and email me a digest', 'Web Search + AI + Email'],
                 ['Every morning at 8am, pull my top Notion pages and email me a summary', 'Notion + Email + Schedule'],
-                ['When someone fills out my form, create a Linear issue and notify my team', 'Webhook + Linear + Email'],
                 ['Review every AI-drafted post before it gets sent anywhere', 'AI + Human Approval + Email'],
               ].map(([prompt, tags]) => (
                 <div key={prompt} className="rounded-xl px-4 py-3"
@@ -405,6 +405,68 @@ export function LandingPage() {
             </div>
           </div>
           <AIChatMock />
+        </div>
+      </section>
+
+      {/* ── Internet-connected AI ── */}
+      <section className="mx-auto max-w-6xl px-6 py-16" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+        <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/30">Internet access</p>
+            <h2 className="mb-4 text-[1.35rem] font-bold tracking-tight sm:text-[1.6rem]">
+              AI that can actually read the internet
+            </h2>
+            <p className="mb-6 text-[14px] leading-relaxed text-white/40">
+              Every AI node in your workflow has access to the live web. It can search for current information,
+              open URLs, and read full page content — including JavaScript-rendered pages, documentation sites, and blog posts.
+              No manual copy-pasting. No stale knowledge cutoffs.
+            </p>
+            <div className="flex flex-col gap-3">
+              {[
+                { tool:'web_search', desc:'Searches the web and returns the top results with titles, URLs, and excerpts' },
+                { tool:'read_url', desc:'Opens any URL and reads the full content — including client-side rendered pages' },
+              ].map((t) => (
+                <div key={t.tool} className="flex items-start gap-3 rounded-xl px-4 py-3"
+                  style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+                  <code className="shrink-0 rounded px-2 py-0.5 text-[11px] font-mono mt-0.5"
+                    style={{ background:'rgba(59,130,246,0.12)', color:'#60a5fa', border:'1px solid rgba(59,130,246,0.2)' }}>
+                    {t.tool}
+                  </code>
+                  <p className="text-[12px] text-white/40 leading-relaxed">{t.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ background:'rgba(10,10,12,0.97)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }}>
+            <div style={{ padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:7, height:7, borderRadius:'50%', background:'#3b82f6' }} />
+              <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.5)', letterSpacing:'0.06em' }}>AI Node · Live run</span>
+            </div>
+            <div style={{ padding:'14px', display:'flex', flexDirection:'column', gap:8 }}>
+              {[
+                { tool:'web_search', query:'"top AI tools" site:news', status:'done', result:'8 results found' },
+                { tool:'read_url', query:'techcrunch.com/2025/ai-roundup', status:'done', result:'4 200 words read' },
+                { tool:'read_url', query:'venturebeat.com/ai/weekly', status:'running', result:null },
+              ].map((s, i) => (
+                <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'10px 12px' }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                    <code style={{ fontSize:10, color:'#60a5fa', background:'rgba(59,130,246,0.1)', padding:'2px 7px', borderRadius:5 }}>{s.tool}</code>
+                    {s.status === 'done'
+                      ? <span style={{ fontSize:10, color:'#34d399' }}>✓ {s.result}</span>
+                      : <span style={{ fontSize:10, color:'rgba(255,255,255,0.3)', display:'flex', alignItems:'center', gap:4 }}>
+                          <span style={{ width:5, height:5, borderRadius:'50%', background:'#3b82f6', display:'inline-block', animation:'pulse 1s infinite' }}/>
+                          reading…
+                        </span>
+                    }
+                  </div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', fontFamily:'monospace' }}>{s.query}</div>
+                </div>
+              ))}
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)', paddingTop:4 }}>
+                Synthesising findings into newsletter draft…
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -455,7 +517,9 @@ export function LandingPage() {
             { name:'Linear', color:C.linear },
             { name:'Email', color:C.email },
             { name:'Claude AI', color:C.llm },
-            { name:'GPT-4', color:'#10b981' },
+            { name:'GPT-4o', color:'#10b981' },
+            { name:'Web Search', color:'#f97316' },
+            { name:'Web Reader', color:'#8b5cf6' },
             { name:'Webhooks', color:C.webhook },
             { name:'HTTP', color:C.http },
             { name:'Any API', color:'rgba(255,255,255,0.3)' },
@@ -483,9 +547,11 @@ export function LandingPage() {
         {/* Integration details */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { color:C.notion, name:'Notion', actions:'Create pages · Query databases · Append content' },
-            { color:C.linear, name:'Linear', actions:'Create issues · List & filter · Post comments' },
-            { color:C.email,  name:'Email',  actions:'Send to anyone · Dynamic content · AI-triggered' },
+            { color:C.notion,   name:'Notion',      actions:'Create pages · Query databases · Append content' },
+            { color:C.linear,   name:'Linear',      actions:'Create issues · List & filter · Post comments' },
+            { color:C.email,    name:'Email',        actions:'Send to anyone · Dynamic content · AI-triggered' },
+            { color:'#f97316',  name:'Web Search',  actions:'Search any topic · Real-time results · Powered by Brave' },
+            { color:'#8b5cf6',  name:'Web Reader',  actions:'Read any URL · Works on JS-rendered pages · Returns clean markdown' },
           ].map((t) => (
             <div key={t.name} className="rounded-xl p-4"
               style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderLeft:`2px solid ${t.color}` }}>
@@ -504,12 +570,12 @@ export function LandingPage() {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { color:C.llm,      name:'Daily content digests',    desc:'Pull articles every morning, summarise with AI, deliver to your inbox.' },
+            { color:'#f97316',  name:'Web research digest',      desc:'Search for the week\'s top news in any topic, read the full articles, and get a clean summary in your inbox.' },
+            { color:C.llm,      name:'Competitor monitoring',    desc:'Automatically read competitor blogs and release notes, summarise what changed, and notify your team.' },
             { color:C.notion,   name:'Notion automations',       desc:'Auto-create pages, log entries, or update databases on a schedule.' },
             { color:C.linear,   name:'Issue triage',             desc:'Incoming requests become Linear issues — categorised by AI, assigned automatically.' },
             { color:C.approval, name:'Approval flows',           desc:'AI drafts it, you review it, then it goes out — no accidental sends.' },
             { color:C.schedule, name:'Scheduled reports',        desc:'Aggregate data from multiple sources and deliver a clean summary, on time.' },
-            { color:C.http,     name:'Cross-tool pipelines',     desc:'Connect any two tools. If one can send data and the other can receive it, you can automate it.' },
           ].map((n) => (
             <div key={n.name} className="rounded-xl p-5"
               style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
