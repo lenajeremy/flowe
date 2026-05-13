@@ -69,14 +69,12 @@ function ResizeHandle({
   return (
     <div className="flex-shrink-0 flex flex-col" style={{ width: '6px', position: 'relative' }}>
       <div
-        className="flex-1 cursor-col-resize hover:bg-white/10 transition-colors"
-        style={{ background: '#1a1a1a' }}
+        className="flex-1 cursor-col-resize transition-colors resize-handle-bg hover:bg-[var(--color-border2)]"
         onMouseDown={open ? onMouseDown : undefined}
       />
       <button
         onClick={onToggle}
-        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-subtle)] hover:text-white hover:bg-white/5 transition-colors"
-        style={{ background: '#1a1a1a' }}
+        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-subtle)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] transition-colors resize-handle-bg"
         title={open ? 'Collapse panel' : 'Expand panel'}
       >
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -123,8 +121,16 @@ export function WorkflowEditorPage() {
   const [leftOpen, setLeftOpen] = useState(true)
   const left  = useResizable(DEFAULT_LEFT,  MIN_LEFT,  MAX_LEFT,  'left')
   const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
-  // Read theme for Canvas prop; App.tsx owns the attribute update
-  const [theme] = useState<Theme>(getInitialTheme)
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('workflow-ai-theme', theme)
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+  }
 
   // ── Load workflow from DB on mount / id change ────────────
   const loadedIdRef = useRef<string | null>(null)
@@ -278,7 +284,7 @@ export function WorkflowEditorPage() {
   // ── Layout ────────────────────────────────────────────────
   return (
     <div
-      className="flex overflow-hidden bg-black text-white"
+      className="flex overflow-hidden bg-[var(--color-canvas)] text-[var(--color-text)]"
       style={{ height: '100dvh' }}
     >
       {/* Left panel */}
@@ -300,7 +306,7 @@ export function WorkflowEditorPage() {
         <ReactFlowProvider>
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <Canvas theme={theme} />
-            <BottomToolDock onSave={handleSave} />
+            <BottomToolDock onSave={handleSave} theme={theme} onThemeToggle={toggleTheme} />
           </div>
         </ReactFlowProvider>
         <ExecutionPanel />
