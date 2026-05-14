@@ -9,7 +9,7 @@ import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 import { API } from '@/lib/config'
 
 function Divider() {
-  return <div className="dock-divider" />
+  return <div className="mx-1 h-4 w-px flex-shrink-0 bg-white/10" />
 }
 
 function ToolBtn({
@@ -26,7 +26,11 @@ function ToolBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`dock-tool-btn flex h-8 w-8 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-40 ${active ? 'active' : ''}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+        active
+          ? 'bg-white/15 text-white'
+          : 'text-[var(--color-muted)] hover:bg-white/10 hover:text-white'
+      }`}
     >
       {children}
     </button>
@@ -42,7 +46,7 @@ function Spinner() {
   )
 }
 
-export function BottomToolDock({ onSave, theme, onThemeToggle }: { onSave?: () => void; theme?: 'dark' | 'light'; onThemeToggle?: () => void } = {}) {
+export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -459,7 +463,7 @@ export function BottomToolDock({ onSave, theme, onThemeToggle }: { onSave?: () =
 
       {/* Main pill */}
       <div
-        className="pointer-events-auto relative flex items-center gap-0 rounded-full px-1 py-1 backdrop-blur dock-pill"
+        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-white/10 bg-[#111111]/95 px-1 py-1 backdrop-blur"
         style={{ boxShadow: 'var(--dock-shadow)' }}
       >
         {/* Select */}
@@ -520,24 +524,6 @@ export function BottomToolDock({ onSave, theme, onThemeToggle }: { onSave?: () =
           </ToolBtn>
         )}
 
-        {/* Theme toggle */}
-        {onThemeToggle && (
-          <ToolBtn title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={onThemeToggle}>
-            {theme === 'dark' ? (
-              <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-                <circle cx="7.5" cy="7.5" r="3" stroke="currentColor" strokeWidth="1.35"/>
-                <path d="M7.5 1v1.5M7.5 12.5V14M1 7.5h1.5M12.5 7.5H14M3.2 3.2l1 1M10.8 10.8l1 1M10.8 3.2l-1 1M3.2 10.8l-1 1" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round"/>
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-                <path d="M7.5 1.5a6 6 0 100 12 6 6 0 000-12z" stroke="currentColor" strokeWidth="1.35"/>
-                <path d="M7.5 1.5A4.5 4.5 0 0112 7.5a4.5 4.5 0 01-4.5 4.5V1.5z" fill="currentColor" opacity="0.3"/>
-                <path d="M3 4A6 6 0 007.5 13.5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round"/>
-              </svg>
-            )}
-          </ToolBtn>
-        )}
-
         <Divider />
 
         {/* Tabs — icon only, count badge */}
@@ -575,7 +561,8 @@ export function BottomToolDock({ onSave, theme, onThemeToggle }: { onSave?: () =
         ) : (
           <button
             onClick={handleRun}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-[var(--color-text)] px-3.5 text-[11px] font-semibold text-[var(--color-canvas)] transition-all hover:opacity-90 active:scale-95"
+            className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[11px] font-semibold text-black transition-all hover:opacity-90 active:scale-95"
+            style={{ boxShadow: '0 0 16px rgba(255,255,255,0.2)' }}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
               <path d="M2 1.5l7 3.5-7 3.5V1.5z"/>

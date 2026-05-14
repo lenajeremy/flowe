@@ -25,6 +25,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root,
+[data-theme='light'],
 [data-theme='dark'] {
   color-scheme: dark;
   --color-canvas:   #000000;
@@ -39,38 +40,6 @@
   --color-accent:   #0d99ff;
   --panel-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
   --dock-shadow: 0 14px 42px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  --dock-bg: rgba(17, 17, 17, 0.95);
-  --dock-border: rgba(255, 255, 255, 0.1);
-  --dock-divider: rgba(255, 255, 255, 0.1);
-  --dock-btn-hover-bg: rgba(255, 255, 255, 0.1);
-  --dock-btn-active-bg: rgba(255, 255, 255, 0.15);
-  --dock-btn-active-color: #ffffff;
-  --dock-btn-hover-color: #ffffff;
-  --resize-handle-bg: #1a1a1a;
-}
-
-[data-theme='light'] {
-  color-scheme: light;
-  --color-canvas:   #f0f0f0;
-  --color-surface:  #ffffff;
-  --color-surface2: #f5f5f5;
-  --color-elevated: #ffffff;
-  --color-border:   #e2e2e2;
-  --color-border2:  #cccccc;
-  --color-text:     #0f0f0f;
-  --color-muted:    #777777;
-  --color-subtle:   #aaaaaa;
-  --color-accent:   #0d99ff;
-  --panel-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
-  --dock-shadow: 0 4px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
-  --dock-bg: rgba(255, 255, 255, 0.95);
-  --dock-border: rgba(0, 0, 0, 0.1);
-  --dock-divider: rgba(0, 0, 0, 0.1);
-  --dock-btn-hover-bg: rgba(0, 0, 0, 0.06);
-  --dock-btn-active-bg: rgba(0, 0, 0, 0.09);
-  --dock-btn-active-color: #0f0f0f;
-  --dock-btn-hover-color: #0f0f0f;
-  --resize-handle-bg: #e8e8e8;
 }
 
 body {
@@ -205,34 +174,6 @@ body {
 .chat-markdown th, .chat-markdown td { border: 1px solid var(--color-border); padding: 0.25em 0.5em; text-align: left; white-space: nowrap; }
 .chat-markdown th { background: var(--color-surface2); font-weight: 600; }
 .chat-markdown :where(table) { display: block; overflow-x: auto; }
-
-/* ── Dock theme-aware classes ─────────────────────────────── */
-.dock-pill {
-  background: var(--dock-bg);
-  border: 1px solid var(--dock-border);
-}
-.dock-divider {
-  width: 1px;
-  height: 1rem;
-  flex-shrink: 0;
-  margin: 0 0.25rem;
-  background: var(--dock-divider);
-}
-.dock-tool-btn {
-  color: var(--color-muted);
-  transition: background 0.15s, color 0.15s;
-}
-.dock-tool-btn:hover {
-  background: var(--dock-btn-hover-bg);
-  color: var(--dock-btn-hover-color);
-}
-.dock-tool-btn.active {
-  background: var(--dock-btn-active-bg);
-  color: var(--dock-btn-active-color);
-}
-.resize-handle-bg {
-  background: var(--resize-handle-bg);
-}
 
 /* ── Scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
