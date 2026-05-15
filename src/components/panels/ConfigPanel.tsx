@@ -41,12 +41,18 @@ const APPROVAL_TIMEOUTS: Array<{ value: string; label: string }> = [
   { value: '86400', label: '24 hours'    },
 ]
 
-const LLM_MODELS: Array<{ value: string; label: string }> = [
-  { value: 'gpt-4o',            label: 'GPT-4o' },
-  { value: 'gpt-4o-mini',       label: 'GPT-4o Mini' },
-  { value: 'claude-opus-4-5',   label: 'Claude Opus 4.5' },
-  { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-  { value: 'claude-haiku-4-5',  label: 'Claude Haiku 4.5' },
+const LLM_MODELS: Array<{ value: string; label: string; group: string }> = [
+  { value: 'gpt-4o',                 label: 'GPT-4o',              group: 'OpenAI' },
+  { value: 'gpt-4o-mini',            label: 'GPT-4o Mini',         group: 'OpenAI' },
+  { value: 'o4-mini',                label: 'o4-mini',             group: 'OpenAI' },
+  { value: 'claude-opus-4-5',        label: 'Claude Opus 4.5',     group: 'Anthropic' },
+  { value: 'claude-sonnet-4-5',      label: 'Claude Sonnet 4.5',   group: 'Anthropic' },
+  { value: 'claude-haiku-4-5',       label: 'Claude Haiku 4.5',    group: 'Anthropic' },
+  { value: 'gemini-2.5-pro',         label: 'Gemini 2.5 Pro',        group: 'Google' },
+  { value: 'gemini-3-flash',         label: 'Gemini 3 Flash',        group: 'Google' },
+  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro',        group: 'Google' },
+  { value: 'gemini-3.1-flash',       label: 'Gemini 3.1 Flash',      group: 'Google' },
+  { value: 'gemini-3.1-flash-lite',  label: 'Gemini 3.1 Flash Lite', group: 'Google' },
 ]
 
 /** Returns all nodes that have an edge pointing TO targetId (direct upstream only) */

@@ -21,9 +21,15 @@ export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'wait
 export type LLMModel =
   | 'gpt-4o'
   | 'gpt-4o-mini'
+  | 'o4-mini'
   | 'claude-opus-4-5'
   | 'claude-sonnet-4-5'
   | 'claude-haiku-4-5'
+  | 'gemini-2.5-pro'
+  | 'gemini-3-flash'
+  | 'gemini-3.1-pro-preview'
+  | 'gemini-3.1-flash'
+  | 'gemini-3.1-flash-lite'
 
 /**
  * Flat node data type that satisfies Record<string, unknown> for @xyflow/react.

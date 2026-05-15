@@ -38,11 +38,19 @@ function fromStored(msgs: StoredMessage[]): ChatMessage[] {
 
 // ── Component ───────────────────────────────────────────────────
 
+const CHAT_MODELS = [
+  { value: 'claude-sonnet-4-6',      label: 'Claude Sonnet 4.6' },
+  { value: 'o4-mini',                label: 'o4-mini' },
+  { value: 'gemini-2.5-pro',         label: 'Gemini 2.5 Pro' },
+  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
+] as const
+
 export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [chatModel, setChatModel] = useState<string>('claude-sonnet-4-6')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -120,6 +128,7 @@ export function ChatPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: text,
+          model: chatModel,
           history: historySnapshot,
           currentNodes: nodes.map(({ id, type, position, data }) => ({
             id, type, position,
@@ -298,15 +307,27 @@ export function ChatPanel() {
 
       {/* Input */}
       <div className="border-t border-[var(--color-border)] p-3 flex flex-col gap-2">
-        {messages.length > 0 && !isGenerating && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="self-start text-[10px] text-[var(--color-subtle)] hover:text-[var(--color-muted)] transition-colors"
+        <div className="flex items-center justify-between">
+          <select
+            value={chatModel}
+            onChange={(e) => setChatModel(e.target.value)}
+            disabled={isGenerating}
+            className="text-[10px] bg-transparent text-[var(--color-muted)] border-none outline-none cursor-pointer hover:text-[var(--color-text)] transition-colors disabled:opacity-50"
           >
-            Clear conversation
-          </button>
-        )}
+            {CHAT_MODELS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          {messages.length > 0 && !isGenerating && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-[10px] text-[var(--color-subtle)] hover:text-[var(--color-muted)] transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <div className="relative flex items-end gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 focus-within:border-[var(--color-border2)]">
           <textarea
             ref={inputRef}
@@ -438,7 +459,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               </div>
             ) : (
               <div className="chat-markdown">
-                <Markdown remarkPlugins={[remarkGfm]}>{stripCodeBlocks(message.content)}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
               </div>
             )}
           </div>
@@ -457,6 +478,3 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   )
 }
 
-function stripCodeBlocks(text: string): string {
-  return text.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').replace(/\n{3,}/g, '\n\n').trim()
-}

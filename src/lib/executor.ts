@@ -8,7 +8,7 @@ import type {
   WorkflowASTNode,
   WorkflowASTEdge,
 } from '@/types/workflow'
-import { getApiKeys, isAnthropicModel } from '@/lib/apiKeys'
+import { getApiKeys, isAnthropicModel, isGeminiModel } from '@/lib/apiKeys'
 
 export interface ExecutorStore {
   nodes: FlowNode[]
@@ -151,6 +151,53 @@ async function callOpenAI(
     choices: Array<{ message: { content: string } }>
   }
   return json.choices[0]?.message.content ?? ''
+}
+
+async function callGemini(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number,
+  maxTokens: number,
+  apiKey: string,
+  images: ImageRef[] = [],
+): Promise<string> {
+  type GeminiPart =
+    | { text: string }
+    | { inline_data: { mime_type: string; data: string } }
+
+  const parts: GeminiPart[] = [
+    ...images.map((img): GeminiPart => ({
+      inline_data: { mime_type: img.mediaType, data: img.data },
+    })),
+    { text: userPrompt },
+  ]
+
+  const body: Record<string, unknown> = {
+    system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature, maxOutputTokens: maxTokens },
+  }
+  if (!systemPrompt) delete body.system_instruction
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Gemini API error ${res.status}: ${err}`)
+  }
+
+  const json = await res.json() as {
+    candidates: Array<{ content: { parts: Array<{ text: string }> } }>
+  }
+  return json.candidates[0]?.content.parts.map((p) => p.text).join('') ?? ''
 }
 
 // ── Helpers ──────────────────────────────────────────────────

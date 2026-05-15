@@ -1,8 +1,10 @@
 import { useRef } from 'react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
-import { runWorkflow, serializeToAST } from '@/lib/executor'
-import type { WorkflowAST } from '@/types/workflow'
+import { serializeToAST } from '@/lib/executor'
+import { consumeRunStream } from '@/lib/runStream'
+import { API } from '@/lib/config'
+import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 
 function DownloadIcon() {
   return (
@@ -65,10 +67,11 @@ export function Toolbar({ theme, onToggleTheme }: ToolbarProps) {
   const {
     workflowName, setWorkflowName,
     executionState,
-    nodes, edges,
+    nodes, edges, dbId,
     resetNodeExecutionStatuses, clearExecutionLog,
     setExecutionState, appendExecutionEvent,
     setNodeExecutionStatus, setLogPanelOpen,
+    setPendingApproval, setCurrentRunId,
     setApiKeyModalOpen,
     importWorkflowAsNewTab,
   } = useWorkflowStore(
@@ -78,12 +81,15 @@ export function Toolbar({ theme, onToggleTheme }: ToolbarProps) {
       executionState: s.executionState,
       nodes: s.nodes,
       edges: s.edges,
+      dbId: s.dbId,
       resetNodeExecutionStatuses: s.resetNodeExecutionStatuses,
       clearExecutionLog: s.clearExecutionLog,
       setExecutionState: s.setExecutionState,
       appendExecutionEvent: s.appendExecutionEvent,
       setNodeExecutionStatus: s.setNodeExecutionStatus,
       setLogPanelOpen: s.setLogPanelOpen,
+      setPendingApproval: s.setPendingApproval,
+      setCurrentRunId: s.setCurrentRunId,
       setApiKeyModalOpen: s.setApiKeyModalOpen,
       importWorkflowAsNewTab: s.importWorkflowAsNewTab,
     })),
@@ -91,17 +97,62 @@ export function Toolbar({ theme, onToggleTheme }: ToolbarProps) {
 
   const isRunning = executionState === 'running'
 
-  function handleRun() {
+  async function handleRun() {
     if (isRunning) return
     resetNodeExecutionStatuses()
     clearExecutionLog()
     setExecutionState('running')
     setLogPanelOpen(true)
-    void runWorkflow({
-      nodes, edges, workflowName,
-      setExecutionState, appendExecutionEvent,
-      setNodeExecutionStatus, setLogPanelOpen,
-    })
+
+    try {
+      const response = await fetch(`${API}/api/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workflowId: dbId ?? '',
+          workflow: { version: '1.0', name: workflowName, nodes, edges, createdAt: new Date().toISOString() },
+        }),
+      })
+      if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
+
+      const nodeOutputs = new Map<string, string>()
+      await consumeRunStream(response.body.getReader(), (event: ExecutionEvent) => {
+        appendExecutionEvent(event)
+        const nid = event.nodeId
+        switch (event.type) {
+          case 'workflow_started':
+            if (event.runId) setCurrentRunId(event.runId)
+            break
+          case 'node_started':
+            if (nid) setNodeExecutionStatus(nid, 'running')
+            break
+          case 'node_output':
+            if (nid && event.output !== undefined) nodeOutputs.set(nid, event.output)
+            break
+          case 'node_completed':
+            if (nid) setNodeExecutionStatus(nid, 'completed', nodeOutputs.get(nid))
+            break
+          case 'node_error':
+            if (nid) setNodeExecutionStatus(nid, 'error', event.message)
+            break
+          case 'node_waiting':
+            if (nid) {
+              setNodeExecutionStatus(nid, 'waiting')
+              setPendingApproval({ runId: event.runId ?? '', nodeId: nid, message: event.message ?? 'Please review and approve or reject this step.' })
+            }
+            break
+          case 'workflow_completed':
+            setExecutionState('completed')
+            break
+          case 'workflow_error':
+            setExecutionState('error')
+            break
+        }
+      })
+    } catch (err) {
+      appendExecutionEvent({ id: crypto.randomUUID(), type: 'workflow_error', message: `Run failed: ${err instanceof Error ? err.message : String(err)}`, timestamp: 0 })
+      setExecutionState('error')
+    }
   }
 
   function handleDownload() {
@@ -226,7 +277,7 @@ export function Toolbar({ theme, onToggleTheme }: ToolbarProps) {
 
       {/* Run button */}
       <button
-        onClick={handleRun}
+        onClick={() => { void handleRun() }}
         disabled={isRunning}
         className={`flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-[12px] font-medium transition-all ${
           isRunning
