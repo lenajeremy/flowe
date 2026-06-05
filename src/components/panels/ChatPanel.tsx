@@ -341,15 +341,18 @@ export function ChatPanel() {
           ))}
         </select>
 
-        {/* Textarea card — gradient border */}
+        {/* Textarea card — gradient border + outward glow */}
         <div
-          className="rounded-2xl p-[1px] transition-opacity duration-200"
+          className="rounded-2xl transition-all duration-300"
           style={{
-            background: 'linear-gradient(135deg, #7c3aed 0%, #4338ca 40%, #0ea5e9 100%)',
-            opacity: inputFocused ? 1 : 0.65,
+            padding: '1.5px',
+            background: 'linear-gradient(135deg, #6d28d9 0%, #1e1b2e 40%, #14532d 70%, #16a34a 100%)',
+            boxShadow: inputFocused
+              ? '-6px 0 28px rgba(109, 40, 217, 0.55), 6px 0 28px rgba(22, 163, 74, 0.45), 0 6px 24px rgba(109, 40, 217, 0.3)'
+              : '-3px 0 18px rgba(109, 40, 217, 0.3), 3px 0 18px rgba(22, 163, 74, 0.25), 0 3px 16px rgba(109, 40, 217, 0.15)',
           }}
         >
-        <div className="rounded-2xl bg-[var(--color-surface)] px-3.5 pt-3 pb-2.5">
+        <div className="rounded-2xl bg-[var(--color-canvas)] px-4 pt-4 pb-3">
           <textarea
             ref={inputRef}
             value={input}
@@ -358,15 +361,15 @@ export function ChatPanel() {
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
             placeholder="Eg. Build a workflow that sends top product design articles to my email every day"
-            rows={2}
+            rows={3}
             disabled={isGenerating}
-            className="w-full resize-none bg-transparent text-[12px] text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none leading-relaxed disabled:opacity-50"
+            className="w-full resize-none bg-transparent text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none leading-relaxed disabled:opacity-50"
           />
-          <div className="flex items-center justify-between mt-1.5">
-            {/* Paperclip */}
+          <div className="flex items-center justify-between mt-2">
+            {/* Paperclip — dark rounded square button */}
             <button
               type="button"
-              className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
               tabIndex={-1}
             >
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -374,14 +377,14 @@ export function ChatPanel() {
               </svg>
             </button>
 
-            {/* Send / Stop */}
+            {/* Send / Stop — large white circle */}
             {isGenerating ? (
               <button
                 type="button"
                 onClick={handleStop}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)] hover:opacity-80 transition-opacity"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black hover:opacity-80 transition-opacity"
               >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
                   <rect x="2.5" y="2.5" width="5" height="5" rx="0.5" fill="currentColor" />
                 </svg>
               </button>
@@ -390,7 +393,7 @@ export function ChatPanel() {
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={!input.trim()}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)] transition-opacity disabled:opacity-30 hover:opacity-80"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black transition-opacity disabled:opacity-30 hover:opacity-80"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M6 10V2M6 2L2.5 5.5M6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
