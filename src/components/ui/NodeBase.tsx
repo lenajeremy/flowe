@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
+import LiquidGlass from 'liquid-glass-react'
 import type { ExecutionStatus } from '@/types/workflow'
 
 interface NodeBaseProps {
@@ -11,69 +12,168 @@ interface NodeBaseProps {
 }
 
 export function NodeBase({ accentHex, iconPath, label, isSelected, executionStatus, children }: NodeBaseProps) {
-  const statusClass =
-    executionStatus === 'running'   ? 'node-running'  :
-    executionStatus === 'completed' ? 'node-complete'  :
-    executionStatus === 'error'     ? 'node-error'     :
-    executionStatus === 'waiting'   ? 'node-waiting'   : ''
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dims, setDims] = useState({ w: 0, h: 0 })
 
-  const shadow = isSelected
-    ? `0 0 0 1.5px ${accentHex}, 0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${accentHex}22`
-    : '0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07)'
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setDims({ w: entry.contentRect.width, h: entry.contentRect.height })
+      window.dispatchEvent(new Event('resize'))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const isWaiting   = executionStatus === 'waiting'
+  const isRunning   = executionStatus === 'running'
+  const isCompleted = executionStatus === 'completed'
+  const isError     = executionStatus === 'error'
+
+  const borderColor =
+    isRunning   ? '#3B82F6' :
+    isCompleted ? '#10B981' :
+    isError     ? '#EF4444' :
+    isWaiting   ? '#F97316' :
+    isSelected  ? accentHex :
+    accentHex + '55'
+
+  const outerGlow = isSelected
+    ? `0 0 28px ${accentHex}35, 0 8px 32px rgba(0,0,0,0.6)`
+    : '0 4px 24px rgba(0,0,0,0.5)'
 
   return (
-    <div
-      className={`relative flex select-none flex-col rounded-2xl transition-shadow ${statusClass}`}
-      style={{
-        width: 260,
-        aspectRatio: '16/9',
-        boxShadow: shadow,
-        background: 'rgba(255,255,255,0.05)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      {/* Header */}
-      <div className="flex flex-shrink-0 items-center justify-between px-3 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex min-w-0 items-center gap-2.5">
-          {/* Colored icon box */}
-          <div
-            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[7px]"
-            style={{ backgroundColor: `${accentHex}22` }}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
-              stroke={accentHex} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+    <div className="flex flex-col" style={{ width: 260 }}>
+
+      {/* Status badge above node */}
+      {isWaiting && (
+        <div
+          className="mb-2 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          style={{
+            background: 'rgba(249,115,22,0.15)',
+            border: '1px solid rgba(249,115,22,0.35)',
+            color: '#FB923C',
+          }}
+        >
+          Action Required
+        </div>
+      )}
+
+      {/* ── 3-layer card ── */}
+      <div
+        ref={containerRef}
+        className="relative select-none"
+        style={{ borderRadius: 16, boxShadow: outerGlow }}
+      >
+        {/* Layer 1 — accent gradient */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            borderRadius: 16,
+            background: isSelected
+              ? `linear-gradient(135deg, ${accentHex}40 0%, ${accentHex}18 100%)`
+              : `linear-gradient(135deg, ${accentHex}28 0%, ${accentHex}0C 100%)`,
+          }}
+        />
+
+        {/* Layer 2 — LiquidGlass */}
+        {dims.w > 0 && (
+          <LiquidGlass
+            cornerRadius={16}
+            displacementScale={40}
+            blurAmount={0.06}
+            saturation={125}
+            aberrationIntensity={1}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: dims.w,
+              height: dims.h,
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          >{null}</LiquidGlass>
+        )}
+
+        {/* Layer 3 — content (2px margin so gradient shows as border glow) */}
+        <div
+          className="relative"
+          style={{
+            margin: 2,
+            borderRadius: 14,
+            background: 'rgba(10, 10, 18, 0.92)',
+            border: `1px solid ${borderColor}`,
+            zIndex: 2,
+          }}
+        >
+          {/* Header: icon + label */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+            <div
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
+              style={{
+                borderRadius: 10,
+                background: `${accentHex}1A`,
+                border: `1px solid ${accentHex}40`,
+                boxShadow: `0 2px 8px 1px ${accentHex}20 inset`,
+              }}
             >
-              <path d={iconPath} />
-            </svg>
+              <svg
+                width="20" height="20" viewBox="0 0 16 16" fill="none"
+                style={{ overflow: 'visible' }}
+              >
+                <path
+                  d={iconPath}
+                  stroke={accentHex}
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="truncate text-[15px] font-semibold text-white leading-tight">
+              {label}
+            </span>
           </div>
 
-          <span className="truncate text-xs font-semibold text-[var(--color-text)]">
-            {label}
-          </span>
+          {/* Body — node-specific content + Handles */}
+          <div className="px-4 pb-4">
+            {children}
+          </div>
         </div>
+      </div>
 
-        {/* Status badge */}
-        {executionStatus && executionStatus !== 'idle' && (
-          <span
-            className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${
-              executionStatus === 'running'   ? 'bg-blue-500/20 text-blue-500'       :
-              executionStatus === 'completed' ? 'bg-emerald-500/20 text-emerald-600' :
-              executionStatus === 'waiting'   ? 'bg-pink-500/20 text-pink-400'       :
-              'bg-red-500/20 text-red-500'
-            }`}
+      {/* Action buttons — shown when selected */}
+      {isSelected && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <button
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
+            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
           >
-            {executionStatus === 'running'   ? '●' :
-             executionStatus === 'completed' ? '✓' :
-             executionStatus === 'waiting'   ? '⏳' : '✗'}
-          </span>
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-hidden px-3 py-2">
-        {children}
-      </div>
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor">
+              <path d="M2 1.5l7 3.5-7 3.5V1.5z"/>
+            </svg>
+            Run
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
+            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6a4 4 0 1 0 8 0 4 4 0 0 0-8 0zM6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            Test
+          </button>
+          <button
+            className="flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
+            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <circle cx="3" cy="7" r="1.1"/><circle cx="7" cy="7" r="1.1"/><circle cx="11" cy="7" r="1.1"/>
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
