@@ -18,12 +18,12 @@ import { API } from '@/lib/config'
 
 // ── Resize logic (unchanged from original App.tsx) ───────────
 
-const MIN_LEFT    = 120
-const MAX_LEFT    = 480
-const DEFAULT_LEFT = 224
+const MIN_LEFT = 120
+const MAX_LEFT = 480
+const DEFAULT_LEFT = 450
 
-const MIN_RIGHT   = 200
-const MAX_RIGHT   = 640
+const MIN_RIGHT = 200
+const MAX_RIGHT = 640
 const DEFAULT_RIGHT = 288
 
 type Theme = 'dark' | 'light'
@@ -129,7 +129,7 @@ export function WorkflowEditorPage() {
   )
 
   const [leftOpen, setLeftOpen] = useState(true)
-  const left  = useResizable(DEFAULT_LEFT,  MIN_LEFT,  MAX_LEFT,  'left')
+  const left = useResizable(DEFAULT_LEFT, MIN_LEFT, MAX_LEFT, 'left')
   const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
   const [theme] = useState<Theme>(getInitialTheme)
   const [lastRun, setLastRun] = useState<{ id: string; createdAt: string } | null>(null)
@@ -141,7 +141,7 @@ export function WorkflowEditorPage() {
       .then((runs: Array<{ id: string; created_at: string }>) => {
         if (runs.length > 0) setLastRun({ id: runs[0].id, createdAt: runs[0].created_at })
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [dbId])
 
   // ── Load workflow from DB on mount / id change ────────────
@@ -233,7 +233,7 @@ export function WorkflowEditorPage() {
         void fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, dbId])
 
   // If dbId arrives after node was already added (new workflow flow)
@@ -321,8 +321,8 @@ export function WorkflowEditorPage() {
             title="Home"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-              <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+              <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -331,7 +331,7 @@ export function WorkflowEditorPage() {
         <div className="flex items-center gap-1.5">
           <span className="text-[14px] font-semibold text-[var(--color-text)]">{workflowName}</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[var(--color-muted)]">
-            <path d="M4 5.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 5.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
 
@@ -358,9 +358,9 @@ export function WorkflowEditorPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-white/5 transition-colors disabled:opacity-50"
           >
             <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
-              <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
-              <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1"/>
-              <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1"/>
+              <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+              <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1" />
+              <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1" />
             </svg>
             Save
           </button>
@@ -375,64 +375,64 @@ export function WorkflowEditorPage() {
       {/* Main content row */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-      {/* Left panel */}
-      {leftOpen && (
-        <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: left.width }}>
-          <NodePalette onCollapse={() => setLeftOpen(false)} />
-        </div>
-      )}
-
-      <ResizeHandle
-        onMouseDown={left.onMouseDown}
-        onToggle={() => setLeftOpen((o) => !o)}
-        open={leftOpen}
-        chevronOpen="M6 1L2 4l4 3"
-        chevronClosed="M2 1l4 3-4 3"
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col bg-[var(--color-canvas)]">
-        <ReactFlowProvider>
-          <div className="relative min-h-0 flex-1 overflow-hidden">
-            <Canvas theme={theme} />
-            <BottomToolDock onSave={handleSave} />
+        {/* Left panel */}
+        {leftOpen && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: left.width }}>
+            <NodePalette onCollapse={() => setLeftOpen(false)} />
           </div>
-        </ReactFlowProvider>
-        <ExecutionPanel />
-      </div>
+        )}
 
-      <ResizeHandle
-        onMouseDown={right.onMouseDown}
-        onToggle={() => setConfigPanelOpen(!isConfigPanelOpen)}
-        open={isConfigPanelOpen}
-        chevronOpen="M2 1l4 3-4 3"
-        chevronClosed="M6 1L2 4l4 3"
-      />
+        <ResizeHandle
+          onMouseDown={left.onMouseDown}
+          onToggle={() => setLeftOpen((o) => !o)}
+          open={leftOpen}
+          chevronOpen="M6 1L2 4l4 3"
+          chevronClosed="M2 1l4 3-4 3"
+        />
 
-      {isConfigPanelOpen && (
-        <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: right.width }}>
-          {versionsOpen ? (
-            <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
-              <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
-                <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
-              </div>
-              {dbId ? (
-                <VersionsPanel workflowId={dbId} />
-              ) : (
-                <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
-                  <p className="text-[12px] text-[var(--color-muted)]">Save the workflow first to manage version history.</p>
-                </div>
-              )}
-            </aside>
-          ) : (
-            <ConfigPanel />
-          )}
+        <div className="flex min-w-0 flex-1 flex-col bg-[var(--color-canvas)]">
+          <ReactFlowProvider>
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              <Canvas theme={theme} />
+              <BottomToolDock onSave={handleSave} />
+            </div>
+          </ReactFlowProvider>
+          <ExecutionPanel />
         </div>
-      )}
 
-      {(left.dragging || right.dragging) && (
-        <div className="fixed inset-0 z-[9999] cursor-col-resize" />
-      )}
+        <ResizeHandle
+          onMouseDown={right.onMouseDown}
+          onToggle={() => setConfigPanelOpen(!isConfigPanelOpen)}
+          open={isConfigPanelOpen}
+          chevronOpen="M2 1l4 3-4 3"
+          chevronClosed="M6 1L2 4l4 3"
+        />
+
+        {isConfigPanelOpen && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: right.width }}>
+            {versionsOpen ? (
+              <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
+                <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
+                  <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
+                </div>
+                {dbId ? (
+                  <VersionsPanel workflowId={dbId} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
+                    <p className="text-[12px] text-[var(--color-muted)]">Save the workflow first to manage version history.</p>
+                  </div>
+                )}
+              </aside>
+            ) : (
+              <ConfigPanel />
+            )}
+          </div>
+        )}
+
+        {(left.dragging || right.dragging) && (
+          <div className="fixed inset-0 z-[9999] cursor-col-resize" />
+        )}
 
       </div>{/* end main content row */}
 

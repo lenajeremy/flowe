@@ -6,7 +6,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
 import { FloweIcon } from '@/components/FloweIcon'
 import LiquidGlass from 'liquid-glass-react'
-
 // ── Types ───────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -64,9 +63,25 @@ export function ChatPanel() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [chatModel, setChatModel] = useState<string>('claude-sonnet-4-6')
   const [inputFocused, setInputFocused] = useState(false)
+  const [inputWidth, setInputWidth] = useState(0)
+  const [inputHeight, setInputHeight] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const inputContainerRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    const el = inputContainerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setInputWidth(entry.contentRect.width)
+      setInputHeight(entry.contentRect.height)
+      // LiquidGlass only remeasures on window resize — notify it
+      window.dispatchEvent(new Event('resize'))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const { nodes, edges, dbId, importWorkflowVersion, applyPatch, undo } = useWorkflowStore(
     useShallow((s) => ({
@@ -295,7 +310,7 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[var(--color-canvas)]">
+    <div className="flex flex-1 min-h-0 flex-col bg-[var(--color-canvas)]">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {loadingHistory ? (
@@ -330,87 +345,81 @@ export function ChatPanel() {
       </div>
 
       {/* Input area */}
-      <div className="p-3 border-t border-[var(--color-border)] flex flex-col gap-2">
-        {/* Model selector */}
-        <select
-          value={chatModel}
-          onChange={(e) => setChatModel(e.target.value)}
-          disabled={isGenerating}
-          className="text-[10px] bg-transparent text-[var(--color-muted)] border-none outline-none cursor-pointer hover:text-[var(--color-text)] transition-colors disabled:opacity-50 self-start"
-        >
-          {CHAT_MODELS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
-          ))}
-        </select>
-
-        {/* Textarea card — gradient glow + liquid glass */}
-        <LiquidGlass
-          cornerRadius={16}
-          displacementScale={35}
-          blurAmount={0.05}
-          saturation={125}
-          aberrationIntensity={1.2}
-          style={{
-            outline: '1.5px solid transparent',
-            backgroundImage: 'linear-gradient(var(--color-canvas), var(--color-canvas)), linear-gradient(135deg, #6d28d9 0%, #1e1b2e 40%, #14532d 70%, #16a34a 100%)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'padding-box, border-box',
-            boxShadow: inputFocused
-              ? '-6px 0 28px rgba(109, 40, 217, 0.55), 6px 0 28px rgba(22, 163, 74, 0.45), 0 6px 24px rgba(109, 40, 217, 0.3)'
-              : '-3px 0 18px rgba(109, 40, 217, 0.3), 3px 0 18px rgba(22, 163, 74, 0.25), 0 3px 16px rgba(109, 40, 217, 0.15)',
-          }}
-        >
-        <div className="px-4 pt-4 pb-3">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-            placeholder="Eg. Build a workflow that sends top product design articles to my email every day"
-            rows={3}
-            disabled={isGenerating}
-            className="w-full resize-none bg-transparent text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none leading-relaxed disabled:opacity-50"
+      <div className="p-3 flex flex-col gap-2">
+        {/* Layer stack: gradient → glass → content */}
+        <div ref={inputContainerRef} className="relative w-full rounded-[20px]">
+          {/* Layer 1 — gradient fill */}
+          <div
+            className="absolute inset-0 rounded-[20px]"
+            style={{ background: 'linear-gradient(135deg, #3900F415 0%, #F34CFF15 50%, #0AA41215 100%)' }}
           />
-          <div className="flex items-center justify-between mt-2">
-            {/* Paperclip — dark rounded square button */}
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
-              tabIndex={-1}
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 6.5L7 12.5a4 4 0 0 1-5.66-5.66l6-6a2.5 2.5 0 0 1 3.54 3.54L5.5 10.16a1 1 0 0 1-1.42-1.42L9.5 3.33" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
 
-            {/* Send / Stop — large white circle */}
-            {isGenerating ? (
+          {/* Layer 2 — LiquidGlass over the gradient */}
+          {inputWidth > 0 && (
+            <LiquidGlass
+              cornerRadius={20}
+              displacementScale={64}
+              blurAmount={0.1}
+              saturation={130}
+              aberrationIntensity={1.5}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: inputWidth,
+                height: inputHeight,
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          )}
+
+          {/* Layer 3 — content, 4px margin exposes gradient as border */}
+          <div
+            className="relative m-[4px] rounded-[16px] px-4 pt-4 pb-3"
+            style={{
+              zIndex: 2,
+              border: '1px solid transparent',
+              background: 'linear-gradient(var(--color-canvas), var(--color-canvas)) padding-box, linear-gradient(135deg, #4D4D5B, #2A2A3E) border-box',
+            }}
+          >
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder="Eg. Build a workflow that sends top product design articles to my email every day"
+              rows={3}
+              disabled={isGenerating}
+              className="w-full resize-none bg-transparent text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none leading-relaxed disabled:opacity-50"
+            />
+            <div className="flex items-center justify-between mt-2">
               <button
                 type="button"
-                onClick={handleStop}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black hover:opacity-80 transition-opacity"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
+                tabIndex={-1}
               >
-                <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
-                  <rect x="2.5" y="2.5" width="5" height="5" rx="0.5" fill="currentColor" />
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M13 6.5L7 12.5a4 4 0 0 1-5.66-5.66l6-6a2.5 2.5 0 0 1 3.54 3.54L5.5 10.16a1 1 0 0 1-1.42-1.42L9.5 3.33" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={!input.trim()}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black transition-opacity disabled:opacity-30 hover:opacity-80"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 10V2M6 2L2.5 5.5M6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            )}
+              {isGenerating ? (
+                <button type="button" onClick={handleStop} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black hover:opacity-80 transition-opacity">
+                  <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
+                    <rect x="2.5" y="2.5" width="5" height="5" rx="0.5" fill="currentColor" />
+                  </svg>
+                </button>
+              ) : (
+                <button type="button" onClick={() => void handleSend()} disabled={!input.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black transition-opacity disabled:opacity-30 hover:opacity-80">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 10V2M6 2L2.5 5.5M6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
-        </div>{/* content */}
-        </LiquidGlass>
+        </div>
 
         {!dbId && (
           <p className="text-[10px] text-[var(--color-subtle)]">
@@ -438,21 +447,28 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
         </div>
       </div>
 
-      {/* Suggestions pinned to bottom */}
-      <div className="border-t border-[var(--color-border)]">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => onSelect(s)}
-            className="flex items-center justify-between w-full px-4 py-3 text-[12px] text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors border-b border-[var(--color-border)] last:border-b-0"
-          >
-            <span className="text-left pr-3 leading-snug">{s}</span>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 opacity-50">
-              <path d="M5 10.5l4-3.5-4-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        ))}
+      {/* Suggestions pinned to bottom — fade from transparent (top) to opaque (bottom) */}
+      <div className="pb-2">
+        {suggestions.map((s, i) => {
+          const opacity = i === 0 ? 0.3 : i === 1 ? 0.65 : 1
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onSelect(s)}
+              className="flex items-center justify-between w-full px-4 py-4 transition-opacity hover:opacity-100"
+              style={{ opacity }}
+            >
+              <span
+                className="text-left pr-3"
+                style={{ color: '#667179', fontSize: 12, lineHeight: '16px', fontWeight: 400 }}
+              >{s}</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0" style={{ color: '#667179' }}>
+                <path d="M5 10.5l4-3.5-4-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
