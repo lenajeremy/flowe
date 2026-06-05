@@ -1,7 +1,10 @@
 @import "tailwindcss";
+@import "@fontsource/geist/400.css";
+@import "@fontsource/geist/500.css";
+@import "@fontsource/geist/600.css";
 
 @theme {
-  --font-sans: 'Aptos', 'IBM Plex Sans', 'Avenir Next', sans-serif;
+  --font-sans: 'Geist', 'Aptos', 'IBM Plex Sans', sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 
   --color-canvas:   #000000;
