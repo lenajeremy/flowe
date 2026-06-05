@@ -27,6 +27,12 @@ const DEFAULT_RIGHT = 288
 
 type Theme = 'dark' | 'light'
 
+function formatRunTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).toLowerCase().replace(' ', '')
+}
+
 function getInitialTheme(): Theme {
   const saved = window.localStorage.getItem('workflow-ai-theme')
   if (saved === 'dark' || saved === 'light') return saved
@@ -124,8 +130,18 @@ export function WorkflowEditorPage() {
   const [leftOpen, setLeftOpen] = useState(true)
   const left  = useResizable(DEFAULT_LEFT,  MIN_LEFT,  MAX_LEFT,  'left')
   const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
-  // Read theme for Canvas prop; App.tsx owns the attribute update
   const [theme] = useState<Theme>(getInitialTheme)
+  const [lastRun, setLastRun] = useState<{ id: string; createdAt: string } | null>(null)
+
+  useEffect(() => {
+    if (!dbId) { setLastRun(null); return }
+    fetch(`${API}/api/workflows/${dbId}/runs`)
+      .then((r) => r.json())
+      .then((runs: Array<{ id: string; created_at: string }>) => {
+        if (runs.length > 0) setLastRun({ id: runs[0].id, createdAt: runs[0].created_at })
+      })
+      .catch(() => {})
+  }, [dbId])
 
   // ── Load workflow from DB on mount / id change ────────────
   const loadedIdRef = useRef<string | null>(null)
@@ -283,21 +299,39 @@ export function WorkflowEditorPage() {
       style={{ height: '100dvh' }}
     >
       {/* Top header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)]" style={{ height: 52 }}>
-        {/* Left: home icon */}
-        <div className="flex items-center gap-3" style={{ minWidth: 120 }}>
+      <header
+        className="flex-shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)]"
+        style={{ height: 52 }}
+      >
+        {/* Left: brand icon + home */}
+        <div className="flex items-center gap-1" style={{ minWidth: 160 }}>
+          {/* Brand / app icon */}
           <button
             onClick={() => navigate('/workflows')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-white/5 transition-colors"
             title="All Workflows"
           >
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-              <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+              <rect x="1.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="10.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="1.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="10.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+          </button>
+          {/* Home icon */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+            title="Home"
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>
 
-        {/* Center: workflow name */}
+        {/* Center: workflow name + chevron */}
         <div className="flex items-center gap-1.5">
           <span className="text-[14px] font-semibold text-[var(--color-text)]">{workflowName}</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[var(--color-muted)]">
@@ -305,9 +339,23 @@ export function WorkflowEditorPage() {
           </svg>
         </div>
 
-        {/* Right: save indicator + Save + Publish */}
-        <div className="flex items-center gap-2.5" style={{ minWidth: 120, justifyContent: 'flex-end' }}>
-          <SaveIndicator />
+        {/* Right: last run + Save + Publish */}
+        <div className="flex items-center gap-2.5" style={{ minWidth: 160, justifyContent: 'flex-end' }}>
+          {/* Last run info */}
+          {lastRun && (
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <span className="text-[var(--color-muted)]">Last run {formatRunTime(lastRun.createdAt)}</span>
+              <button
+                onClick={() => navigate(`/runs/${lastRun.id}`)}
+                className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+              >
+                View logs
+              </button>
+            </div>
+          )}
+
+          {/* Save */}
           <button
             onClick={handleSave}
             disabled={saveStatus === 'saving' || saveStatus === 'saved'}
@@ -320,9 +368,9 @@ export function WorkflowEditorPage() {
             </svg>
             Save
           </button>
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90 transition-opacity"
-          >
+
+          {/* Publish */}
+          <button className="flex items-center px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90 transition-opacity">
             Publish
           </button>
         </div>
