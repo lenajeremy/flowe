@@ -9,6 +9,7 @@ import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
 import { BottomToolDock } from '@/components/BottomToolDock'
 import { SaveIndicator } from '@/components/SaveIndicator'
+import { FloweIcon } from '@/components/FloweIcon'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
@@ -311,12 +312,7 @@ export function WorkflowEditorPage() {
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-white/5 transition-colors"
             title="All Workflows"
           >
-            <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
-              <rect x="1.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="10.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="1.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="10.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.4"/>
-            </svg>
+            <FloweIcon size={20} />
           </button>
           {/* Home icon */}
           <button

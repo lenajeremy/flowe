@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import type { NodeType } from '@/types/workflow'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS, NODE_LABELS } from '@/lib/nodeColors'
 import { ChatPanel } from '@/components/panels/ChatPanel'
+import { FloweIcon } from '@/components/FloweIcon'
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
@@ -75,23 +76,7 @@ export function NodePalette({ onCollapse }: { onCollapse?: () => void }) {
               : 'bg-transparent border-white/5 text-[var(--color-muted)] hover:border-white/10 hover:text-[var(--color-text)]'
           }`}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <defs>
-              <linearGradient id="ai-tab-grad" x1="0" y1="0" x2="14" y2="14" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#a855f7" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M7 1l1.3 3 3 1.3-3 1.3L7 9.5 5.7 6.6 2.7 5.3l3-1.3L7 1z"
-              fill="url(#ai-tab-grad)"
-            />
-            <path
-              d="M11.5 8.5l.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7 1.5-.7.7-1.5z"
-              fill="url(#ai-tab-grad)"
-              opacity="0.7"
-            />
-          </svg>
+          <FloweIcon size={14} className={activeTab === 'chat' ? 'text-white' : 'text-[var(--color-muted)]'} />
           AI builder
         </button>
 

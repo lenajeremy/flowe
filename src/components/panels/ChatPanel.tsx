@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
+import { FloweIcon } from '@/components/FloweIcon'
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -421,20 +422,8 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
     <div className="flex flex-col h-full">
       {/* Centered icon + title */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 gap-3">
-        <div className="relative flex items-center justify-center">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <path
-              d="M10 36l4-9H8a5 5 0 0 1-5-5V9a5 5 0 0 1 5-5h26a5 5 0 0 1 5 5v13a5 5 0 0 1-5 5H20L10 36z"
-              stroke="var(--color-muted)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {/* Sparkle */}
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="absolute -top-1.5 -right-1.5">
-            <path d="M7 1.5v2M7 10.5v2M1.5 7h2M10.5 7h2M3.4 3.4l1.4 1.4M9.2 9.2l1.4 1.4M3.4 10.6l1.4-1.4M9.2 4.8l1.4-1.4" stroke="var(--color-muted)" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
+        <div className="flex items-center justify-center opacity-30">
+          <FloweIcon size={48} />
         </div>
         <div className="text-center">
           <h3 className="text-[15px] font-semibold text-[var(--color-text)]">Meet Flowe AI</h3>
