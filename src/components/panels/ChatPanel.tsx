@@ -5,6 +5,7 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
 import { FloweIcon } from '@/components/FloweIcon'
+import LiquidGlass from 'liquid-glass-react'
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -342,7 +343,7 @@ export function ChatPanel() {
           ))}
         </select>
 
-        {/* Textarea card — gradient border + outward glow */}
+        {/* Textarea card — gradient glow + liquid glass */}
         <div
           className="rounded-2xl transition-all duration-300"
           style={{
@@ -353,7 +354,15 @@ export function ChatPanel() {
               : '-3px 0 18px rgba(109, 40, 217, 0.3), 3px 0 18px rgba(22, 163, 74, 0.25), 0 3px 16px rgba(109, 40, 217, 0.15)',
           }}
         >
-        <div className="rounded-2xl bg-[var(--color-canvas)] px-4 pt-4 pb-3">
+        <LiquidGlass
+          cornerRadius={14}
+          displacementScale={35}
+          blurAmount={0.05}
+          saturation={125}
+          aberrationIntensity={1.2}
+          className="w-full"
+        >
+        <div className="px-4 pt-4 pb-3">
           <textarea
             ref={inputRef}
             value={input}
@@ -402,7 +411,8 @@ export function ChatPanel() {
               </button>
             )}
           </div>
-        </div>{/* inner bg */}
+        </div>{/* content */}
+        </LiquidGlass>
         </div>{/* gradient border */}
 
         {!dbId && (
