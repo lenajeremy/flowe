@@ -8,6 +8,7 @@ import { Canvas } from '@/components/Canvas'
 import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
 import { BottomToolDock } from '@/components/BottomToolDock'
+import { SaveIndicator } from '@/components/SaveIndicator'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
@@ -278,13 +279,62 @@ export function WorkflowEditorPage() {
   // ── Layout ────────────────────────────────────────────────
   return (
     <div
-      className="flex overflow-hidden bg-black text-white"
+      className="flex flex-col overflow-hidden bg-[var(--color-canvas)] text-[var(--color-text)]"
       style={{ height: '100dvh' }}
     >
+      {/* Top header */}
+      <header className="flex-shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)]" style={{ height: 52 }}>
+        {/* Left: home icon */}
+        <div className="flex items-center gap-3" style={{ minWidth: 120 }}>
+          <button
+            onClick={() => navigate('/workflows')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+            title="All Workflows"
+          >
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+              <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Center: workflow name */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[14px] font-semibold text-[var(--color-text)]">{workflowName}</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[var(--color-muted)]">
+            <path d="M4 5.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
+        {/* Right: save indicator + Save + Publish */}
+        <div className="flex items-center gap-2.5" style={{ minWidth: 120, justifyContent: 'flex-end' }}>
+          <SaveIndicator />
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+              <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
+              <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1"/>
+              <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1"/>
+            </svg>
+            Save
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90 transition-opacity"
+          >
+            Publish
+          </button>
+        </div>
+      </header>
+
+      {/* Main content row */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+
       {/* Left panel */}
       {leftOpen && (
         <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: left.width }}>
-          <NodePalette />
+          <NodePalette onCollapse={() => setLeftOpen(false)} />
         </div>
       )}
 
@@ -339,6 +389,8 @@ export function WorkflowEditorPage() {
       {(left.dragging || right.dragging) && (
         <div className="fixed inset-0 z-[9999] cursor-col-resize" />
       )}
+
+      </div>{/* end main content row */}
 
       {isApiKeyModalOpen && (
         <ApiKeyModal onClose={() => setApiKeyModalOpen(false)} />

@@ -61,6 +61,7 @@ export function ChatPanel() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [chatModel, setChatModel] = useState<string>('claude-sonnet-4-6')
+  const [inputFocused, setInputFocused] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -340,13 +341,22 @@ export function ChatPanel() {
           ))}
         </select>
 
-        {/* Textarea card */}
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 pt-3 pb-2.5 focus-within:border-[var(--color-border2)] transition-colors">
+        {/* Textarea card — gradient border */}
+        <div
+          className="rounded-2xl p-[1px] transition-opacity duration-200"
+          style={{
+            background: 'linear-gradient(135deg, #7c3aed 0%, #4338ca 40%, #0ea5e9 100%)',
+            opacity: inputFocused ? 1 : 0.65,
+          }}
+        >
+        <div className="rounded-2xl bg-[var(--color-surface)] px-3.5 pt-3 pb-2.5">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             placeholder="Eg. Build a workflow that sends top product design articles to my email every day"
             rows={2}
             disabled={isGenerating}
@@ -388,7 +398,8 @@ export function ChatPanel() {
               </button>
             )}
           </div>
-        </div>
+        </div>{/* inner bg */}
+        </div>{/* gradient border */}
 
         {!dbId && (
           <p className="text-[10px] text-[var(--color-subtle)]">
