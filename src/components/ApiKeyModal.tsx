@@ -13,7 +13,7 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
   const [openai, setOpenai] = useState(() => getApiKeys().openai)
 
   function handleSave() {
-    saveApiKeys({ anthropic: anthropic.trim(), openai: openai.trim() })
+    saveApiKeys({ anthropic: anthropic.trim(), openai: openai.trim(), gemini: getApiKeys().gemini })
     onClose()
   }
 

@@ -8,7 +8,7 @@ import type {
   WorkflowASTNode,
   WorkflowASTEdge,
 } from '@/types/workflow'
-import { getApiKeys, isAnthropicModel, isGeminiModel } from '@/lib/apiKeys'
+import { getApiKeys, isAnthropicModel } from '@/lib/apiKeys'
 
 export interface ExecutorStore {
   nodes: FlowNode[]
@@ -153,7 +153,7 @@ async function callOpenAI(
   return json.choices[0]?.message.content ?? ''
 }
 
-async function callGemini(
+export async function callGemini(
   model: string,
   systemPrompt: string,
   userPrompt: string,

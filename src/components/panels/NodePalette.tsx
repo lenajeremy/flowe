@@ -3,7 +3,6 @@ import type { NodeType } from '@/types/workflow'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS, NODE_LABELS } from '@/lib/nodeColors'
 import { ChatPanel } from '@/components/panels/ChatPanel'
 import { FloweIcon } from '@/components/FloweIcon'
-import LiquidGlass from 'liquid-glass-react'
 
 const CUSTOM_ICONS: Partial<Record<NodeType, React.ReactNode>> = {
   webhookTrigger: (

@@ -42,11 +42,6 @@ function fromStored(msgs: StoredMessage[]): ChatMessage[] {
 
 // ── Constants ────────────────────────────────────────────────────
 
-const CHAT_MODELS = [
-  { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-  { value: 'o4-mini',           label: 'o4-mini' },
-  { value: 'gemini-2.5-pro',    label: 'Gemini 2.5 Pro' },
-] as const
 
 const SUGGESTIONS = [
   'Every Monday, search for top AI news and email me a digest',
@@ -61,8 +56,7 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [chatModel, setChatModel] = useState<string>('claude-sonnet-4-6')
-  const [inputFocused, setInputFocused] = useState(false)
+  const [chatModel] = useState<string>('claude-sonnet-4-6')
   const [inputWidth, setInputWidth] = useState(0)
   const [inputHeight, setInputHeight] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -179,7 +173,7 @@ export function ChatPanel() {
       let currentEvent = ''
       const dataLines: string[] = []
       let thinkingStartMs: number | null = null
-      let thinkingDuration: number | null = null
+      let thinkingDuration: number | undefined = undefined
 
       function dispatchSSE() {
         if (!currentEvent) return
@@ -196,7 +190,7 @@ export function ChatPanel() {
             break
 
           case 'text':
-            if (thinkingStartMs && thinkingDuration === null) {
+            if (thinkingStartMs && thinkingDuration === undefined) {
               thinkingDuration = Math.round((Date.now() - thinkingStartMs) / 1000)
               setMessages((m) =>
                 m.map((msg) => msg.id === assistantId ? { ...msg, thinkingDuration } : msg),
@@ -370,7 +364,7 @@ export function ChatPanel() {
                 pointerEvents: 'none',
                 zIndex: 1,
               }}
-            />
+            >{null}</LiquidGlass>
           )}
 
           {/* Layer 3 — content, 4px margin exposes gradient as border */}
@@ -387,8 +381,6 @@ export function ChatPanel() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => setInputFocused(false)}
               placeholder="Eg. Build a workflow that sends top product design articles to my email every day"
               rows={3}
               disabled={isGenerating}
