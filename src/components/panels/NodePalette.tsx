@@ -3,6 +3,7 @@ import type { NodeType } from '@/types/workflow'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS, NODE_LABELS } from '@/lib/nodeColors'
 import { ChatPanel } from '@/components/panels/ChatPanel'
 import { FloweIcon } from '@/components/FloweIcon'
+import LiquidGlass from 'liquid-glass-react'
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
@@ -65,7 +66,15 @@ export function NodePalette({ onCollapse }: { onCollapse?: () => void }) {
   return (
     <aside className="flex h-full w-full flex-col overflow-hidden bg-[var(--color-canvas)]">
       {/* Tab bar */}
-      <div className="flex items-center gap-2 px-3 py-3">
+      <LiquidGlass
+        cornerRadius={12}
+        displacementScale={30}
+        blurAmount={0.04}
+        saturation={120}
+        aberrationIntensity={1}
+        className="mx-2 mt-2"
+      >
+      <div className="flex items-center gap-2 px-3 py-2.5">
         {/* AI builder tab */}
         <button
           type="button"
@@ -114,6 +123,7 @@ export function NodePalette({ onCollapse }: { onCollapse?: () => void }) {
           </button>
         )}
       </div>
+      </LiquidGlass>
 
       {/* Tab content */}
       {activeTab === 'nodes' ? (

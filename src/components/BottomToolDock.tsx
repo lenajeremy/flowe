@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import LiquidGlass from 'liquid-glass-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
@@ -462,9 +463,16 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       )}
 
       {/* Main pill */}
+      <LiquidGlass
+        cornerRadius={999}
+        displacementScale={40}
+        blurAmount={0.05}
+        saturation={130}
+        aberrationIntensity={1.5}
+        className="pointer-events-auto"
+      >
       <div
-        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-white/10 bg-[#111111]/95 px-1 py-1 backdrop-blur"
-        style={{ boxShadow: 'var(--dock-shadow)' }}
+        className="relative flex items-center gap-0 px-1 py-1"
       >
         {/* Select */}
         <ToolBtn title="Select (V)" onClick={() => setActiveTool('select')} active={activeTool === 'select'}>
@@ -658,6 +666,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
           )}
         </div>
       </div>
+      </LiquidGlass>
 
       <input
         ref={fileInputRef}
