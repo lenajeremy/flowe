@@ -463,8 +463,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Main pill */}
       <div
-        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-white/10 bg-[#111111]/95 px-1 py-1 backdrop-blur"
-        style={{ boxShadow: 'var(--dock-shadow)' }}
+        className="pointer-events-auto relative flex items-center gap-0 px-1 py-1 rounded-full border border-[var(--color-border)] bg-[#111111]/95 backdrop-blur-xl"
       >
         {/* Select */}
         <ToolBtn title="Select (V)" onClick={() => setActiveTool('select')} active={activeTool === 'select'}>
