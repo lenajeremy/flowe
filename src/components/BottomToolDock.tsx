@@ -472,7 +472,8 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
         className="pointer-events-auto"
       >
       <div
-        className="relative flex items-center gap-0 px-1 py-1"
+        className="relative flex items-center gap-0 px-1 py-1 rounded-full"
+        style={{ background: 'rgba(10,10,10,0.6)' }}
       >
         {/* Select */}
         <ToolBtn title="Select (V)" onClick={() => setActiveTool('select')} active={activeTool === 'select'}>

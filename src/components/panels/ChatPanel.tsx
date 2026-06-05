@@ -344,23 +344,21 @@ export function ChatPanel() {
         </select>
 
         {/* Textarea card — gradient glow + liquid glass */}
-        <div
-          className="rounded-2xl transition-all duration-300"
-          style={{
-            padding: '1.5px',
-            background: 'linear-gradient(135deg, #6d28d9 0%, #1e1b2e 40%, #14532d 70%, #16a34a 100%)',
-            boxShadow: inputFocused
-              ? '-6px 0 28px rgba(109, 40, 217, 0.55), 6px 0 28px rgba(22, 163, 74, 0.45), 0 6px 24px rgba(109, 40, 217, 0.3)'
-              : '-3px 0 18px rgba(109, 40, 217, 0.3), 3px 0 18px rgba(22, 163, 74, 0.25), 0 3px 16px rgba(109, 40, 217, 0.15)',
-          }}
-        >
         <LiquidGlass
-          cornerRadius={14}
+          cornerRadius={16}
           displacementScale={35}
           blurAmount={0.05}
           saturation={125}
           aberrationIntensity={1.2}
-          className="w-full"
+          style={{
+            outline: '1.5px solid transparent',
+            backgroundImage: 'linear-gradient(var(--color-canvas), var(--color-canvas)), linear-gradient(135deg, #6d28d9 0%, #1e1b2e 40%, #14532d 70%, #16a34a 100%)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            boxShadow: inputFocused
+              ? '-6px 0 28px rgba(109, 40, 217, 0.55), 6px 0 28px rgba(22, 163, 74, 0.45), 0 6px 24px rgba(109, 40, 217, 0.3)'
+              : '-3px 0 18px rgba(109, 40, 217, 0.3), 3px 0 18px rgba(22, 163, 74, 0.25), 0 3px 16px rgba(109, 40, 217, 0.15)',
+          }}
         >
         <div className="px-4 pt-4 pb-3">
           <textarea
@@ -413,7 +411,6 @@ export function ChatPanel() {
           </div>
         </div>{/* content */}
         </LiquidGlass>
-        </div>{/* gradient border */}
 
         {!dbId && (
           <p className="text-[10px] text-[var(--color-subtle)]">

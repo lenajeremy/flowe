@@ -66,15 +66,7 @@ export function NodePalette({ onCollapse }: { onCollapse?: () => void }) {
   return (
     <aside className="flex h-full w-full flex-col overflow-hidden bg-[var(--color-canvas)]">
       {/* Tab bar */}
-      <LiquidGlass
-        cornerRadius={12}
-        displacementScale={30}
-        blurAmount={0.04}
-        saturation={120}
-        aberrationIntensity={1}
-        className="mx-2 mt-2"
-      >
-      <div className="flex items-center gap-2 px-3 py-2.5">
+      <div className="flex items-center gap-2 px-3 py-3">
         {/* AI builder tab */}
         <button
           type="button"
@@ -123,7 +115,6 @@ export function NodePalette({ onCollapse }: { onCollapse?: () => void }) {
           </button>
         )}
       </div>
-      </LiquidGlass>
 
       {/* Tab content */}
       {activeTab === 'nodes' ? (
