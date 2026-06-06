@@ -296,8 +296,16 @@ export function WorkflowEditorPage() {
     >
       {/* Top header */}
       <header
-        className="flex-shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)]"
-        style={{ height: 52 }}
+        className="flex-shrink-0 flex items-center justify-between px-4"
+        style={{
+          height: 60,
+          background: '#0D0D11',
+          borderBottom: '1px solid #212F3C',
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
+          zIndex: 10,
+          position: 'relative',
+        }}
       >
         {/* Left: brand icon + home */}
         <div className="flex items-center gap-1" style={{ minWidth: 160 }}>
