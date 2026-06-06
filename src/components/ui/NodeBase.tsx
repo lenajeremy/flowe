@@ -59,7 +59,7 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
         style={{
           borderRadius: 16,
           boxShadow: outerGlow,
-          border: '1px solid transparent',
+          border: '4px solid transparent',
           background: `linear-gradient(rgb(10, 10, 18), rgb(10, 10, 18)) padding-box, ${borderGradient} border-box`,
         }}
       >
