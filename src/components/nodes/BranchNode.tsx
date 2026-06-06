@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
@@ -7,7 +7,7 @@ export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
   const condition = typeof data.condition === 'string' ? data.condition : ''
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.branch}
       iconPath={NODE_ICON_PATHS.branch}
       label={data.label}
@@ -41,6 +41,6 @@ export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
       >
         F
       </div>
-    </NodeBase>
+    </NodeBase2>
   )
 }

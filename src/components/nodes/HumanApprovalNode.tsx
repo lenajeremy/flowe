@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
@@ -9,7 +9,7 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
   const output = typeof data.executionOutput === 'string' ? data.executionOutput : ''
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.humanApproval}
       iconPath={NODE_ICON_PATHS.humanApproval}
       label={data.label}
@@ -64,6 +64,6 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
         id="rejected"
         style={{ top: '65%', background: 'rgba(239,68,68,0.25)', borderColor: 'rgb(239,68,68)' }}
       />
-    </NodeBase>
+    </NodeBase2>
   )
 }

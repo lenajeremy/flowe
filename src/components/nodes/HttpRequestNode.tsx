@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
@@ -18,7 +18,7 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
   const style = METHOD_STYLES[method] ?? METHOD_STYLES.GET
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.httpRequest}
       iconPath={NODE_ICON_PATHS.httpRequest}
       label={data.label}
@@ -47,6 +47,6 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
       </div>
       <Handle type="target" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }

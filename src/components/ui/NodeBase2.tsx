@@ -11,16 +11,18 @@ interface NodeBaseProps {
   children: ReactNode
 }
 
-export function NodeBase({ accentHex, iconPath, label, isSelected, executionStatus, children }: NodeBaseProps) {
+export function NodeBase2({ accentHex, iconPath, label, isSelected: _isSelected, executionStatus, children }: NodeBaseProps) {
   const [isHovered, setIsHovered] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [dims, setDims] = useState({ w: 0, h: 0 })
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [containerHeight, setContainerHeight] = useState(0)
 
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
-      setDims({ w: entry.contentRect.width, h: entry.contentRect.height })
+      setContainerWidth(entry.contentRect.width)
+      setContainerHeight(entry.contentRect.height)
       window.dispatchEvent(new Event('resize'))
     })
     ro.observe(el)
@@ -39,10 +41,6 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
     isWaiting   ? '#F97316' :
     accentHex
 
-  const outerGlow = isSelected
-    ? `0 0 28px ${accentTop}35, 0 8px 32px rgba(0,0,0,0.65)`
-    : `0 4px 24px rgba(0,0,0,0.5)`
-
   return (
     <div
       className="flex flex-col"
@@ -50,7 +48,7 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Status badge above node */}
+      {/* Status badge */}
       {isWaiting && (
         <div
           className="mb-2 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold"
@@ -64,23 +62,17 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
         </div>
       )}
 
-      {/* ── 3-layer stack (mirrors ChatPanel input box) ── */}
-      <div
-        ref={containerRef}
-        className="relative select-none"
-        style={{ borderRadius: 20, boxShadow: outerGlow }}
-      >
-        {/* Layer 1 — accent gradient fill */}
+      {/* ── Exact ChatPanel textarea layer stack ── */}
+      <div ref={containerRef} className="relative rounded-[20px]">
+
+        {/* Layer 1 — gradient fill: copied exactly from ChatPanel */}
         <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            borderRadius: 20,
-            background: `linear-gradient(to right, ${accentTop}14 0%, transparent 100%)`,
-          }}
+          className="absolute inset-0 rounded-[20px]"
+          style={{ background: 'linear-gradient(135deg, #3900F415 0%, #F34CFF15 50%, #0AA41215 100%)' }}
         />
 
-        {/* Layer 2 — LiquidGlass, clipped to node boundary so it never bleeds onto neighbours */}
-        {dims.w > 0 && (
+        {/* Layer 2 — LiquidGlass: copied exactly from ChatPanel, clipped to boundary */}
+        {containerWidth > 0 && (
           <LiquidGlass
             cornerRadius={20}
             displacementScale={64}
@@ -90,8 +82,8 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
             style={{
               position: 'absolute',
               inset: 0,
-              width: dims.w,
-              height: dims.h,
+              width: containerWidth,
+              height: containerHeight,
               pointerEvents: 'none',
               zIndex: 1,
               clipPath: 'inset(0 round 20px)',
@@ -99,16 +91,16 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
           >{null}</LiquidGlass>
         )}
 
-        {/* Layer 3 — content, 4px margin exposes Layer 1 as the visible border */}
+        {/* Layer 3 — content: copied exactly from ChatPanel (m-[4px], same border gradient) */}
         <div
           className="relative m-[4px] rounded-[16px] px-4 pt-4 pb-4"
           style={{
             zIndex: 2,
             border: '1px solid transparent',
-            background: `linear-gradient(rgb(10, 10, 18), rgb(10, 10, 18)) padding-box, linear-gradient(to right, ${accentTop}73, transparent) border-box`,
+            background: 'linear-gradient(var(--color-canvas), var(--color-canvas)) padding-box, linear-gradient(135deg, #4D4D5B, #2A2A3E) border-box',
           }}
         >
-          {/* Header: icon + label */}
+          {/* Icon + label (node-specific, replaces the textarea) */}
           <div className="flex items-center gap-3 pb-3">
             <div
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
@@ -119,10 +111,7 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
                 boxShadow: `0 2px 8px 1px ${accentTop}20 inset`,
               }}
             >
-              <svg
-                width="20" height="20" viewBox="0 0 16 16" fill="none"
-                style={{ overflow: 'visible' }}
-              >
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style={{ overflow: 'visible' }}>
                 <path
                   d={iconPath}
                   stroke={accentTop}
@@ -137,12 +126,12 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
             </span>
           </div>
 
-          {/* Body */}
+          {/* Node-specific content + Handles */}
           <div>{children}</div>
         </div>
       </div>
 
-      {/* Action buttons — visible on hover */}
+      {/* Action buttons — on hover */}
       {isHovered && (
         <div className="mt-2 flex items-center gap-1.5">
           <button

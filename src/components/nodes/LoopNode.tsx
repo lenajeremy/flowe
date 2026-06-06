@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
@@ -8,7 +8,7 @@ export function LoopNode({ data, selected }: NodeProps<FlowNode>) {
   const mode = data.mode === 'concurrent' ? 'concurrent' : 'sequential'
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.loop}
       iconPath={NODE_ICON_PATHS.loop}
       label={data.label}
@@ -29,6 +29,6 @@ export function LoopNode({ data, selected }: NodeProps<FlowNode>) {
       </div>
       <Handle type="target" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }

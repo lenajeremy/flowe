@@ -21,9 +21,6 @@ const MIN_LEFT = 120
 const MAX_LEFT = 480
 const DEFAULT_LEFT = 450
 
-const MIN_RIGHT = 200
-const MAX_RIGHT = 640
-const DEFAULT_RIGHT = 288
 
 type Theme = 'dark' | 'light'
 
@@ -129,7 +126,6 @@ export function WorkflowEditorPage() {
 
   const [leftOpen, setLeftOpen] = useState(true)
   const left = useResizable(DEFAULT_LEFT, MIN_LEFT, MAX_LEFT, 'left')
-  const right = useResizable(DEFAULT_RIGHT, MIN_RIGHT, MAX_RIGHT, 'right')
   const [theme] = useState<Theme>(getInitialTheme)
   const [lastRun, setLastRun] = useState<{ id: string; createdAt: string } | null>(null)
 
@@ -376,7 +372,10 @@ export function WorkflowEditorPage() {
 
         {/* Left panel */}
         {leftOpen && (
-          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: left.width }}>
+          <div
+            className="flex-shrink-0 flex flex-col overflow-hidden border-r border-[var(--color-border)]"
+            style={{ width: left.width }}
+          >
             <NodePalette onCollapse={() => setLeftOpen(false)} />
           </div>
         )}
@@ -389,47 +388,55 @@ export function WorkflowEditorPage() {
           chevronClosed="M2 1l4 3-4 3"
         />
 
+        {/* Canvas — config panel overlays on top of this */}
         <div className="flex min-w-0 flex-1 flex-col bg-[var(--color-canvas)]">
           <ReactFlowProvider>
             <div className="relative min-h-0 flex-1 overflow-hidden">
               <Canvas theme={theme} />
               <BottomToolDock onSave={handleSave} />
+
+              {/* Config / Versions panel — absolute overlay on the right of the canvas */}
+              {isConfigPanelOpen && (
+                <div
+                  className="absolute right-0 top-0 bottom-0 flex flex-col overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-surface)]"
+                  style={{ width: 288, zIndex: 20 }}
+                >
+                  {/* Close button */}
+                  <button
+                    onClick={() => setConfigPanelOpen(false)}
+                    className="absolute top-3 right-3 z-10 flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+                    title="Close panel"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+
+                  {versionsOpen ? (
+                    <aside className="flex h-full w-full flex-col overflow-y-auto">
+                      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
+                        <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
+                      </div>
+                      {dbId ? (
+                        <VersionsPanel workflowId={dbId} />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
+                          <p className="text-[12px] text-[var(--color-muted)]">Save the workflow first to manage version history.</p>
+                        </div>
+                      )}
+                    </aside>
+                  ) : (
+                    <ConfigPanel />
+                  )}
+                </div>
+              )}
             </div>
           </ReactFlowProvider>
           <ExecutionPanel />
         </div>
 
-        <ResizeHandle
-          onMouseDown={right.onMouseDown}
-          onToggle={() => setConfigPanelOpen(!isConfigPanelOpen)}
-          open={isConfigPanelOpen}
-          chevronOpen="M2 1l4 3-4 3"
-          chevronClosed="M6 1L2 4l4 3"
-        />
-
-        {isConfigPanelOpen && (
-          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: right.width }}>
-            {versionsOpen ? (
-              <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
-                <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
-                  <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
-                </div>
-                {dbId ? (
-                  <VersionsPanel workflowId={dbId} />
-                ) : (
-                  <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
-                    <p className="text-[12px] text-[var(--color-muted)]">Save the workflow first to manage version history.</p>
-                  </div>
-                )}
-              </aside>
-            ) : (
-              <ConfigPanel />
-            )}
-          </div>
-        )}
-
-        {(left.dragging || right.dragging) && (
+        {left.dragging && (
           <div className="fixed inset-0 z-[9999] cursor-col-resize" />
         )}
 

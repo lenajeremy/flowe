@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
@@ -26,7 +26,7 @@ export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   }, [dbId])
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.webhookTrigger}
       iconPath={NODE_ICON_PATHS.webhookTrigger}
       label={data.label}
@@ -50,6 +50,6 @@ export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
         )}
       </div>
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }

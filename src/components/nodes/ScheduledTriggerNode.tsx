@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
@@ -74,7 +74,7 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   const sched = fromData ?? fetched
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.scheduledTrigger}
       iconPath={NODE_ICON_PATHS.scheduledTrigger}
       label={data.label}
@@ -109,6 +109,6 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
         )}
       </div>
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }

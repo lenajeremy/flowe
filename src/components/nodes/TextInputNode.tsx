@@ -1,11 +1,11 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
 export function TextInputNode({ data, selected }: NodeProps<FlowNode>) {
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.textInput}
       iconPath={NODE_ICON_PATHS.textInput}
       label={data.label}
@@ -19,6 +19,6 @@ export function TextInputNode({ data, selected }: NodeProps<FlowNode>) {
         }
       </p>
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }

@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NodeBase } from '@/components/ui/NodeBase'
+import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
 import type { FlowNode } from '@/types/workflow'
 
@@ -8,7 +8,7 @@ export function ImageInputNode({ data, selected }: NodeProps<FlowNode>) {
   const hasImage = imageUrl.startsWith('data:image/') || imageUrl.startsWith('http')
 
   return (
-    <NodeBase
+    <NodeBase2
       accentHex={NODE_ACCENT_HEX.imageInput}
       iconPath={NODE_ICON_PATHS.imageInput}
       label={data.label}
@@ -33,6 +33,6 @@ export function ImageInputNode({ data, selected }: NodeProps<FlowNode>) {
         </div>
       )}
       <Handle type="source" position={Position.Right} />
-    </NodeBase>
+    </NodeBase2>
   )
 }
