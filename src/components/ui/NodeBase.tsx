@@ -26,7 +26,7 @@ export function NodeBase({ accentHex, iconPath, label, isSelected, executionStat
     accentHex
 
   // Gradient border: accent at 70% opacity for the first 30%, then fades to transparent
-  const borderGradient = `linear-gradient(135deg, ${accentTop}B2 0%, ${accentTop}B2 30%, transparent 100%)`
+  const borderGradient = `linear-gradient(135deg, ${accentTop}73 0%, transparent 100%)`
 
   const outerGlow = isSelected
     ? `0 0 0 1px ${accentTop}50, 0 0 28px ${accentTop}35, 0 8px 32px rgba(0,0,0,0.65)`
