@@ -56,7 +56,7 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [chatModel] = useState<string>('claude-sonnet-4-6')
+  const [chatModel] = useState<string>('claude-haiku-4-5-20251001')
   const [inputWidth, setInputWidth] = useState(0)
   const [inputHeight, setInputHeight] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
