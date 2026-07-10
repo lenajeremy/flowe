@@ -9,10 +9,16 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nodeTypes } from './nodes'
+import { GradientEdge } from './GradientEdge'
+import { CanvasControls } from './CanvasControls'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getDefaultNodeData } from '@/lib/nodeDefaults'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import type { NodeType, FlowEdge } from '@/types/workflow'
+
+// Must be defined at module scope — never inside a component body
+const edgeTypes = { gradient: GradientEdge }
 
 /** BFS to collect nodeId + every node reachable downstream via edges */
 function getDownstreamIds(startId: string, edges: FlowEdge[]): string[] {
@@ -107,19 +113,22 @@ export function Canvas({ theme }: CanvasProps) {
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [edges, selectedNodeId, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo])
+  }, [edges, selectedNodeId, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo, setActiveTool])
 
-  // ── Animated edges ────────────────────────────────────────
+  // ── Gradient edges — Figma frames 161-168: fade into the target's accent ──
   const animatedEdges = useMemo(
-    () => edges.map((e) => ({
-      ...e,
-      animated: executionState === 'running',
-      selected: e.id === selectedEdgeId,
-      style: e.id === selectedEdgeId
-        ? { stroke: 'var(--color-accent)', strokeWidth: 2 }
-        : undefined,
-    })),
-    [edges, executionState, selectedEdgeId],
+    () => edges.map((e) => {
+      const targetNode = nodes.find((n) => n.id === e.target)
+      const accent = targetNode ? NODE_ACCENT_HEX[targetNode.data.nodeType] : '#70f17b'
+      return {
+        ...e,
+        type: 'gradient',
+        data: { ...e.data, accent },
+        animated: executionState === 'running',
+        selected: e.id === selectedEdgeId,
+      }
+    }),
+    [edges, nodes, executionState, selectedEdgeId],
   )
 
   const onNodeClick = useCallback(
@@ -190,6 +199,7 @@ export function Canvas({ theme }: CanvasProps) {
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         deleteKeyCode={null}
@@ -204,9 +214,12 @@ export function Canvas({ theme }: CanvasProps) {
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          color={theme === 'dark' ? '#3a3a3a' : '#d8d8d8'}
+          color={theme === 'dark' ? '#26262c' : '#d8d8d8'}
         />
       </ReactFlow>
+
+      {/* Bottom-left zoom / tool cluster — Figma frames 160-168 */}
+      <CanvasControls />
     </div>
   )
 }

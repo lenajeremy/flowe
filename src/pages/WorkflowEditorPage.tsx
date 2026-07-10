@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
-import { NodePalette } from '@/components/panels/NodePalette'
+import { NodePalette, type LeftTab } from '@/components/panels/NodePalette'
 import { ConfigPanel } from '@/components/panels/ConfigPanel'
 import { VersionsPanel } from '@/components/panels/VersionsPanel'
 import { Canvas } from '@/components/Canvas'
 import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
-import { BottomToolDock } from '@/components/BottomToolDock'
 import { FloweIcon } from '@/components/FloweIcon'
+import { useRunStreamBridge } from '@/lib/runController'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
@@ -73,14 +73,14 @@ function ResizeHandle({
   return (
     <div className="flex-shrink-0 flex flex-col" style={{ width: '6px', position: 'relative' }}>
       <div
-        className="flex-1 cursor-col-resize hover:bg-white/10 transition-colors"
-        style={{ background: '#1a1a1a' }}
+        className="flex-1 cursor-col-resize transition-colors duration-150 hover:bg-[var(--color-accent)]/40"
+        style={{ background: 'var(--color-surface2)' }}
         onMouseDown={open ? onMouseDown : undefined}
       />
       <button
         onClick={onToggle}
-        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-subtle)] hover:text-white hover:bg-white/5 transition-colors"
-        style={{ background: '#1a1a1a' }}
+        className="flex-shrink-0 flex items-center justify-center h-10 w-full text-[var(--color-subtle)] transition-colors duration-150 hover:text-[var(--color-text)]"
+        style={{ background: 'var(--color-surface2)' }}
         title={open ? 'Collapse panel' : 'Expand panel'}
       >
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -103,7 +103,7 @@ export function WorkflowEditorPage() {
   const {
     isApiKeyModalOpen, setApiKeyModalOpen,
     isConfigPanelOpen, setConfigPanelOpen,
-    nodes, edges, workflowName, dbId,
+    nodes, edges, workflowName, setWorkflowName, dbId,
     loadWorkflow, saveStatus, setSaveStatus,
     executionState, versionsOpen,
   } = useWorkflowStore(
@@ -115,6 +115,7 @@ export function WorkflowEditorPage() {
       nodes: s.nodes,
       edges: s.edges,
       workflowName: s.workflowName,
+      setWorkflowName: s.setWorkflowName,
       dbId: s.dbId,
       loadWorkflow: s.loadWorkflow,
       saveStatus: s.saveStatus,
@@ -125,9 +126,26 @@ export function WorkflowEditorPage() {
   )
 
   const [leftOpen, setLeftOpen] = useState(true)
+  const [paletteTab, setPaletteTab] = useState<LeftTab>('chat')
   const left = useResizable(DEFAULT_LEFT, MIN_LEFT, MAX_LEFT, 'left')
   const [theme] = useState<Theme>(getInitialTheme)
   const [lastRun, setLastRun] = useState<{ id: string; createdAt: string } | null>(null)
+
+  // Connects ?runId= streams + scheduled/webhook run pushes to the canvas
+  useRunStreamBridge()
+
+  // ── Published ("live") state — Figma frames 163-167 ────────
+  const [published, setPublished] = useState(false)
+  useEffect(() => {
+    setPublished(id ? window.localStorage.getItem(`flowe-published-${id}`) === '1' : false)
+  }, [id])
+
+  function handlePublish() {
+    if (!id) return
+    window.localStorage.setItem(`flowe-published-${id}`, '1')
+    setPublished(true)
+    void handleSave()
+  }
 
   useEffect(() => {
     if (!dbId) { setLastRun(null); return }
@@ -228,7 +246,6 @@ export function WorkflowEditorPage() {
         void fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, dbId])
 
   // If dbId arrives after node was already added (new workflow flow)
@@ -294,7 +311,7 @@ export function WorkflowEditorPage() {
       className="flex flex-col overflow-hidden bg-[var(--color-canvas)] text-[var(--color-text)]"
       style={{ height: '100dvh' }}
     >
-      {/* Top header */}
+      {/* Top header — Figma spec: 60px, #0D0D11, 24px bottom radii */}
       <header
         className="flex-shrink-0 flex items-center justify-between px-4"
         style={{
@@ -309,18 +326,16 @@ export function WorkflowEditorPage() {
       >
         {/* Left: brand icon + home */}
         <div className="flex items-center gap-1" style={{ minWidth: 160 }}>
-          {/* Brand / app icon */}
           <button
             onClick={() => navigate('/workflows')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-white/5 transition-colors"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-white/5"
             title="All Workflows"
           >
             <FloweIcon size={20} />
           </button>
-          {/* Home icon */}
           <button
             onClick={() => navigate('/')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5"
             title="Home"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -330,9 +345,25 @@ export function WorkflowEditorPage() {
           </button>
         </div>
 
-        {/* Center: workflow name + chevron */}
+        {/* Center: workflow name (editable in place) + chevron */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[14px] font-semibold text-[var(--color-text)]">{workflowName}</span>
+          <input
+            value={workflowName}
+            onChange={(e) => setWorkflowName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+            aria-label="Workflow name"
+            size={Math.max(workflowName.length, 8)}
+            className="rounded-md border border-transparent bg-transparent px-1 py-0.5 text-center text-[14px] font-semibold text-[var(--color-text)] outline-none transition-colors duration-150 hover:border-white/10 focus:border-white/20 focus:bg-white/5"
+          />
+          {/* "live" badge — Figma frames 163-167 */}
+          {published && (
+            <span
+              className="rounded-[15px] px-2 py-0.5 text-[10px] font-medium uppercase"
+              style={{ color: '#7BE679', background: 'rgba(82, 255, 79, 0.1)', letterSpacing: '0.04em' }}
+            >
+              live
+            </span>
+          )}
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[var(--color-muted)]">
             <path d="M4 5.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -340,14 +371,13 @@ export function WorkflowEditorPage() {
 
         {/* Right: last run + Save + Publish */}
         <div className="flex items-center gap-2.5" style={{ minWidth: 160, justifyContent: 'flex-end' }}>
-          {/* Last run info */}
           {lastRun && (
             <div className="flex items-center gap-1.5 text-[11px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-ok)] flex-shrink-0" />
               <span className="text-[var(--color-muted)]">Last run {formatRunTime(lastRun.createdAt)}</span>
               <button
-                onClick={() => navigate(`/runs/${lastRun.id}`)}
-                className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+                onClick={() => navigate(`/run/${lastRun.id}`)}
+                className="font-medium text-[var(--color-accent)] transition-opacity hover:opacity-80"
               >
                 View logs
               </button>
@@ -358,19 +388,33 @@ export function WorkflowEditorPage() {
           <button
             onClick={handleSave}
             disabled={saveStatus === 'saving' || saveStatus === 'saved'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-white/5 disabled:opacity-50"
           >
-            <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
-              <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
-              <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1" />
-              <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1" />
-            </svg>
-            Save
+            {saveStatus === 'saving' ? (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="animate-spin">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3" />
+                <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            ) : saveStatus === 'saved' ? (
+              <svg width="11" height="11" viewBox="0 0 10 10" fill="none" className="text-[var(--color-ok)]">
+                <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+                <path d="M2 2.5A.5.5 0 012.5 2h7l1.5 1.5v7a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-8z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+                <rect x="4.5" y="2" width="4" height="3" rx=".3" stroke="currentColor" strokeWidth="1.1" />
+                <rect x="3.5" y="7" width="6" height="4" rx=".4" stroke="currentColor" strokeWidth="1.1" />
+              </svg>
+            )}
+            {saveStatus === 'saving' ? 'Saving' : saveStatus === 'saved' ? 'Saved' : 'Save'}
           </button>
 
           {/* Publish */}
-          <button className="flex items-center px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90 transition-opacity">
-            Publish
+          <button
+            onClick={handlePublish}
+            className="pressable flex items-center px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90"
+          >
+            {published ? 'Published' : 'Publish'}
           </button>
         </div>
       </header>
@@ -379,40 +423,87 @@ export function WorkflowEditorPage() {
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* Left panel */}
-        {leftOpen && (
+        {leftOpen ? (
+          <>
+            <div
+              className="flex-shrink-0 flex flex-col overflow-hidden border-r border-[var(--color-border)]"
+              style={{ width: left.width }}
+            >
+              <NodePalette
+                onCollapse={() => setLeftOpen(false)}
+                tab={paletteTab}
+                onTabChange={setPaletteTab}
+              />
+            </div>
+
+            <ResizeHandle
+              onMouseDown={left.onMouseDown}
+              onToggle={() => setLeftOpen(false)}
+              open
+              chevronOpen="M6 1L2 4l4 3"
+              chevronClosed="M2 1l4 3-4 3"
+            />
+          </>
+        ) : (
+          /* Collapsed icon rail — Figma frame 163: 52px, stacked tab icons */
           <div
-            className="flex-shrink-0 flex flex-col overflow-hidden border-r border-[var(--color-border)]"
-            style={{ width: left.width }}
+            className="m-2 flex w-[52px] flex-shrink-0 flex-col items-center gap-[15px] rounded-xl py-4"
+            style={{ background: '#0D0D11' }}
           >
-            <NodePalette onCollapse={() => setLeftOpen(false)} />
+            <button
+              type="button"
+              onClick={() => { setPaletteTab('chat'); setLeftOpen(true) }}
+              title="AI builder"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border transition-colors"
+              style={{
+                background: paletteTab === 'chat' ? '#202024' : 'transparent',
+                borderColor: '#212F3C',
+                boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <FloweIcon size={14} className={paletteTab === 'chat' ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)]'} />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPaletteTab('nodes'); setLeftOpen(true) }}
+              title="Elements"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+              style={{
+                background: paletteTab === 'nodes' ? '#202024' : 'transparent',
+                borderColor: '#212F3C',
+                boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M1.5 1.5h4v4h-4zM7.5 1.5h4v4h-4zM1.5 7.5h4v4h-4zM7.5 7.5h4v4h-4z"
+                  stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         )}
-
-        <ResizeHandle
-          onMouseDown={left.onMouseDown}
-          onToggle={() => setLeftOpen((o) => !o)}
-          open={leftOpen}
-          chevronOpen="M6 1L2 4l4 3"
-          chevronClosed="M2 1l4 3-4 3"
-        />
 
         {/* Canvas — config panel overlays on top of this */}
         <div className="flex min-w-0 flex-1 flex-col bg-[var(--color-canvas)]">
           <ReactFlowProvider>
             <div className="relative min-h-0 flex-1 overflow-hidden">
               <Canvas theme={theme} />
-              <BottomToolDock onSave={handleSave} />
 
-              {/* Config / Versions panel — absolute overlay on the right of the canvas */}
+              {/* Config / Versions panel — floating overlay, Figma frames 161-167 */}
               {isConfigPanelOpen && (
                 <div
-                  className="absolute right-0 top-0 bottom-0 flex flex-col overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-surface)]"
-                  style={{ width: 288, zIndex: 20 }}
+                  className="absolute flex flex-col overflow-hidden rounded-3xl border border-white/5"
+                  style={{
+                    top: 8, right: 8, bottom: 8, width: 349, zIndex: 20,
+                    background: 'rgba(27, 27, 29, 0.6)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
                 >
-                  {/* Close button */}
+                  {/* Close button — Figma: 24px square, #2A2A3E border */}
                   <button
                     onClick={() => setConfigPanelOpen(false)}
-                    className="absolute top-3 right-3 z-10 flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5 transition-colors"
+                    className="absolute top-4 right-4 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-[#2A2A3E] text-[var(--color-text)]/60 hover:text-[var(--color-text)] transition-colors"
                     title="Close panel"
                   >
                     <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
@@ -423,8 +514,8 @@ export function WorkflowEditorPage() {
                   {versionsOpen ? (
                     <aside className="flex h-full w-full flex-col overflow-y-auto">
                       <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
-                        <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
-                        <p className="text-[13px] font-semibold text-[var(--color-text)] ml-1">Version History</p>
+                        <p className="micro text-[var(--color-subtle)]">Workflow</p>
+                        <p className="ml-1 text-[13px] font-semibold text-[var(--color-text)]">Version history</p>
                       </div>
                       {dbId ? (
                         <VersionsPanel workflowId={dbId} />

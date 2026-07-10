@@ -14,9 +14,9 @@ function tryJson(str: string): string {
 }
 
 function statusColor(status: WorkflowRun['status']) {
-  if (status === 'completed') return 'text-emerald-400 bg-emerald-500/10'
-  if (status === 'error')     return 'text-red-400 bg-red-500/10'
-  return 'text-blue-400 bg-blue-500/10'
+  if (status === 'completed') return 'text-[var(--color-ok)] bg-[var(--color-ok)]/10'
+  if (status === 'error')     return 'text-[var(--color-fail)] bg-[var(--color-fail)]/10'
+  return 'text-[var(--color-accent)] bg-[var(--color-accent)]/10'
 }
 
 interface NodeCard {
@@ -170,13 +170,13 @@ export function RunDetailPage() {
           </svg>
         </Link>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] text-[var(--color-muted)] uppercase tracking-wider">Run Detail</p>
+          <p className="micro text-[var(--color-subtle)]">Run detail</p>
           <p className="text-sm font-semibold truncate">{run.workflow_name ?? run.id}</p>
         </div>
-        <span className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${statusColor(run.status)}`}>
+        <span className={`micro rounded-full px-2.5 py-1 ${statusColor(run.status)}`}>
           {run.status}
         </span>
-        <span className="text-[11px] text-[var(--color-muted)]">
+        <span className="font-[var(--font-mono)] text-[11px] text-[var(--color-subtle)]">
           {new Date(run.created_at).toLocaleString()}
         </span>
       </div>
@@ -185,16 +185,16 @@ export function RunDetailPage() {
 
         {/* Approval required banner */}
         {waitingCard && !decided && (
-          <div className="rounded-xl border border-pink-500/30 bg-pink-500/10 p-5 flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-xl border border-[var(--color-hold)]/30 bg-[var(--color-hold)]/8 p-5">
             <div>
-              <p className="text-sm font-semibold text-pink-400">Approval Required</p>
-              <p className="text-xs text-white/60 mt-1">{waitingCard.message}</p>
+              <p className="text-sm font-semibold text-[var(--color-hold)]">Approval required</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">{waitingCard.message}</p>
             </div>
 
             {/* Show what the previous node produced — the thing being approved */}
             {prevCard?.output && (
               <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
+                <p className="micro text-[var(--color-subtle)]">
                   Content to review — {prevCard.label}
                 </p>
                 <pre className="text-[12px] text-[var(--color-text)] bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-lg px-4 py-3 whitespace-pre-wrap break-words max-h-[420px] overflow-y-auto leading-relaxed">
@@ -207,14 +207,14 @@ export function RunDetailPage() {
               <button
                 onClick={() => void handleDecision(true)}
                 disabled={approving}
-                className="flex-1 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                className="pressable flex-1 rounded-lg bg-[var(--color-ok)] px-4 py-2.5 text-sm font-semibold text-[#052e1b] disabled:opacity-50"
               >
                 {approving ? 'Saving…' : 'Approve'}
               </button>
               <button
                 onClick={() => void handleDecision(false)}
                 disabled={approving}
-                className="flex-1 rounded-lg bg-red-500/80 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 transition-colors disabled:opacity-50"
+                className="pressable flex-1 rounded-lg bg-[var(--color-fail)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >
                 Reject
               </button>
@@ -226,8 +226,8 @@ export function RunDetailPage() {
         {decided && (
           <div className={`rounded-xl border p-4 text-center text-sm font-medium ${
             decided === 'approved'
-              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-              : 'border-red-500/30 bg-red-500/10 text-red-400'
+              ? 'border-[var(--color-ok)]/30 bg-[var(--color-ok)]/10 text-[var(--color-ok)]'
+              : 'border-[var(--color-fail)]/30 bg-[var(--color-fail)]/10 text-[var(--color-fail)]'
           }`}>
             {decided === 'approved' ? 'Approved — workflow continuing.' : 'Rejected — workflow will skip this step.'}
           </div>
@@ -239,9 +239,9 @@ export function RunDetailPage() {
             key={card.nodeId}
             className={`rounded-xl border bg-[var(--color-surface)] overflow-hidden ${
               card.status === 'waiting' && !decided
-                ? 'border-pink-500/30'
+                ? 'border-[var(--color-hold)]/40'
                 : card.status === 'error'
-                ? 'border-red-500/20'
+                ? 'border-[var(--color-fail)]/30'
                 : 'border-[var(--color-border)]'
             }`}
           >
@@ -249,11 +249,11 @@ export function RunDetailPage() {
             <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)]">
               <span className="text-[11px] text-[var(--color-muted)] tabular-nums">{i + 1}</span>
               <span className="text-[13px] font-medium flex-1">{card.label}</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                card.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
-                card.status === 'error'     ? 'bg-red-500/15 text-red-400' :
-                card.status === 'waiting'   ? 'bg-pink-500/15 text-pink-400' :
-                'bg-blue-500/15 text-blue-400'
+              <span className={`micro rounded-full px-2 py-0.5 ${
+                card.status === 'completed' ? 'bg-[var(--color-ok)]/15 text-[var(--color-ok)]' :
+                card.status === 'error'     ? 'bg-[var(--color-fail)]/15 text-[var(--color-fail)]' :
+                card.status === 'waiting'   ? 'bg-[var(--color-hold)]/15 text-[var(--color-hold)]' :
+                'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
               }`}>
                 {card.status}
               </span>
@@ -273,7 +273,7 @@ export function RunDetailPage() {
             {/* Error message */}
             {card.status === 'error' && card.message && (
               <div className="px-4 pb-3">
-                <p className="text-[11px] text-red-400">{card.message}</p>
+                <p className="text-[11px] text-[var(--color-fail)]">{card.message}</p>
               </div>
             )}
           </div>

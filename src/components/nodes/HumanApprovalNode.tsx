@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
@@ -11,7 +12,7 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.humanApproval}
-      iconPath={NODE_ICON_PATHS.humanApproval}
+      icon={NODE_ICONS.humanApproval}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
@@ -19,8 +20,8 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
       <div className="flex flex-col gap-1.5">
         {isWaiting && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse flex-shrink-0" />
-            <span className="text-[10px] text-pink-400 font-medium">Waiting for approval…</span>
+            <span className="h-1.5 w-1.5 rounded-full animate-pulse flex-shrink-0 bg-[var(--color-hold)]" />
+            <span className="micro text-[var(--color-hold)]">Waiting for approval…</span>
           </span>
         )}
         {approvalMessage && !isWaiting && (
@@ -34,8 +35,8 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
         {output && (
           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium w-fit ${
             output === 'approved'
-              ? 'bg-emerald-500/20 text-emerald-400'
-              : 'bg-red-500/20 text-red-400'
+              ? 'bg-[var(--color-ok)]/15 text-[var(--color-ok)]'
+              : 'bg-[var(--color-fail)]/15 text-[var(--color-fail)]'
           }`}>
             {output}
           </span>
@@ -44,25 +45,25 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
       <Handle type="target" position={Position.Left} />
 
       {/* Approve path */}
-      <div className="absolute pointer-events-none flex items-center gap-1" style={{ right: '-52px', top: 'calc(35% - 8px)' }}>
-        <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wide">Approve</span>
+      <div className="micro pointer-events-none absolute text-[var(--color-ok)]" style={{ right: '-62px', top: 'calc(38% - 6px)' }}>
+        Approve
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="approved"
-        style={{ top: '35%', background: 'rgba(16,185,129,0.25)', borderColor: 'rgb(16,185,129)' }}
+        style={{ top: '38%', background: 'rgba(61,214,140,0.25)', borderColor: 'var(--color-ok)' }}
       />
 
       {/* Reject path */}
-      <div className="absolute pointer-events-none flex items-center gap-1" style={{ right: '-46px', top: 'calc(65% - 8px)' }}>
-        <span className="text-[9px] font-semibold text-red-400 uppercase tracking-wide">Reject</span>
+      <div className="micro pointer-events-none absolute text-[var(--color-fail)]" style={{ right: '-52px', top: 'calc(68% - 6px)' }}>
+        Reject
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="rejected"
-        style={{ top: '65%', background: 'rgba(239,68,68,0.25)', borderColor: 'rgb(239,68,68)' }}
+        style={{ top: '68%', background: 'rgba(244,85,74,0.25)', borderColor: 'var(--color-fail)' }}
       />
     </NodeBase2>
   )

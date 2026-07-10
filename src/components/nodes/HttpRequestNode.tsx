@@ -1,14 +1,15 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 const METHOD_STYLES: Record<string, { bg: string; text: string }> = {
-  GET:    { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  POST:   { bg: 'bg-blue-500/20',    text: 'text-blue-400'    },
-  PUT:    { bg: 'bg-amber-500/20',   text: 'text-amber-400'   },
-  DELETE: { bg: 'bg-red-500/20',     text: 'text-red-400'     },
-  PATCH:  { bg: 'bg-purple-500/20',  text: 'text-purple-400'  },
+  GET:    { bg: 'bg-[var(--color-ok)]/15',    text: 'text-[var(--color-ok)]'   },
+  POST:   { bg: 'bg-[#51b4fb]/15',            text: 'text-[#51b4fb]'           },
+  PUT:    { bg: 'bg-[var(--color-hold)]/15',  text: 'text-[var(--color-hold)]' },
+  DELETE: { bg: 'bg-[var(--color-fail)]/15',  text: 'text-[var(--color-fail)]' },
+  PATCH:  { bg: 'bg-[#e45fff]/15',            text: 'text-[#e45fff]'           },
 }
 
 export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
@@ -20,7 +21,7 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.httpRequest}
-      iconPath={NODE_ICON_PATHS.httpRequest}
+      icon={NODE_ICONS.httpRequest}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
@@ -40,7 +41,7 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
           )}
         </span>
         {output && (
-          <p className="text-[11px] text-emerald-400 line-clamp-2 leading-relaxed mt-0.5">
+          <p className="mt-0.5 line-clamp-2 font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-ok)]">
             {output.slice(0, 80)}{output.length > 80 ? '…' : ''}
           </p>
         )}

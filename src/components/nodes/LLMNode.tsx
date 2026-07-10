@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
@@ -13,14 +14,14 @@ export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.llm}
-      iconPath={NODE_ICON_PATHS.llm}
+      icon={NODE_ICONS.llm}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >
       <div className="flex flex-col gap-1.5">
         <span className="inline-flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20 font-medium">
+          <span className="micro rounded-md border border-[var(--color-border2)] bg-[var(--color-surface2)] px-1.5 py-0.5 text-[var(--color-muted)]">
             {model}
           </span>
           <span className="text-[10px] text-[var(--color-muted)]">
@@ -33,7 +34,7 @@ export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
           </p>
         )}
         {output && (
-          <p className="text-[11px] text-emerald-400 line-clamp-2 leading-relaxed mt-0.5">
+          <p className="mt-0.5 line-clamp-2 font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-ok)]">
             {output.slice(0, 100)}…
           </p>
         )}

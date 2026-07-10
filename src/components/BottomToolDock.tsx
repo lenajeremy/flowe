@@ -26,10 +26,10 @@ function ToolBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`pressable flex h-8 w-8 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-40 ${
         active
-          ? 'bg-white/15 text-white'
-          : 'text-[var(--color-muted)] hover:bg-white/10 hover:text-white'
+          ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
+          : 'text-[var(--color-muted)] hover:bg-white/10 hover:text-[var(--color-text)]'
       }`}
     >
       {children}
@@ -407,7 +407,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
           {/* Saved workflows */}
           <div className="border-t border-[var(--color-border)]">
-            <p className="px-3 pt-2 pb-1 text-[9px] uppercase tracking-widest text-[var(--color-muted)]">
+            <p className="micro px-3 pt-2 pb-1 text-[var(--color-subtle)]">
               Saved
             </p>
             <div className="max-h-40 overflow-y-auto">
@@ -463,7 +463,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Main pill */}
       <div
-        className="pointer-events-auto relative flex items-center gap-0 px-1 py-1 rounded-full border border-[var(--color-border)] bg-[#111111]/95 backdrop-blur-xl"
+        className="pointer-events-auto relative flex items-center gap-0 rounded-full border border-[var(--color-border2)] bg-[var(--color-surface)]/90 px-1 py-1 shadow-[var(--dock-shadow)] backdrop-blur-xl"
       >
         {/* Select */}
         <ToolBtn title="Select (V)" onClick={() => setActiveTool('select')} active={activeTool === 'select'}>
@@ -537,7 +537,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
               <rect x="1" y="8.5" width="12" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
             </svg>
             {tabs.length > 1 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[8px] font-bold text-white">
+              <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] font-[var(--font-mono)] text-[8px] font-bold text-[#17123d]">
                 {tabs.length}
               </span>
             )}
@@ -550,7 +550,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
         {isRunning ? (
           <button
             onClick={handleStop}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-red-500/15 px-3.5 text-[11px] font-semibold text-red-400 ring-1 ring-red-500/30 transition-all hover:bg-red-500/25 active:scale-95"
+            className="pressable flex h-8 items-center gap-1.5 rounded-full bg-[var(--color-fail)]/15 px-3.5 text-[11px] font-semibold text-[var(--color-fail)] ring-1 ring-[var(--color-fail)]/30 hover:bg-[var(--color-fail)]/25"
           >
             <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor">
               <rect x="1" y="1" width="7" height="7" rx="1.5"/>
@@ -560,8 +560,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
         ) : (
           <button
             onClick={handleRun}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[11px] font-semibold text-black transition-all hover:opacity-90 active:scale-95"
-            style={{ boxShadow: '0 0 16px rgba(255,255,255,0.2)' }}
+            className="pressable flex h-8 items-center gap-1.5 rounded-full bg-[var(--color-text)] px-3.5 text-[11px] font-semibold text-[var(--color-canvas)] hover:opacity-90"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
               <path d="M2 1.5l7 3.5-7 3.5V1.5z"/>
@@ -592,7 +591,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
               style={{ minWidth: '14rem' }}
             >
               <div className="border-b border-[var(--color-border)] px-3 py-2.5">
-                <p className="mb-1.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow name</p>
+                <p className="micro mb-1.5 text-[var(--color-subtle)]">Workflow name</p>
                 <input
                   type="text"
                   value={workflowName}

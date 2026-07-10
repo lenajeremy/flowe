@@ -4,9 +4,18 @@ import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
 import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
-import { NODE_LABELS, NODE_ACCENT_COLORS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NodeStatusTab, NodeLogsTab } from '@/components/panels/NodeRunTabs'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
+
+type InspectorTab = 'configure' | 'status' | 'logs'
+
+const INSPECTOR_TABS: Array<{ id: InspectorTab; label: string }> = [
+  { id: 'configure', label: 'Configure' },
+  { id: 'status',    label: 'Status'    },
+  { id: 'logs',      label: 'Logs'      },
+]
 
 const HTTP_METHODS: Array<{ value: string; label: string }> = [
   { value: 'GET',    label: 'GET'    },
@@ -83,7 +92,7 @@ function AvailableInputs({ upstreamNodes, onInsert }: AvailableInputsProps) {
 
   return (
     <div className="mb-3 p-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)]">
-      <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider mb-2">
+      <p className="micro text-[var(--color-subtle)] mb-2">
         Available Inputs
       </p>
       <div className="flex flex-col gap-1.5">
@@ -107,11 +116,11 @@ function AvailableInputs({ upstreamNodes, onInsert }: AvailableInputsProps) {
                 {node.data.label}
               </span>
               {/* Token preview */}
-              <code className="text-[10px] text-blue-400 font-[var(--font-mono)] truncate max-w-[110px] opacity-60 group-hover:opacity-100 transition-opacity">
+              <code className="text-[10px] text-[var(--color-accent)] font-[var(--font-mono)] truncate max-w-[110px] opacity-60 group-hover:opacity-100 transition-opacity">
                 {token}
               </code>
               {/* Action hint */}
-              <span className={`text-[9px] flex-shrink-0 transition-colors ${isCopied ? 'text-emerald-400' : 'text-[var(--color-muted)] group-hover:text-blue-400'}`}>
+              <span className={`text-[9px] flex-shrink-0 transition-colors ${isCopied ? 'text-[var(--color-ok)]' : 'text-[var(--color-muted)] group-hover:text-[var(--color-accent)]'}`}>
                 {isCopied ? '✓ inserted' : '+ insert'}
               </span>
             </button>
@@ -131,11 +140,11 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
   const upstream = upstreamNodes[0]
   return (
     <div className="mb-3 p-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)]">
-      <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
+      <p className="micro text-[var(--color-subtle)] mb-1.5">
         Condition context
       </p>
       <p className="text-[11px] text-[var(--color-text)] leading-relaxed">
-        <code className="text-amber-400">output</code>
+        <code className="text-[var(--color-hold)]">output</code>
         {' '}= output of{' '}
         <span className="font-medium">{upstream.data.label}</span>
         {' '}(parsed as JSON if valid)
@@ -166,18 +175,19 @@ interface FocusedField {
 
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
-  const { nodes, edges, selectedNodeId, selectedNodeIds, updateNodeData, executionState, executionLog, dbId } = useWorkflowStore(
+  const { nodes, edges, selectedNodeId, selectedNodeIds, updateNodeData, dbId } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
       selectedNodeId: s.selectedNodeId,
       selectedNodeIds: s.selectedNodeIds,
       updateNodeData: s.updateNodeData,
-      executionState: s.executionState,
-      executionLog: s.executionLog,
       dbId: s.dbId,
     })),
   )
+
+  // Configure / Status / Logs — Figma frames 162-166
+  const [activeTab, setActiveTab] = useState<InspectorTab>('configure')
 
   // Refs to textareas so we can insert at cursor position (LLM node)
   const systemRef = useRef<HTMLTextAreaElement>(null)
@@ -329,72 +339,21 @@ export function ConfigPanel() {
     }
   }
 
+  // ── Empty state — Figma frame 161: "No node Selected" ──────
   if (!selectedNode || selectedNodeIds.length > 1) {
-    const triggerCount = nodes.filter((node) => node.data.nodeType === 'textInput' || node.data.label.toLowerCase().includes('trigger')).length
-    const aiCount = nodes.filter((node) => node.data.nodeType === 'llm').length
-    const actionCount = nodes.filter((node) => node.data.nodeType === 'textOutput').length
-    const readiness = [
-      { label: 'Trigger input', complete: triggerCount > 0 },
-      { label: 'AI decision step', complete: aiCount > 0 },
-      { label: 'Output or action', complete: actionCount > 0 },
-      { label: 'Connected path', complete: edges.length > 0 },
-    ]
-
     return (
-      <aside className="flex h-full w-full flex-col overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="border-b border-[var(--color-border)] px-4 py-4">
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Workflow</p>
-          <h2 className="mt-1 text-[15px] font-semibold text-[var(--color-text)]">Run Inspector</h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-muted)]">
-            Select a step to configure it, or use this panel to check whether the workflow is ready to run.
+      <aside className="flex h-full w-full flex-col items-center justify-center gap-3 px-12 text-center">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[var(--color-text)]">
+          <path d="M13 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-6-6z"
+            stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M13 2v6h6M9.5 12.5l5 5M14.5 12.5l-5 5"
+            stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div className="flex flex-col gap-1">
+          <p className="text-[14px] font-medium text-[var(--color-text)]">No node Selected</p>
+          <p className="text-[10px] leading-relaxed text-[#667179]">
+            Select a node to make edits, view status or logs
           </p>
-        </div>
-
-        <div className="overflow-y-auto">
-          <section className="border-b border-[var(--color-border)] px-4 py-4">
-            <h2 className="mb-3 text-[13px] font-semibold text-[var(--color-text)]">Run State</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Status</p>
-                <p className="mt-1 text-[12px] font-semibold capitalize text-[var(--color-text)]">{executionState}</p>
-              </div>
-              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Events</p>
-                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{executionLog.length}</p>
-              </div>
-              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Steps</p>
-                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{nodes.length}</p>
-              </div>
-              <div className="rounded-[7px] bg-[var(--color-surface2)] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Links</p>
-                <p className="mt-1 text-[12px] font-semibold text-[var(--color-text)]">{edges.length}</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="border-b border-[var(--color-border)] px-4 py-4">
-            <h2 className="mb-3 text-[13px] font-semibold text-[var(--color-text)]">Readiness</h2>
-            <div className="flex flex-col gap-2">
-              {readiness.map((item) => (
-                <div key={item.label} className="flex items-center gap-2 text-[12px]">
-                  <span className={`h-2 w-2 rounded-full ${item.complete ? 'bg-emerald-500' : 'bg-[var(--color-border2)]'}`} />
-                  <span className={item.complete ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="border-b border-[var(--color-border)] px-4 py-4">
-            <h2 className="mb-2 text-[13px] font-semibold text-[var(--color-text)]">Next Best Step</h2>
-            <p className="text-[12px] leading-relaxed text-[var(--color-muted)]">
-              Add a trigger, connect it to an AI step, then end with an action or report output.
-            </p>
-          </section>
-
-          <div className="px-4 py-8 text-center">
-            <p className="text-[12px] text-[var(--color-muted)]">Select a node to edit prompts, inputs, branches, and outputs.</p>
-          </div>
         </div>
       </aside>
     )
@@ -483,41 +442,51 @@ export function ConfigPanel() {
   const isCompleted = data.executionStatus === 'completed'
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
-      {/* Header */}
-      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
-        <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: NODE_ACCENT_COLORS[nodeType] }}
-        />
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider leading-none mb-0.5">
-            {NODE_LABELS[nodeType]}
-          </p>
-          <p className="text-[13px] font-semibold text-[var(--color-text)]">Step Settings</p>
-        </div>
-        {data.executionStatus && data.executionStatus !== 'idle' && (
-          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wide flex-shrink-0 ${
-            data.executionStatus === 'running'   ? 'bg-blue-500/20 text-blue-400'      :
-            data.executionStatus === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-            'bg-red-500/20 text-red-400'
-          }`}>
-            {data.executionStatus === 'running' ? '● running' :
-             data.executionStatus === 'completed' ? '✓ done' : '✗ error'}
-          </span>
-        )}
+    <aside className="flex h-full w-full flex-col overflow-hidden">
+      {/* Header — Figma frames 162/163: node title, close X lives in the page overlay */}
+      <div className="flex-shrink-0 px-4 pb-0 pr-12 pt-5">
+        <h2 className="truncate text-[16px] font-medium text-[var(--color-text)]">
+          {data.label || NODE_LABELS[nodeType]}
+        </h2>
       </div>
 
+      {/* Configure / Status / Logs tabs */}
+      <div className="flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 pt-3">
+          {INSPECTOR_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-2 text-[12px] font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'text-[var(--color-text)]'
+                  : 'text-[#667179] hover:text-[var(--color-text)]'
+              }`}
+              style={activeTab === tab.id ? { boxShadow: 'inset 0 -2px 0 0 var(--color-accent)' } : undefined}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="h-px w-full bg-white/5" />
+      </div>
+
+      {activeTab === 'status' && <NodeStatusTab />}
+      {activeTab === 'logs' && <NodeLogsTab />}
+
+      {activeTab === 'configure' && (
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {/* ── Output block — shown FIRST when node has completed output ── */}
       {isCompleted && hasOutput && (
-        <div className="mx-4 mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 overflow-hidden flex-shrink-0">
-          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-emerald-500/20">
+        <div className="mx-4 mt-4 rounded-lg border border-[var(--color-ok)]/30 bg-[var(--color-ok)]/5 overflow-hidden flex-shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-[var(--color-ok)]/20">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#10b981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-wider">Output</span>
+            <span className="micro text-[var(--color-ok)]">Output</span>
           </div>
-          <pre className="px-3 py-2.5 text-[11px] text-emerald-300 leading-relaxed whitespace-pre-wrap break-words max-h-52 overflow-y-auto font-[var(--font-mono)]">
+          <pre className="px-3 py-2.5 text-[11px] text-[var(--color-ok)] leading-relaxed whitespace-pre-wrap break-words max-h-52 overflow-y-auto font-[var(--font-mono)]">
             {data.executionOutput as string}
           </pre>
         </div>
@@ -719,8 +688,8 @@ export function ConfigPanel() {
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1">
                 Must evaluate to{' '}
-                <code className="text-emerald-400">true</code> or{' '}
-                <code className="text-red-400">false</code>
+                <code className="text-[var(--color-ok)]">true</code> or{' '}
+                <code className="text-[var(--color-fail)]">false</code>
               </p>
             </FormField>
           </>
@@ -759,7 +728,7 @@ export function ConfigPanel() {
             {typeof data.executionOutput === 'string' && data.executionOutput ? (
               <pre
                 id="cfg-output"
-                className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-2.5 py-2 text-[11px] text-emerald-300 leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-[var(--font-mono)]"
+                className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-2.5 py-2 text-[11px] text-[var(--color-ok)] leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-[var(--font-mono)]"
               >
                 {data.executionOutput}
               </pre>
@@ -795,7 +764,7 @@ export function ConfigPanel() {
                 placeholder="https://api.example.com/endpoint"
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1">
-                Template tokens like <code className="text-blue-400">{'{{nodeId.output}}'}</code> are supported.
+                Template tokens like <code className="text-[var(--color-accent)]">{'{{nodeId.output}}'}</code> are supported.
               </p>
             </FormField>
             <FormField label="Request Headers (JSON)" htmlFor="cfg-http-headers">
@@ -872,7 +841,7 @@ export function ConfigPanel() {
             </FormField>
             <div className="mt-1 px-2.5 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)]">
               <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
-                Requires <code className="text-amber-400">SENDGRID_API_KEY</code> env var on server.{' '}
+                Requires <code className="text-[var(--color-hold)]">SENDGRID_API_KEY</code> env var on server.{' '}
                 In dev mode, emails are logged to the console.
               </p>
             </div>
@@ -895,8 +864,8 @@ export function ConfigPanel() {
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
                 This message is shown to the reviewer. Downstream nodes receive{' '}
-                <code className="text-emerald-400">approved</code> or{' '}
-                <code className="text-red-400">rejected</code>.
+                <code className="text-[var(--color-ok)]">approved</code> or{' '}
+                <code className="text-[var(--color-fail)]">rejected</code>.
               </p>
             </FormField>
             <FormField label="Notification Email" htmlFor="cfg-approval-email">
@@ -929,12 +898,12 @@ export function ConfigPanel() {
         {nodeType === 'webhookTrigger' && (
           <div className="flex flex-col gap-3">
             <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3">
-              <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider mb-2">Webhook URL</p>
+              <p className="micro text-[var(--color-subtle)] mb-2">Webhook URL</p>
               {webhookLoading ? (
                 <p className="text-[11px] text-[var(--color-muted)]">Loading…</p>
               ) : webhookUrl ? (
                 <>
-                  <p className="text-[10px] font-mono text-emerald-400 break-all leading-relaxed">
+                  <p className="text-[10px] font-mono text-[var(--color-ok)] break-all leading-relaxed">
                     POST {webhookUrl}
                   </p>
                   <button
@@ -1303,13 +1272,15 @@ export function ConfigPanel() {
                 await fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
                 setSchedNextRun(null)
               }}
-              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors text-left"
+              className="text-[10px] text-[var(--color-fail)]/60 hover:text-[var(--color-fail)] transition-colors text-left"
             >
               Remove schedule
             </button>
           </div>
         )}
       </div>
+      </div>
+      )}
     </aside>
   )
 }

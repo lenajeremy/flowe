@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 export function ImageInputNode({ data, selected }: NodeProps<FlowNode>) {
@@ -10,7 +11,7 @@ export function ImageInputNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.imageInput}
-      iconPath={NODE_ICON_PATHS.imageInput}
+      icon={NODE_ICONS.imageInput}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}

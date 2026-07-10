@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
@@ -28,7 +29,7 @@ export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.webhookTrigger}
-      iconPath={NODE_ICON_PATHS.webhookTrigger}
+      icon={NODE_ICONS.webhookTrigger}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
@@ -37,7 +38,7 @@ export function WebhookTriggerNode({ data, selected }: NodeProps<FlowNode>) {
         <div className="text-[10px] text-[var(--color-muted)]">Webhook URL</div>
         {webhookUrl ? (
           <div
-            className="text-[10px] font-mono text-emerald-400 truncate cursor-pointer hover:text-emerald-300"
+            className="cursor-pointer truncate font-mono text-[10px] text-[var(--color-accent)] hover:opacity-80"
             title="Click to copy"
             onClick={() => void navigator.clipboard.writeText(webhookUrl)}
           >

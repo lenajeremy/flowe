@@ -50,7 +50,7 @@ export interface WorkflowRun {
   workflow_id: string
   workflow_name?: string
   status: 'running' | 'completed' | 'error'
-  error_msg?: string
+  error_message?: string
   events?: ExecutionEvent[]
   created_at: string
   updated_at: string

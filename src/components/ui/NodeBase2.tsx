@@ -1,165 +1,183 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react'
-import LiquidGlass from 'liquid-glass-react'
+import { useState, type ReactNode } from 'react'
+import { useWorkflowStore } from '@/store/workflowStore'
+import { startRun, stopRun } from '@/lib/runController'
 import type { ExecutionStatus } from '@/types/workflow'
 
 interface NodeBaseProps {
   accentHex: string
-  iconPath: string
+  iconPath?: string
+  icon?: ReactNode
   label: string
   isSelected: boolean
   executionStatus?: ExecutionStatus
   children: ReactNode
 }
 
-export function NodeBase2({ accentHex, iconPath, label, isSelected: _isSelected, executionStatus, children }: NodeBaseProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-  const [containerHeight, setContainerHeight] = useState(0)
+// Toolbar button under the selected node — Figma EL-54f39c21
+const toolBtnStyle: React.CSSProperties = {
+  background: '#0D0D11',
+  border: '1px solid #293035',
+  boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.1)',
+}
 
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const ro = new ResizeObserver(([entry]) => {
-      setContainerWidth(entry.contentRect.width)
-      setContainerHeight(entry.contentRect.height)
-      window.dispatchEvent(new Event('resize'))
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+/**
+ * The node card — Figma frames 161-168: translucent shell with a blurred
+ * accent glow, #0D0D11 inner card with a -46deg gradient border, 32px icon
+ * chip, and the run-state grammar layered on via .node-shell classes.
+ */
+export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, executionStatus, children }: NodeBaseProps) {
+  const [isHovered, setIsHovered] = useState(false)
+  const isRunning = useWorkflowStore((s) => s.executionState === 'running')
+  const setLogPanelOpen = useWorkflowStore((s) => s.setLogPanelOpen)
+  const setConfigPanelOpen = useWorkflowStore((s) => s.setConfigPanelOpen)
 
   const isWaiting   = executionStatus === 'waiting'
-  const isRunning   = executionStatus === 'running'
+  const nodeRunning = executionStatus === 'running'
   const isCompleted = executionStatus === 'completed'
   const isError     = executionStatus === 'error'
 
   const accentTop =
-    isRunning   ? '#3B82F6' :
-    isCompleted ? '#10B981' :
-    isError     ? '#EF4444' :
-    isWaiting   ? '#F97316' :
+    nodeRunning ? 'var(--color-accent)' :
+    isCompleted ? 'var(--color-ok)'     :
+    isError     ? 'var(--color-fail)'   :
+    isWaiting   ? 'var(--color-hold)'   :
     accentHex
+
+  const shellState =
+    nodeRunning ? 'is-running'  :
+    isWaiting   ? 'is-waiting'  :
+    isCompleted ? 'is-complete' :
+    isError     ? 'is-error'    :
+    isSelected  ? 'is-selected' : ''
 
   return (
     <div
       className="flex flex-col"
-      style={{ width: 260 }}
+      style={{ width: 214 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Status badge */}
+      {/* ── Card shell — rgba(255,255,255,0.08) rounded-16 with accent glow ── */}
+      <div
+        className={`node-shell relative overflow-hidden rounded-2xl ${shellState}`}
+        style={{
+          '--node-accent': accentHex,
+          background: 'rgba(255, 255, 255, 0.08)',
+          minHeight: 90,
+          border: isSelected ? `1px solid ${accentHex}` : '1px solid transparent',
+        } as React.CSSProperties}
+      >
+        {/* Blurred accent glow — Figma: 91px ellipse, blur 33px, 70% opacity */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute rounded-full"
+          style={{
+            width: 91, height: 91, left: -24, top: -4,
+            background: accentHex,
+            opacity: 0.7,
+            filter: 'blur(33px)',
+          }}
+        />
+
+        {/* Inner card — #0D0D11, radius 12, -46deg gradient border */}
+        <div
+          className="relative m-1 flex flex-col gap-1 rounded-xl p-2"
+          style={{
+            border: '1px solid transparent',
+            background:
+              'linear-gradient(rgba(13, 13, 17, 0.92), rgba(13, 13, 17, 0.92)) padding-box, ' +
+              'linear-gradient(-46deg, rgba(33, 47, 60, 0) 1%, rgba(33, 47, 60, 1) 100%) border-box',
+            backdropFilter: 'blur(2px)',
+          }}
+        >
+          {/* Icon chip + title */}
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:overflow-visible"
+              style={{
+                borderRadius: 8,
+                padding: icon ? 7 : 0,
+                background: '#0D0D11',
+                border: '1px solid #2B2B3F',
+                boxShadow: 'inset 0px 2px 8px 1px rgba(255, 255, 255, 0.15)',
+                overflow: 'visible',
+              }}
+            >
+              {icon ?? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ overflow: 'visible' }}>
+                  <path
+                    d={iconPath}
+                    stroke={accentTop}
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+            <span className="truncate text-[14px] font-medium leading-tight text-white">
+              {label}
+            </span>
+          </div>
+
+          {/* Node-specific description / content + Handles */}
+          <div className="text-[10px] leading-relaxed text-[#667179]" style={{ maxWidth: 190 }}>
+            {children}
+          </div>
+        </div>
+      </div>
+
+      {/* "Action Required" badge — Figma: below the card, #261917 / #FF7E4F */}
       {isWaiting && (
         <div
-          className="mb-2 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold"
-          style={{
-            background: 'rgba(249,115,22,0.15)',
-            border: '1px solid rgba(249,115,22,0.35)',
-            color: '#FB923C',
-          }}
+          className="mt-2 self-start rounded-lg px-2 py-1 text-[12px] font-medium"
+          style={{ background: '#261917', color: '#FF7E4F' }}
         >
           Action Required
         </div>
       )}
 
-      {/* ── Exact ChatPanel textarea layer stack ── */}
-      <div ref={containerRef} className="relative rounded-[20px]">
-
-        {/* Layer 1 — gradient fill: copied exactly from ChatPanel */}
-        <div
-          className="absolute inset-0 rounded-[20px]"
-          style={{ background: 'linear-gradient(135deg, #3900F415 0%, #F34CFF15 50%, #0AA41215 100%)' }}
-        />
-
-        {/* Layer 2 — LiquidGlass: copied exactly from ChatPanel, clipped to boundary */}
-        {containerWidth > 0 && (
-          <LiquidGlass
-            cornerRadius={20}
-            displacementScale={64}
-            blurAmount={0.1}
-            saturation={130}
-            aberrationIntensity={1.5}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: containerWidth,
-              height: containerHeight,
-              pointerEvents: 'none',
-              zIndex: 1,
-              clipPath: 'inset(0 round 20px)',
-            }}
-          >{null}</LiquidGlass>
-        )}
-
-        {/* Layer 3 — content: copied exactly from ChatPanel (m-[4px], same border gradient) */}
-        <div
-          className="relative m-[4px] rounded-[16px] px-4 pt-4 pb-4"
-          style={{
-            zIndex: 2,
-            border: '1px solid transparent',
-            background: 'linear-gradient(var(--color-canvas), var(--color-canvas)) padding-box, linear-gradient(135deg, #4D4D5B, #2A2A3E) border-box',
-          }}
-        >
-          {/* Icon + label (node-specific, replaces the textarea) */}
-          <div className="flex items-center gap-3 pb-3">
-            <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
-              style={{
-                borderRadius: 10,
-                background: `${accentTop}18`,
-                border: `1px solid ${accentTop}40`,
-                boxShadow: `0 2px 8px 1px ${accentTop}20 inset`,
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style={{ overflow: 'visible' }}>
-                <path
-                  d={iconPath}
-                  stroke={accentTop}
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="truncate text-[15px] font-semibold text-white leading-tight">
-              {label}
-            </span>
-          </div>
-
-          {/* Node-specific content + Handles */}
-          <div>{children}</div>
-        </div>
-      </div>
-
-      {/* Action buttons — on hover */}
-      {isHovered && (
-        <div className="mt-2 flex items-center gap-1.5">
+      {/* Run / Test / ⋯ toolbar — Figma: shown under the selected node */}
+      {(isSelected || isHovered) && (
+        <div className="nodrag mt-2 flex items-center gap-2">
           <button
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else startRun() }}
+            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[#667179] hover:text-white"
+            style={toolBtnStyle}
           >
-            <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor">
-              <path d="M2 1.5l7 3.5-7 3.5V1.5z"/>
-            </svg>
-            Run
+            {isRunning ? (
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <rect x="2" y="2" width="6" height="6" rx="1" />
+              </svg>
+            ) : (
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path d="M2 1.5l7 3.5-7 3.5V1.5z" />
+              </svg>
+            )}
+            {isRunning ? 'Stop' : 'Run'}
           </button>
           <button
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLogPanelOpen(true) }}
+            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[#667179] hover:text-white"
+            style={toolBtnStyle}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6a4 4 0 1 0 8 0 4 4 0 0 0-8 0zM6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M4.5 1.5h3v2h-3zM6 3.5v2M3 8l1.5-2.5h3L9 8M2.5 8a3.5 3.5 0 1 0 7 0" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Test
           </button>
           <button
-            className="flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-white"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setConfigPanelOpen(true) }}
+            className="pressable flex h-7 w-7 items-center justify-center rounded-lg text-[#667179] hover:text-white"
+            style={toolBtnStyle}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-              <circle cx="3" cy="7" r="1.1"/>
-              <circle cx="7" cy="7" r="1.1"/>
-              <circle cx="11" cy="7" r="1.1"/>
+              <circle cx="3" cy="7" r="1.1" />
+              <circle cx="7" cy="7" r="1.1" />
+              <circle cx="11" cy="7" r="1.1" />
             </svg>
           </button>
         </div>

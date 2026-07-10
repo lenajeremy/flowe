@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 const OP_LABELS: Record<string, string> = {
@@ -16,7 +17,7 @@ export function LinearNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.linear}
-      iconPath={NODE_ICON_PATHS.linear}
+      icon={NODE_ICONS.linear}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}

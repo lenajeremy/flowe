@@ -23,7 +23,7 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
         {/* Anthropic */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[var(--color-node-llm)]" />
+            <div className="w-2 h-2 rounded-full bg-[#70f17b]" />
             <label htmlFor="key-anthropic" className="text-xs font-medium text-[var(--color-text)]">
               Anthropic API Key
             </label>
@@ -44,7 +44,7 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
         {/* OpenAI */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <div className="w-2 h-2 rounded-full bg-[var(--color-ok)]" />
             <label htmlFor="key-openai" className="text-xs font-medium text-[var(--color-text)]">
               OpenAI API Key
             </label>
@@ -70,13 +70,13 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-3 py-1.5 rounded text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface2)] transition-all"
+          className="pressable rounded-lg px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-surface2)] hover:text-[var(--color-text)]"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
-          className="px-4 py-1.5 rounded text-xs font-medium bg-[var(--color-accent)] text-white hover:bg-blue-400 transition-all active:scale-95"
+          className="pressable rounded-lg bg-[var(--color-text)] px-4 py-1.5 text-xs font-semibold text-[var(--color-canvas)] hover:opacity-90"
         >
           Save Keys
         </button>
@@ -160,9 +160,9 @@ function ApiKeysTab() {
       {newKeyResult && (
         <div
           className="flex flex-col gap-2 rounded-lg p-3 border"
-          style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.2)' }}
+          style={{ background: 'rgba(61,214,140,0.08)', borderColor: 'rgba(61,214,140,0.25)' }}
         >
-          <p className="text-[11px] font-semibold text-emerald-400">Your new API key (shown only once):</p>
+          <p className="text-[11px] font-semibold text-[var(--color-ok)]">Your new API key (shown only once):</p>
           <div
             className="flex items-center gap-2 rounded px-2.5 py-2 border font-[var(--font-mono)] text-[11px]"
             style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}
@@ -187,7 +187,7 @@ function ApiKeysTab() {
 
       {/* Create new key */}
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Create new key</p>
+        <p className="micro text-[var(--color-subtle)]">Create new key</p>
         <div className="flex gap-2">
           <input
             type="text"
@@ -200,7 +200,7 @@ function ApiKeysTab() {
           <button
             onClick={() => void handleCreate()}
             disabled={creating || !newKeyName.trim()}
-            className="px-3 py-1.5 rounded text-xs font-medium bg-white text-black hover:opacity-90 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="pressable rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-xs font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {creating ? 'Creating…' : 'Create'}
           </button>
@@ -209,7 +209,7 @@ function ApiKeysTab() {
 
       {/* Key list */}
       {error && (
-        <p className="text-[11px] text-red-400">{error}</p>
+        <p className="text-[11px] text-[var(--color-fail)]">{error}</p>
       )}
 
       {loading ? (
@@ -238,7 +238,7 @@ function ApiKeysTab() {
                   <span className="text-[10px] text-white/60">Delete?</span>
                   <button
                     onClick={() => void handleDelete(k.id)}
-                    className="px-2 py-1 rounded text-[10px] font-medium bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+                    className="px-2 py-1 rounded text-[10px] font-medium bg-[var(--color-fail)] text-white transition-opacity hover:opacity-90"
                   >
                     Yes
                   </button>
@@ -252,7 +252,7 @@ function ApiKeysTab() {
               ) : (
                 <button
                   onClick={() => setDeletingId(k.id)}
-                  className="flex-shrink-0 p-1.5 rounded text-[var(--color-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="flex-shrink-0 p-1.5 rounded text-[var(--color-muted)] transition-colors hover:bg-[var(--color-fail)]/10 hover:text-[var(--color-fail)]"
                   title="Delete key"
                 >
                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -282,7 +282,7 @@ export function ApiKeyModal({ onClose }: Props) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md mx-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-2xl">
+      <div className="rise-in relative mx-4 w-full max-w-md rounded-2xl border border-[var(--color-border2)] bg-[var(--color-surface)] shadow-[var(--pop-shadow)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-3">

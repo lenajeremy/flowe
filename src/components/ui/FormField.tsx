@@ -11,7 +11,7 @@ export function FormField({ label, htmlFor, children }: FormFieldProps) {
     <div className="flex flex-col gap-1 mb-3">
       <label
         htmlFor={htmlFor}
-        className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider"
+        className="micro text-[var(--color-subtle)]"
       >
         {label}
       </label>

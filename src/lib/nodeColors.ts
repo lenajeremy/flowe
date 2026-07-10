@@ -1,37 +1,24 @@
 import type { NodeType } from '@/types/workflow'
 
-export const NODE_ACCENT_COLORS: Record<NodeType, string> = {
-  textInput:        'var(--color-node-input)',
-  imageInput:       'var(--color-node-input)',
-  llm:              'var(--color-node-llm)',
-  branch:           'var(--color-node-branch)',
-  loop:             'var(--color-node-loop)',
-  textOutput:       'var(--color-node-output)',
-  httpRequest:      '#06b6d4',
-  emailSend:        '#f97316',
-  humanApproval:    '#ec4899',
-  webhookTrigger:   '#10b981',
-  scheduledTrigger: '#a855f7',
-  notion:           '#6b7280',
+// One color language across palette icons, node cards, and config panels:
+// the pastel-neon set from the palette icon artwork.
+export const NODE_ACCENT_HEX: Record<NodeType, string> = {
+  textInput:        '#e5e4e5',
+  imageInput:       '#e3fd7c',
+  llm:              '#70f17b',
+  branch:           '#64f4bf',
+  loop:             '#e45fff',
+  textOutput:       '#e5e4e5',
+  httpRequest:      '#51b4fb',
+  emailSend:        '#ffb74b',
+  humanApproval:    '#f94b4b',
+  webhookTrigger:   '#9889f8',
+  scheduledTrigger: '#ff8ce8',
+  notion:           '#e5e4e5',
   linear:           '#5e6ad2',
 }
 
-// Hex values matching the CSS vars above
-export const NODE_ACCENT_HEX: Record<NodeType, string> = {
-  textInput:        '#64748b',
-  imageInput:       '#64748b',
-  llm:              '#0d99ff',
-  branch:           '#f59e0b',
-  loop:             '#9b6bff',
-  textOutput:       '#14ae5c',
-  httpRequest:      '#06b6d4',
-  emailSend:        '#f97316',
-  humanApproval:    '#ec4899',
-  webhookTrigger:   '#10b981',
-  scheduledTrigger: '#a855f7',
-  notion:           '#6b7280',
-  linear:           '#5e6ad2',
-}
+export const NODE_ACCENT_COLORS: Record<NodeType, string> = NODE_ACCENT_HEX
 
 // SVG path data for node icons (16×16 viewBox, stroke-only)
 export const NODE_ICON_PATHS: Record<NodeType, string> = {

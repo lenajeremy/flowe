@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
@@ -76,7 +77,7 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.scheduledTrigger}
-      iconPath={NODE_ICON_PATHS.scheduledTrigger}
+      icon={NODE_ICONS.scheduledTrigger}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
@@ -84,13 +85,13 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
       <div className="flex flex-col gap-1.5 min-w-[190px]">
         {sched ? (
           <>
-            <div className="text-[11px] font-medium text-purple-400 leading-snug">
+            <div className="text-[11px] font-medium leading-snug text-[#ff8ce8]">
               {formatSchedule(sched)}
             </div>
             <div className="flex items-center gap-1.5">
               <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold tracking-wide ${
                 sched.repeat
-                  ? 'bg-purple-500/20 text-purple-400'
+                  ? 'bg-[#ff8ce8]/15 text-[#ff8ce8]'
                   : 'bg-white/10 text-[var(--color-muted)]'
               }`}>
                 {sched.repeat ? 'Repeats' : 'Once'}

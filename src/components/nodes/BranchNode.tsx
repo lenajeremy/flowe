@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeBase2 } from '@/components/ui/NodeBase2'
-import { NODE_ACCENT_HEX, NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
 export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
@@ -9,37 +10,37 @@ export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
   return (
     <NodeBase2
       accentHex={NODE_ACCENT_HEX.branch}
-      iconPath={NODE_ICON_PATHS.branch}
+      icon={NODE_ICONS.branch}
       label={data.label}
       isSelected={selected ?? false}
       executionStatus={data.executionStatus}
     >
       <div className="flex flex-col gap-1.5">
         {condition ? (
-          <code className="text-[11px] text-amber-600 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20 block font-[var(--font-mono)]">
+          <code className="block rounded-md border border-[var(--color-border)] bg-[var(--color-surface2)] px-2 py-1 font-[var(--font-mono)] text-[11px] text-[var(--color-muted)]">
             {condition.slice(0, 60)}{condition.length > 60 ? '…' : ''}
           </code>
         ) : (
-          <span className="text-[11px] text-[var(--color-muted)] italic">No condition set</span>
+          <span className="text-[11px] italic text-[var(--color-subtle)]">No condition set</span>
         )}
       </div>
 
       <Handle type="target" position={Position.Left} />
 
-      <Handle type="source" position={Position.Right} id="true" style={{ top: '35%' }} />
+      <Handle type="source" position={Position.Right} id="true" style={{ top: '38%' }} />
       <div
-        className="absolute text-[9px] font-medium text-[var(--color-node-output)] pointer-events-none"
-        style={{ right: '-24px', top: 'calc(35% - 6px)' }}
+        className="micro pointer-events-none absolute text-[var(--color-ok)]"
+        style={{ right: '-40px', top: 'calc(38% - 6px)' }}
       >
-        T
+        True
       </div>
 
-      <Handle type="source" position={Position.Right} id="false" style={{ top: '65%' }} />
+      <Handle type="source" position={Position.Right} id="false" style={{ top: '68%' }} />
       <div
-        className="absolute text-[9px] font-medium text-red-500 pointer-events-none"
-        style={{ right: '-24px', top: 'calc(65% - 6px)' }}
+        className="micro pointer-events-none absolute text-[var(--color-fail)]"
+        style={{ right: '-44px', top: 'calc(68% - 6px)' }}
       >
-        F
+        False
       </div>
     </NodeBase2>
   )

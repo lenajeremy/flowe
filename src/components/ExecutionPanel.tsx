@@ -21,7 +21,7 @@ function syntaxHighlight(json: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(
-      /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
       (match) => {
         let cls = 'color:#f59e0b' // number – amber
         if (/^"/.test(match)) {
@@ -62,13 +62,13 @@ function JsonOutput({ raw }: { raw: string }) {
 
 function EventDot({ type }: { type: ExecutionEvent['type'] }) {
   const color =
-    type === 'node_started'        ? 'bg-yellow-400' :
-    type === 'node_output'         ? 'bg-blue-400'   :
-    type === 'node_completed'      ? 'bg-emerald-400' :
-    type === 'node_error'          ? 'bg-red-400'     :
-    type === 'node_waiting'        ? 'bg-pink-400'    :
-    type === 'workflow_started'    ? 'bg-violet-400'  :
-    type === 'workflow_completed'  ? 'bg-emerald-500' :
+    type === 'node_started'        ? 'bg-[var(--color-accent)]' :
+    type === 'node_output'         ? 'bg-[var(--color-accent)]' :
+    type === 'node_completed'      ? 'bg-[var(--color-ok)]'     :
+    type === 'node_error'          ? 'bg-[var(--color-fail)]'   :
+    type === 'node_waiting'        ? 'bg-[var(--color-hold)]'   :
+    type === 'workflow_started'    ? 'bg-[var(--color-accent)]' :
+    type === 'workflow_completed'  ? 'bg-[var(--color-ok)]'     :
     'bg-[var(--color-muted)]'
   return <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${color}`} />
 }
@@ -93,11 +93,11 @@ function EventRow({ event }: { event: ExecutionEvent }) {
               {event.nodeType}
             </span>
           )}
-          <span className="text-[9px] text-[var(--color-muted)] ml-auto flex-shrink-0 tabular-nums">
+          <span className="ml-auto flex-shrink-0 font-[var(--font-mono)] text-[9px] tabular-nums text-[var(--color-subtle)]">
             +{event.timestamp}ms
           </span>
           {hasOutput && (
-            <span className="text-[9px] text-blue-400 flex-shrink-0">
+            <span className="flex-shrink-0 text-[9px] text-[var(--color-accent)]">
               {expanded ? '▲' : '▼'}
             </span>
           )}
@@ -113,9 +113,9 @@ function EventRow({ event }: { event: ExecutionEvent }) {
 // ── Run history helpers ───────────────────────────────────────
 
 function statusBadge(status: WorkflowRun['status']) {
-  if (status === 'completed') return 'bg-emerald-500/20 text-emerald-400'
-  if (status === 'error')     return 'bg-red-500/20 text-red-400'
-  return 'bg-blue-500/20 text-blue-400'
+  if (status === 'completed') return 'bg-[var(--color-ok)]/15 text-[var(--color-ok)]'
+  if (status === 'error')     return 'bg-[var(--color-fail)]/15 text-[var(--color-fail)]'
+  return 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
 }
 
 function formatDate(iso: string) {
@@ -273,7 +273,7 @@ export function ExecutionPanel() {
     >
       {/* Resize handle */}
       <div
-        className="h-1 flex-shrink-0 cursor-row-resize hover:bg-blue-500/50 active:bg-blue-500/70 transition-colors"
+        className="h-1 flex-shrink-0 cursor-row-resize transition-colors duration-150 hover:bg-[var(--color-accent)]/50 active:bg-[var(--color-accent)]/70"
         style={{ background: 'var(--color-border)' }}
         onMouseDown={onResizeStart}
       />
@@ -286,10 +286,10 @@ export function ExecutionPanel() {
         </svg>
         <span className="text-xs font-medium text-[var(--color-text)]">Execution Log</span>
 
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wide ml-1 ${
-          executionState === 'running'   ? 'bg-blue-500/20 text-blue-400'      :
-          executionState === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-          executionState === 'error'     ? 'bg-red-500/20 text-red-400'         :
+        <span className={`micro ml-1 rounded-full px-2 py-0.5 ${
+          executionState === 'running'   ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]' :
+          executionState === 'completed' ? 'bg-[var(--color-ok)]/15 text-[var(--color-ok)]'         :
+          executionState === 'error'     ? 'bg-[var(--color-fail)]/15 text-[var(--color-fail)]'     :
           'bg-[var(--color-surface2)] text-[var(--color-muted)]'
         }`}>
           {executionState}
@@ -359,29 +359,29 @@ export function ExecutionPanel() {
         return (
           <div
             className="flex flex-col gap-3 px-4 py-3 border-b flex-shrink-0"
-            style={{ background: 'rgba(236,72,153,0.1)', borderColor: 'rgba(236,72,153,0.2)' }}
+            style={{ background: 'rgba(245,166,35,0.08)', borderColor: 'rgba(245,166,35,0.25)' }}
           >
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-pink-400">Approval Required</p>
+                <p className="text-sm font-semibold text-[var(--color-hold)]">Approval required</p>
                 <p className="text-xs text-white/60 mt-0.5">{pendingApproval.message}</p>
               </div>
               <Link
                 to={`/run/${pendingApproval.runId}`}
                 target="_blank"
-                className="flex-shrink-0 text-[11px] text-pink-400 hover:text-pink-300 underline underline-offset-2 transition-colors"
+                className="flex-shrink-0 text-[11px] text-[var(--color-hold)] underline underline-offset-2 transition-opacity hover:opacity-80"
               >
                 Full run ↗
               </Link>
               <button
                 onClick={() => void handleApprove()}
-                className="flex-shrink-0 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-400 transition-colors"
+                className="pressable flex-shrink-0 rounded-full bg-[var(--color-ok)] px-4 py-1.5 text-xs font-semibold text-[#052e1b]"
               >
                 Approve
               </button>
               <button
                 onClick={() => void handleReject()}
-                className="flex-shrink-0 rounded-full bg-red-500/80 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition-colors"
+                className="pressable flex-shrink-0 rounded-full bg-[var(--color-fail)] px-4 py-1.5 text-xs font-semibold text-white"
               >
                 Reject
               </button>

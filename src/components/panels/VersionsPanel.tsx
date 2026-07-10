@@ -16,7 +16,7 @@ interface WorkflowVersion {
 
 export function VersionsPanel({ workflowId }: { workflowId: string }) {
   const [versions, setVersions] = useState<WorkflowVersion[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [restoring, setRestoring] = useState<string | null>(null)
 
@@ -25,7 +25,6 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
   )
 
   const load = useCallback(() => {
-    setLoading(true)
     fetch(`${API}/api/workflows/${workflowId}/versions`)
       .then((r) => r.json())
       .then(setVersions)
@@ -51,7 +50,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
   async function restoreVersion(versionId: string) {
     setRestoring(versionId)
     const res = await fetch(
-      `/api/workflows/${workflowId}/versions/${versionId}/restore`,
+      `${API}/api/workflows/${workflowId}/versions/${versionId}/restore`,
       { method: 'POST' },
     )
     if (res.ok) {
@@ -64,13 +63,13 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
   return (
     <div className="flex flex-col gap-3 p-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+        <h3 className="micro text-[var(--color-subtle)]">
           Version History
         </h3>
         <button
           onClick={() => void saveVersion()}
           disabled={saving}
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1 text-[10px] text-[var(--color-text)] transition-colors hover:border-[var(--color-border2)] disabled:opacity-40"
+          className="pressable rounded-lg border border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1 text-[10px] text-[var(--color-text)] hover:border-[var(--color-border2)] disabled:opacity-40"
         >
           {saving ? 'Saving…' : 'Save version'}
         </button>
