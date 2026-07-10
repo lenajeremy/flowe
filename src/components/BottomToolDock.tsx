@@ -7,6 +7,7 @@ import { listWorkflows, type SavedWorkflow } from '@/lib/workflowApi'
 import { consumeRunStream } from '@/lib/runStream'
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
 
 function Divider() {
   return <div className="mx-1 h-4 w-px flex-shrink-0 bg-white/10" />
@@ -179,7 +180,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
     void (async () => {
       try {
-        const response = await fetch(`${API}/api/runs/${externalRunId}/stream`)
+        const response = await apiFetch(`${API}/api/runs/${externalRunId}/stream`)
         if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
         await consumeRunStream(response.body.getReader(), makeEventHandler(externalRunId))
       } catch (err) {
@@ -205,7 +206,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
 
     void (async () => {
       try {
-        const response = await fetch(`${API}/api/workflows/${dbId}/events`, { signal: controller.signal })
+        const response = await apiFetch(`${API}/api/workflows/${dbId}/events`, { signal: controller.signal })
         if (!response.ok || !response.body) return
 
         const reader = response.body.getReader()
@@ -232,7 +233,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
             setPendingApproval(null)
             setCurrentRunId(run_id)
 
-            const streamRes = await fetch(`${API}/api/runs/${run_id}/stream`)
+            const streamRes = await apiFetch(`${API}/api/runs/${run_id}/stream`)
             if (!streamRes.ok || !streamRes.body) continue
             await consumeRunStream(streamRes.body.getReader(), makeEventHandler(run_id))
           }
@@ -260,7 +261,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
     if (creating) return
     setCreating(true)
     try {
-      const res = await fetch(`${API}/api/workflows`, {
+      const res = await apiFetch(`${API}/api/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),
@@ -298,7 +299,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       const ast = serializeToAST(nodes, edges, workflowName)
       const startTime = Date.now()
       try {
-        const response = await fetch(`${API}/api/run`, {
+        const response = await apiFetch(`${API}/api/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),

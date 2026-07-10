@@ -5,6 +5,7 @@ import { consumeRunStream } from '@/lib/runStream'
 import { serializeToAST } from '@/lib/executor'
 import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
+import { apiFetch } from '@/lib/http'
 
 // Run orchestration extracted from the old BottomToolDock so the canvas
 // (node Run buttons, zoom controls) can trigger runs without the dock UI.
@@ -79,7 +80,7 @@ export function startRun() {
     const ast = serializeToAST(nodes, edges, workflowName)
     const startTime = Date.now()
     try {
-      const response = await fetch(`${API}/api/run`, {
+      const response = await apiFetch(`${API}/api/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),
@@ -129,7 +130,7 @@ export function useRunStreamBridge() {
 
     void (async () => {
       try {
-        const response = await fetch(`${API}/api/runs/${externalRunId}/stream`)
+        const response = await apiFetch(`${API}/api/runs/${externalRunId}/stream`)
         if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
         await consumeRunStream(response.body.getReader(), makeEventHandler(externalRunId))
       } catch (err) {
@@ -155,7 +156,7 @@ export function useRunStreamBridge() {
 
     void (async () => {
       try {
-        const response = await fetch(`${API}/api/workflows/${dbId}/events`, { signal: controller.signal })
+        const response = await apiFetch(`${API}/api/workflows/${dbId}/events`, { signal: controller.signal })
         if (!response.ok || !response.body) return
 
         const reader = response.body.getReader()
@@ -177,7 +178,7 @@ export function useRunStreamBridge() {
             connectedRunRef.current = run_id
             prepareRunState(run_id)
 
-            const streamRes = await fetch(`${API}/api/runs/${run_id}/stream`)
+            const streamRes = await apiFetch(`${API}/api/runs/${run_id}/stream`)
             if (!streamRes.ok || !streamRes.body) continue
             await consumeRunStream(streamRes.body.getReader(), makeEventHandler(run_id))
           }

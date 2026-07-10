@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import type { SavedWorkflow } from '@/lib/workflowApi'
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
+import { useAuthStore } from '@/store/authStore'
 
 const C = {
   schedule: '#8b5cf6',
@@ -275,12 +277,17 @@ function Nav({ onOpen }: { onOpen: () => void }) {
 // ─── Main ─────────────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate()
+  const authStatus = useAuthStore((s) => s.status)
   const [creating, setCreating] = useState(false)
 
   async function handleCreate() {
+    if (authStatus !== 'authed') {
+      navigate('/login')
+      return
+    }
     setCreating(true)
     try {
-      const res = await fetch(`${API}/api/workflows`, {
+      const res = await apiFetch(`${API}/api/workflows`, {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body:JSON.stringify({ name:'New Workflow', nodes:[], edges:[] }),
       })

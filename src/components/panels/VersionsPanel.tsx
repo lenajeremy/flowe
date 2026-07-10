@@ -3,6 +3,7 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { FlowNode, FlowEdge } from '@/types/workflow'
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
 
 interface WorkflowVersion {
   id: string
@@ -25,7 +26,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
   )
 
   const load = useCallback(() => {
-    fetch(`${API}/api/workflows/${workflowId}/versions`)
+    apiFetch(`${API}/api/workflows/${workflowId}/versions`)
       .then((r) => r.json())
       .then(setVersions)
       .catch(() => {})
@@ -38,7 +39,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
 
   async function saveVersion() {
     setSaving(true)
-    await fetch(`${API}/api/workflows/${workflowId}/versions`, {
+    await apiFetch(`${API}/api/workflows/${workflowId}/versions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -49,7 +50,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
 
   async function restoreVersion(versionId: string) {
     setRestoring(versionId)
-    const res = await fetch(
+    const res = await apiFetch(
       `${API}/api/workflows/${workflowId}/versions/${versionId}/restore`,
       { method: 'POST' },
     )

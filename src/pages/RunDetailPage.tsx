@@ -4,6 +4,7 @@ import { getRun, approveRun, rejectRun, type WorkflowRun } from '@/lib/workflowA
 import { consumeRunStream } from '@/lib/runStream'
 import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
+import { apiFetch } from '@/lib/http'
 
 function tryJson(str: string): string {
   try {
@@ -84,7 +85,7 @@ export function RunDetailPage() {
           // Connect to live SSE stream for in-progress runs
           const ctrl = new AbortController()
           abortRef.current = ctrl
-          fetch(`${API}/api/runs/${runId}/stream`, { signal: ctrl.signal })
+          apiFetch(`${API}/api/runs/${runId}/stream`, { signal: ctrl.signal })
             .then(async (res) => {
               if (!res.body) return
               await consumeRunStream(res.body.getReader(), (ev) => {

@@ -1,4 +1,5 @@
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
 
 export interface IntegrationResource {
   id: string
@@ -21,7 +22,7 @@ export class ResourceFetchError extends Error {
 export function fetchResources(provider: string): Promise<IntegrationResource[]> {
   let cached = resourceCache.get(provider)
   if (!cached) {
-    cached = fetch(`${API}/api/integrations/${provider}/resources`)
+    cached = apiFetch(`${API}/api/integrations/${provider}/resources`)
       .then(async (r) => {
         if (r.ok) return r.json() as Promise<IntegrationResource[]>
         let message = `HTTP ${r.status}`

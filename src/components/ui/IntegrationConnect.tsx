@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { API } from '@/lib/config'
 import { clearResourceCache } from '@/lib/integrationResources'
+import { apiFetch } from '@/lib/http'
 
 interface IntegrationStatus {
   provider: string
@@ -27,7 +28,7 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   const [showManual, setShowManual] = useState(hasManualToken)
 
   const refresh = useCallback(() => {
-    fetch(`${API}/api/integrations`)
+    apiFetch(`${API}/api/integrations`)
       .then((r) => r.json())
       .then((list: IntegrationStatus[]) => {
         setStatus(list.find((s) => s.provider === provider) ?? null)
@@ -40,7 +41,9 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
 
   // The OAuth popup posts back { type: 'integration-oauth', provider, status }
   useEffect(() => {
+    const apiOrigin = API ? new URL(API).origin : window.location.origin
     function onMessage(e: MessageEvent) {
+      if (e.origin !== apiOrigin) return
       const d = e.data as { type?: string; provider?: string } | null
       if (d?.type === 'integration-oauth' && d.provider === provider) {
         clearResourceCache(provider)
@@ -52,15 +55,17 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   }, [provider, refresh])
 
   function connect() {
+    // Pass our origin so the popup's postMessage can target it exactly —
+    // the dev server port changes between runs.
     window.open(
-      `${API}/api/integrations/${provider}/connect`,
+      `${API}/api/integrations/${provider}/connect?origin=${encodeURIComponent(window.location.origin)}`,
       `connect-${provider}`,
       'width=560,height=720,menubar=no,toolbar=no',
     )
   }
 
   async function disconnect() {
-    await fetch(`${API}/api/integrations/${provider}`, { method: 'DELETE' }).catch(() => {})
+    await apiFetch(`${API}/api/integrations/${provider}`, { method: 'DELETE' }).catch(() => {})
     clearResourceCache(provider)
     refresh()
   }

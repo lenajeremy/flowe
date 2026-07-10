@@ -10,6 +10,7 @@ import { IntegrationConnect } from '@/components/ui/IntegrationConnect'
 import { ResourcePicker } from '@/components/ui/ResourcePicker'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
 
 type InspectorTab = 'configure' | 'status' | 'logs'
 
@@ -232,7 +233,7 @@ export function ConfigPanel() {
     if (!dbId) return
     setWebhookLoading(true)
     try {
-      const r = await fetch(`${API}/api/workflows/${dbId}/webhook`)
+      const r = await apiFetch(`${API}/api/workflows/${dbId}/webhook`)
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const wh = await r.json() as { token: string }
       setWebhookUrl(`${window.location.origin}/trigger/${wh.token}`)
@@ -282,7 +283,7 @@ export function ConfigPanel() {
 
   useEffect(() => {
     if (selectedNode?.data.nodeType !== 'scheduledTrigger' || !dbId) return
-    fetch(`${API}/api/workflows/${dbId}/schedule`)
+    apiFetch(`${API}/api/workflows/${dbId}/schedule`)
       .then((r) => r.ok ? r.json() : null)
       .then((s: { frequency?: string; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
         if (!s) return
@@ -308,7 +309,7 @@ export function ConfigPanel() {
       repeat:       overrides?.repeat       ?? schedRepeat,
     }
     try {
-      const r = await fetch(`${API}/api/workflows/${dbId}/schedule`, {
+      const r = await apiFetch(`${API}/api/workflows/${dbId}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -334,7 +335,7 @@ export function ConfigPanel() {
   async function handleRegenerateWebhook() {
     if (!dbId) return
     try {
-      await fetch(`${API}/api/workflows/${dbId}/webhook`, { method: 'DELETE' })
+      await apiFetch(`${API}/api/workflows/${dbId}/webhook`, { method: 'DELETE' })
       await fetchWebhook()
     } catch {
       // best-effort
@@ -1289,7 +1290,7 @@ export function ConfigPanel() {
             <button
               onClick={async () => {
                 if (!dbId) return
-                await fetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
+                await apiFetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
                 setSchedNextRun(null)
               }}
               className="text-[10px] text-[var(--color-fail)]/60 hover:text-[var(--color-fail)] transition-colors text-left"

@@ -7,6 +7,7 @@ import type { FlowNode } from '@/types/workflow'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
+import { apiFetch } from '@/lib/http'
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -54,7 +55,7 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   // Fetch once on mount so the node is populated before any sidebar interaction
   useEffect(() => {
     if (!dbId) return
-    fetch(`${API}/api/workflows/${dbId}/schedule`)
+    apiFetch(`${API}/api/workflows/${dbId}/schedule`)
       .then((r) => { if (!r.ok) throw new Error(); return r.json() })
       .then((s: Schedule) => setFetched(s))
       .catch(() => {})

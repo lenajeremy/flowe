@@ -2,10 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useWorkflowStore } from '@/store/workflowStore'
+import { useAuthStore } from '@/store/authStore'
 import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
 import { FloweIcon } from '@/components/FloweIcon'
 import LiquidGlass from 'liquid-glass-react'
+import { apiFetch } from '@/lib/http'
 // ── Types ───────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -24,6 +26,15 @@ interface StoredMessage {
   thinking?: string
   thinkingDuration?: number
   workflowApplied?: boolean
+}
+
+interface ChatModelInfo {
+  id: string
+  name: string
+  description: string
+  providerLabel: string
+  keyEnv: string
+  available: boolean
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -49,6 +60,17 @@ const SUGGESTIONS = [
   'Every morning, summarise my unread Gmail and send a digest to Slack',
 ]
 
+const MODEL_STORAGE_KEY = 'flowe:chat-model'
+const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6'
+
+// Used until /api/ai/models responds (or if it never does)
+const FALLBACK_MODELS: ChatModelInfo[] = [
+  { id: 'claude-fable-5', name: 'Fable 5', description: 'Most capable — complex multi-step workflows', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
+  { id: 'claude-opus-4-8', name: 'Opus 4.8', description: 'Deep reasoning for demanding builds', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
+  { id: 'claude-sonnet-4-6', name: 'Sonnet 4.6', description: 'Balanced speed and intelligence', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
+  { id: 'claude-haiku-4-5-20251001', name: 'Haiku 4.5', description: 'Fastest — quick edits and simple flows', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
+]
+
 // ── Component ───────────────────────────────────────────────────
 
 export function ChatPanel() {
@@ -56,7 +78,10 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [chatModel] = useState<string>('claude-sonnet-4-6')
+  const [models, setModels] = useState<ChatModelInfo[]>(FALLBACK_MODELS)
+  const [chatModel, setChatModel] = useState<string>(
+    () => localStorage.getItem(MODEL_STORAGE_KEY) ?? DEFAULT_CHAT_MODEL,
+  )
   const [inputWidth, setInputWidth] = useState(0)
   const [inputHeight, setInputHeight] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -88,11 +113,30 @@ export function ChatPanel() {
     })),
   )
 
+  // ── Available models ─────────────────────────────────────────
+  useEffect(() => {
+    apiFetch(`${API}/api/ai/models`)
+      .then((r) => r.json())
+      .then((data: { models: ChatModelInfo[]; default: string }) => {
+        if (!Array.isArray(data.models) || data.models.length === 0) return
+        setModels(data.models)
+        // A stored model the server no longer accepts (or whose provider key
+        // was removed) falls back to the server default
+        setChatModel((cur) => (data.models.some((m) => m.id === cur && m.available) ? cur : data.default))
+      })
+      .catch(() => {})
+  }, [])
+
+  const selectModel = useCallback((id: string) => {
+    setChatModel(id)
+    localStorage.setItem(MODEL_STORAGE_KEY, id)
+  }, [])
+
   // ── Load chat history ────────────────────────────────────────
   useEffect(() => {
     if (!dbId) { setMessages([]); return }
     setLoadingHistory(true)
-    fetch(`${API}/api/workflows/${dbId}/chat`)
+    apiFetch(`${API}/api/workflows/${dbId}/chat`)
       .then((r) => r.json())
       .then((data: { messages: StoredMessage[] }) => setMessages(fromStored(data.messages ?? [])))
       .catch(() => setMessages([]))
@@ -102,7 +146,7 @@ export function ChatPanel() {
   // ── Persist chat ─────────────────────────────────────────────
   const saveChat = useCallback((msgs: ChatMessage[]) => {
     if (!dbId) return
-    void fetch(`${API}/api/workflows/${dbId}/chat`, {
+    void apiFetch(`${API}/api/workflows/${dbId}/chat`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: toStored(msgs) }),
@@ -141,7 +185,7 @@ export function ChatPanel() {
       .map(({ role, content }) => ({ role, content }))
 
     try {
-      const res = await fetch(`${API}/api/ai/generate-workflow`, {
+      const res = await apiFetch(`${API}/api/ai/generate-workflow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -295,7 +339,7 @@ export function ChatPanel() {
   function handleClear() {
     setMessages([])
     if (dbId) {
-      void fetch(`${API}/api/workflows/${dbId}/chat`, {
+      void apiFetch(`${API}/api/workflows/${dbId}/chat`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [] }),
@@ -387,15 +431,18 @@ export function ChatPanel() {
               className="w-full resize-none bg-transparent text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none leading-relaxed disabled:opacity-50"
             />
             <div className="flex items-center justify-between mt-2">
-              <button
-                type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
-                tabIndex={-1}
-              >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <path d="M13 6.5L7 12.5a4 4 0 0 1-5.66-5.66l6-6a2.5 2.5 0 0 1 3.54 3.54L5.5 10.16a1 1 0 0 1-1.42-1.42L9.5 3.33" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
+                  tabIndex={-1}
+                >
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <path d="M13 6.5L7 12.5a4 4 0 0 1-5.66-5.66l6-6a2.5 2.5 0 0 1 3.54 3.54L5.5 10.16a1 1 0 0 1-1.42-1.42L9.5 3.33" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <ModelPicker models={models} value={chatModel} onChange={selectModel} />
+              </div>
               {isGenerating ? (
                 <button type="button" onClick={handleStop} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black hover:opacity-80 transition-opacity">
                   <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
@@ -419,6 +466,88 @@ export function ChatPanel() {
           </p>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Model Picker ─────────────────────────────────────────────────
+
+function ModelPicker({
+  models,
+  value,
+  onChange,
+}: {
+  models: ChatModelInfo[]
+  value: string
+  onChange: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const current = models.find((m) => m.id === value)
+
+  // Group by provider, preserving server order
+  const groups: { label: string; items: ChatModelInfo[] }[] = []
+  for (const m of models) {
+    const group = groups.find((g) => g.label === m.providerLabel)
+    if (group) group.items.push(m)
+    else groups.push({ label: m.providerLabel, items: [m] })
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-8 items-center gap-1.5 rounded-lg bg-white/5 px-2.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
+      >
+        <span>{current?.name ?? 'Model'}</span>
+        <svg
+          width="9" height="9" viewBox="0 0 10 10" fill="none"
+          className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+        >
+          <path d="M2 6.5L5 3.5l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[440px] w-[260px] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+            {groups.map((group) => (
+              <div key={group.label}>
+                <div className="px-2.5 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)] opacity-70">
+                  {group.label}
+                </div>
+                {group.items.map((m) => {
+                  const active = m.id === value
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={!m.available}
+                      onClick={() => { onChange(m.id); setOpen(false) }}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                    >
+                      <div className="min-w-0">
+                        <div className={`text-[12px] ${active ? 'text-[var(--color-text)] font-medium' : 'text-[var(--color-text)]'}`}>
+                          {m.name}
+                        </div>
+                        <div className="text-[10px] text-[var(--color-muted)] truncate">
+                          {m.available ? m.description : `Add ${m.keyEnv} to enable`}
+                        </div>
+                      </div>
+                      {active && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 text-[var(--color-text)]">
+                          <path d="M2.5 6.5L5 9l4.5-6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -470,16 +599,22 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
 
 function MessageBubble({ message, onRollback }: { message: ChatMessage; onRollback: () => void }) {
   const [reasoningOpen, setReasoningOpen] = useState(false)
+  const user = useAuthStore((s) => s.user)
 
   // User message — right-aligned with avatar
   if (message.role === 'user') {
+    const initial = ((user?.name || user?.email || '?')[0] ?? '?').toUpperCase()
     return (
       <div className="flex justify-end items-start gap-2">
         <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] break-words">
           {message.content}
         </div>
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-semibold mt-0.5 select-none">
-          J
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-semibold mt-0.5 select-none overflow-hidden">
+          {user?.avatar_url ? (
+            <img src={user.avatar_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            initial
+          )}
         </div>
       </div>
     )

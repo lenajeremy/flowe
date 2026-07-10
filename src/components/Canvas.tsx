@@ -202,6 +202,8 @@ export function Canvas({ theme }: CanvasProps) {
         edgeTypes={edgeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.1}
+        maxZoom={5}
         deleteKeyCode={null}
         panOnDrag={activeTool === 'hand' ? true : [1, 2]}
         selectionOnDrag={activeTool === 'select'}

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { listWorkflows, deleteWorkflow, type SavedWorkflow } from '@/lib/workflowApi'
 import { API } from '@/lib/config'
 import { FloweIcon } from '@/components/FloweIcon'
+import { apiFetch } from '@/lib/http'
+import { UserMenu } from '@/components/ui/UserMenu'
 
 // Workflow list lives at /workflows; editor at /workflow/:id
 
@@ -36,7 +38,7 @@ export function HomePage() {
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch(`${API}/api/workflows`, {
+      const res = await apiFetch(`${API}/api/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),
@@ -83,20 +85,23 @@ export function HomePage() {
             </div>
           </div>
 
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            className="pressable flex items-center gap-2 rounded-full bg-[var(--color-text)] px-4 py-2 text-[13px] font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:opacity-50"
-          >
-            {creating ? (
-              <Spinner />
-            ) : (
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            )}
-            New workflow
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="pressable flex items-center gap-2 rounded-full bg-[var(--color-text)] px-4 py-2 text-[13px] font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:opacity-50"
+            >
+              {creating ? (
+                <Spinner />
+              ) : (
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              )}
+              New workflow
+            </button>
+            <UserMenu />
+          </div>
         </div>
 
         {/* List */}
