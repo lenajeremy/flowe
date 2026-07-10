@@ -103,9 +103,9 @@ export type FlowNodeData = {
   linearIssueId?: string
   linearTitle?: string         // supports {{nodeId.output}} templates
   linearDescription?: string   // supports {{nodeId.output}} templates
-  linearPriority?: string      // "0"|"1"|"2"|"3"|"4"
+  linearPriority?: number      // 0..4
   linearCommentBody?: string   // supports {{nodeId.output}} templates
-  linearLimit?: string
+  linearLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

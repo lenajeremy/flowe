@@ -70,7 +70,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         linearTeamId: '',
         linearTitle: '',
         linearDescription: '',
-        linearPriority: '3',
+        linearPriority: 3,
       }
   }
 }

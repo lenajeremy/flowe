@@ -6,6 +6,8 @@ import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
 import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NodeStatusTab, NodeLogsTab } from '@/components/panels/NodeRunTabs'
+import { IntegrationConnect } from '@/components/ui/IntegrationConnect'
+import { ResourcePicker } from '@/components/ui/ResourcePicker'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
 
@@ -946,31 +948,40 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            {/* API Token */}
-            <FormField label="Notion API Token" htmlFor="cfg-notion-token">
-              <input
-                id="cfg-notion-token"
-                type="password"
-                value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
-                onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
-                className={inputClass}
-                placeholder="secret_..."
-              />
-            </FormField>
-            <p className="text-[10px] text-[var(--color-muted)] -mt-2">
-              Get from notion.so → Settings → Integrations → New integration
-            </p>
+            {/* Connection — OAuth via server, manual token as override */}
+            <IntegrationConnect
+              provider="notion"
+              label="Notion"
+              hasManualToken={typeof data.integrationToken === 'string' && data.integrationToken !== ''}
+              manualField={
+                <>
+                  <FormField label="Notion API Token" htmlFor="cfg-notion-token">
+                    <input
+                      id="cfg-notion-token"
+                      type="password"
+                      value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
+                      onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
+                      className={inputClass}
+                      placeholder="secret_..."
+                    />
+                  </FormField>
+                  <p className="text-[10px] text-[var(--color-muted)] -mt-2">
+                    Get from notion.so → Settings → Integrations → New integration
+                  </p>
+                </>
+              }
+            />
 
             {/* create_page fields */}
             {(data.integrationOp === 'create_page' || !data.integrationOp) && (
               <>
-                <FormField label="Database ID" htmlFor="cfg-notion-db">
-                  <input
+                <FormField label="Database" htmlFor="cfg-notion-db">
+                  <ResourcePicker
+                    provider="notion"
+                    kind="database"
                     id="cfg-notion-db"
-                    type="text"
                     value={typeof data.notionDatabaseId === 'string' ? data.notionDatabaseId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionDatabaseId: e.target.value })}
-                    className={inputClass}
+                    onChange={(val) => updateNodeData(nodeId, { notionDatabaseId: val })}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                   />
                 </FormField>
@@ -1000,13 +1011,13 @@ export function ConfigPanel() {
             {/* query_database fields */}
             {data.integrationOp === 'query_database' && (
               <>
-                <FormField label="Database ID" htmlFor="cfg-notion-db-q">
-                  <input
+                <FormField label="Database" htmlFor="cfg-notion-db-q">
+                  <ResourcePicker
+                    provider="notion"
+                    kind="database"
                     id="cfg-notion-db-q"
-                    type="text"
                     value={typeof data.notionDatabaseId === 'string' ? data.notionDatabaseId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionDatabaseId: e.target.value })}
-                    className={inputClass}
+                    onChange={(val) => updateNodeData(nodeId, { notionDatabaseId: val })}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                   />
                 </FormField>
@@ -1026,13 +1037,13 @@ export function ConfigPanel() {
             {/* append_blocks fields */}
             {data.integrationOp === 'append_blocks' && (
               <>
-                <FormField label="Page ID" htmlFor="cfg-notion-page">
-                  <input
+                <FormField label="Page" htmlFor="cfg-notion-page">
+                  <ResourcePicker
+                    provider="notion"
+                    kind="page"
                     id="cfg-notion-page"
-                    type="text"
                     value={typeof data.notionPageId === 'string' ? data.notionPageId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionPageId: e.target.value })}
-                    className={inputClass}
+                    onChange={(val) => updateNodeData(nodeId, { notionPageId: val })}
                     placeholder="{{prev-node.output}} or page ID"
                   />
                 </FormField>
@@ -1068,31 +1079,40 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            {/* API Token */}
-            <FormField label="Linear API Key" htmlFor="cfg-linear-token">
-              <input
-                id="cfg-linear-token"
-                type="password"
-                value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
-                onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
-                className={inputClass}
-                placeholder="lin_api_..."
-              />
-            </FormField>
-            <p className="text-[10px] text-[var(--color-muted)] -mt-2">
-              Get from linear.app → Settings → API → Personal API keys
-            </p>
+            {/* Connection — OAuth via server, manual token as override */}
+            <IntegrationConnect
+              provider="linear"
+              label="Linear"
+              hasManualToken={typeof data.integrationToken === 'string' && data.integrationToken !== ''}
+              manualField={
+                <>
+                  <FormField label="Linear API Key" htmlFor="cfg-linear-token">
+                    <input
+                      id="cfg-linear-token"
+                      type="password"
+                      value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
+                      onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })}
+                      className={inputClass}
+                      placeholder="lin_api_..."
+                    />
+                  </FormField>
+                  <p className="text-[10px] text-[var(--color-muted)] -mt-2">
+                    Get from linear.app → Settings → API → Personal API keys
+                  </p>
+                </>
+              }
+            />
 
             {/* create_issue fields */}
             {(data.integrationOp === 'create_issue' || !data.integrationOp) && (
               <>
-                <FormField label="Team ID" htmlFor="cfg-linear-team">
-                  <input
+                <FormField label="Team" htmlFor="cfg-linear-team">
+                  <ResourcePicker
+                    provider="linear"
+                    kind="team"
                     id="cfg-linear-team"
-                    type="text"
                     value={typeof data.linearTeamId === 'string' ? data.linearTeamId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearTeamId: e.target.value })}
-                    className={inputClass}
+                    onChange={(val) => updateNodeData(nodeId, { linearTeamId: val })}
                     placeholder="Team ID from Linear"
                   />
                 </FormField>
@@ -1119,8 +1139,8 @@ export function ConfigPanel() {
                 <FormField label="Priority" htmlFor="cfg-linear-priority">
                   <Select
                     id="cfg-linear-priority"
-                    value={typeof data.linearPriority === 'string' ? data.linearPriority : '3'}
-                    onChange={(val) => updateNodeData(nodeId, { linearPriority: val })}
+                    value={String(typeof data.linearPriority === 'number' || typeof data.linearPriority === 'string' ? data.linearPriority : 3)}
+                    onChange={(val) => updateNodeData(nodeId, { linearPriority: Number(val) })}
                     options={[
                       { value: '0', label: 'No Priority' },
                       { value: '1', label: 'Urgent' },
@@ -1136,13 +1156,13 @@ export function ConfigPanel() {
             {/* get_issues fields */}
             {data.integrationOp === 'get_issues' && (
               <>
-                <FormField label="Team ID (optional)" htmlFor="cfg-linear-team-g">
-                  <input
+                <FormField label="Team (optional)" htmlFor="cfg-linear-team-g">
+                  <ResourcePicker
+                    provider="linear"
+                    kind="team"
                     id="cfg-linear-team-g"
-                    type="text"
                     value={typeof data.linearTeamId === 'string' ? data.linearTeamId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearTeamId: e.target.value })}
-                    className={inputClass}
+                    onChange={(val) => updateNodeData(nodeId, { linearTeamId: val })}
                     placeholder="Leave blank for all teams"
                   />
                 </FormField>
@@ -1150,8 +1170,8 @@ export function ConfigPanel() {
                   <input
                     id="cfg-linear-limit"
                     type="number"
-                    value={typeof data.linearLimit === 'string' ? data.linearLimit : '25'}
-                    onChange={(e) => updateNodeData(nodeId, { linearLimit: e.target.value })}
+                    value={String(typeof data.linearLimit === 'number' || typeof data.linearLimit === 'string' ? data.linearLimit : 25)}
+                    onChange={(e) => updateNodeData(nodeId, { linearLimit: Number(e.target.value) })}
                     className={inputClass}
                     placeholder="25"
                   />
