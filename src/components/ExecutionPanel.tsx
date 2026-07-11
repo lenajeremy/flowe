@@ -23,17 +23,17 @@ function syntaxHighlight(json: string): string {
     .replace(
       /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
       (match) => {
-        let cls = 'color:#f59e0b' // number – amber
+        let cls = 'color:var(--syn-num)'
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
-            cls = 'color:#a78bfa' // key – purple
+            cls = 'color:var(--syn-key)'
           } else {
-            cls = 'color:#34d399' // string – emerald
+            cls = 'color:var(--syn-str)'
           }
         } else if (/true|false/.test(match)) {
-          cls = 'color:#60a5fa' // boolean – blue
+          cls = 'color:var(--syn-bool)'
         } else if (/null/.test(match)) {
-          cls = 'color:#f87171' // null – red
+          cls = 'color:var(--syn-null)'
         }
         return `<span style="${cls}">${match}</span>`
       },
@@ -268,7 +268,7 @@ export function ExecutionPanel() {
 
   return (
     <div
-      className="flex-shrink-0 flex flex-col bg-[var(--color-surface)] border-t border-[var(--color-border)] overflow-hidden transition-[height] duration-300 ease-in-out"
+      className="flex-shrink-0 flex flex-col bg-[var(--color-surface)] border-t border-[var(--color-border)] overflow-hidden transition-[height] duration-200 ease-[var(--ease-in-out)]"
       style={{ height: isLogPanelOpen ? panelHeight : 0 }}
     >
       {/* Resize handle */}
@@ -305,8 +305,8 @@ export function ExecutionPanel() {
             onClick={() => { setActiveTab('log'); setViewingRun(null) }}
             className={`rounded-full px-3 py-0.5 text-[10px] font-medium transition-colors ${
               activeTab === 'log'
-                ? 'bg-white/15 text-white'
-                : 'text-[var(--color-muted)] hover:text-white'
+                ? 'bg-[var(--color-hover2)] text-[var(--color-text)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
             }`}
           >
             Log
@@ -315,8 +315,8 @@ export function ExecutionPanel() {
             onClick={() => setActiveTab('history')}
             className={`rounded-full px-3 py-0.5 text-[10px] font-medium transition-colors ${
               activeTab === 'history'
-                ? 'bg-white/15 text-white'
-                : 'text-[var(--color-muted)] hover:text-white'
+                ? 'bg-[var(--color-hover2)] text-[var(--color-text)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
             }`}
           >
             History
@@ -325,8 +325,8 @@ export function ExecutionPanel() {
             onClick={() => setActiveTab('state')}
             className={`rounded-full px-3 py-0.5 text-[10px] font-medium transition-colors ${
               activeTab === 'state'
-                ? 'bg-white/15 text-white'
-                : 'text-[var(--color-muted)] hover:text-white'
+                ? 'bg-[var(--color-hover2)] text-[var(--color-text)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
             }`}
           >
             State
@@ -359,12 +359,12 @@ export function ExecutionPanel() {
         return (
           <div
             className="flex flex-col gap-3 px-4 py-3 border-b flex-shrink-0"
-            style={{ background: 'rgba(245,166,35,0.08)', borderColor: 'rgba(245,166,35,0.25)' }}
+            style={{ background: 'var(--tint-hold)', borderColor: 'color-mix(in srgb, var(--color-hold) 30%, transparent)' }}
           >
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--color-hold)]">Approval required</p>
-                <p className="text-xs text-white/60 mt-0.5">{pendingApproval.message}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{pendingApproval.message}</p>
               </div>
               <Link
                 to={`/run/${pendingApproval.runId}`}
@@ -375,7 +375,7 @@ export function ExecutionPanel() {
               </Link>
               <button
                 onClick={() => void handleApprove()}
-                className="pressable flex-shrink-0 rounded-full bg-[var(--color-ok)] px-4 py-1.5 text-xs font-semibold text-[#052e1b]"
+                className="pressable flex-shrink-0 rounded-full bg-[var(--color-ok)] px-4 py-1.5 text-xs font-semibold text-[var(--color-canvas)]"
               >
                 Approve
               </button>
@@ -441,7 +441,7 @@ export function ExecutionPanel() {
               <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)] flex-shrink-0">
                 <button
                   onClick={() => { setViewingRun(null); setViewingRunEvents([]) }}
-                  className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)] hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M6 2L2 5l4 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>

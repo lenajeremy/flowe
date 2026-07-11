@@ -15,6 +15,11 @@ export type NodeType =
   | 'scheduledTrigger'
   | 'notion'
   | 'linear'
+  | 'github'
+  | 'gitlab'
+  | 'gmail'
+  | 'stripe'
+  | 'shopify'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -97,6 +102,8 @@ export type FlowNodeData = {
   notionTitle?: string         // supports {{nodeId.output}} templates
   notionContent?: string       // supports {{nodeId.output}} templates
   notionFilter?: string        // JSON filter string
+  notionQuery?: string         // search text
+  notionProperties?: string    // JSON object of properties for update_page
 
   // linear
   linearTeamId?: string
@@ -106,6 +113,53 @@ export type FlowNodeData = {
   linearPriority?: number      // 0..4
   linearCommentBody?: string   // supports {{nodeId.output}} templates
   linearLimit?: number
+  linearStateId?: string
+  linearAssigneeId?: string
+  linearQuery?: string
+  linearProjectId?: string
+
+  // github
+  githubRepo?: string          // owner/name
+  githubTitle?: string
+  githubBody?: string
+  githubIssueNumber?: string
+  githubLabels?: string        // comma-separated
+  githubState?: string         // open | closed | all
+  githubLimit?: number
+  githubPrNumber?: string
+
+  // gitlab
+  gitlabProjectId?: string
+  gitlabTitle?: string
+  gitlabDescription?: string
+  gitlabIssueIid?: string
+  gitlabLabels?: string
+  gitlabState?: string         // opened | closed | all
+  gitlabLimit?: number
+  gitlabMrIid?: string
+
+  // gmail
+  gmailTo?: string
+  gmailCc?: string
+  gmailSubject?: string
+  gmailBody?: string
+  gmailQuery?: string          // Gmail search syntax
+  gmailMessageId?: string
+  gmailLimit?: number
+
+  // stripe
+  stripeLimit?: number
+  stripeCustomerEmail?: string
+  stripePriceId?: string
+  stripeQuantity?: number
+
+  // shopify
+  shopifyOrderId?: string
+  shopifyLimit?: number
+  shopifyStatus?: string       // open | closed | any
+  shopifyTitle?: string
+  shopifyDescription?: string
+  shopifyPrice?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

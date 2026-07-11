@@ -2,12 +2,21 @@ import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 
-// Matches models.Workflow from the Go server
+// Matches models.Workflow from the Go server (single-workflow endpoints)
 export interface SavedWorkflow {
   id: string
   name: string
   nodes: WorkflowAST['nodes']
   edges: WorkflowAST['edges']
+  created_at: string
+  updated_at: string
+}
+
+// List payload — metadata only; nodes/edges are fetched per-workflow
+export interface WorkflowSummary {
+  id: string
+  name: string
+  node_count: number
   created_at: string
   updated_at: string
 }
@@ -27,10 +36,10 @@ export async function saveWorkflow(
   return res.json() as Promise<SavedWorkflow>
 }
 
-export async function listWorkflows(): Promise<SavedWorkflow[]> {
+export async function listWorkflows(): Promise<WorkflowSummary[]> {
   const res = await apiFetch(`${API}/api/workflows`)
   if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`)
-  return res.json() as Promise<SavedWorkflow[]>
+  return res.json() as Promise<WorkflowSummary[]>
 }
 
 export async function getWorkflow(id: string): Promise<SavedWorkflow> {
@@ -52,6 +61,7 @@ export interface WorkflowRun {
   workflow_name?: string
   status: 'running' | 'completed' | 'error'
   error_message?: string
+  // Present on GET /runs/:id only — list endpoints return summaries
   events?: ExecutionEvent[]
   created_at: string
   updated_at: string

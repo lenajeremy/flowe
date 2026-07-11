@@ -10,33 +10,28 @@ import { LoginPage } from '@/pages/LoginPage'
 import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useAuthStore } from '@/store/authStore'
+import { initTheme, useTheme } from '@/lib/theme'
 
 function App() {
   const bootstrap = useAuthStore((s) => s.bootstrap)
+  const { resolved } = useTheme()
 
-  // Apply saved / system theme once on mount so all pages see correct CSS vars
   useEffect(() => {
-    const saved = localStorage.getItem('workflow-ai-theme')
-    const theme =
-      saved === 'dark' || saved === 'light'
-        ? saved
-        : window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light'
-    document.documentElement.dataset.theme = theme
+    initTheme()
     void bootstrap()
   }, [bootstrap])
 
   return (
     <>
       <Toaster
-        theme="dark"
+        theme={resolved}
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#1B1B1D',
-            border: '1px solid #2A2A3E',
-            color: '#fff',
+            background: 'var(--color-elevated)',
+            border: '1px solid var(--color-border2)',
+            color: 'var(--color-text)',
+            boxShadow: 'var(--pop-shadow)',
           },
         }}
       />

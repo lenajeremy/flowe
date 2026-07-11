@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listWorkflows, deleteWorkflow, type SavedWorkflow } from '@/lib/workflowApi'
+import { listWorkflows, deleteWorkflow, type WorkflowSummary } from '@/lib/workflowApi'
 import { API } from '@/lib/config'
 import { FloweIcon } from '@/components/FloweIcon'
 import { apiFetch } from '@/lib/http'
@@ -24,7 +24,7 @@ function Spinner() {
 
 export function HomePage() {
   const navigate = useNavigate()
-  const [workflows, setWorkflows] = useState<SavedWorkflow[]>([])
+  const [workflows, setWorkflows] = useState<WorkflowSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -43,7 +43,7 @@ export function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Workflow', nodes: [], edges: [] }),
       })
-      const wf = await res.json() as SavedWorkflow
+      const wf = await res.json() as { id: string }
       navigate(`/workflow/${wf.id}`)
     } finally {
       setCreating(false)

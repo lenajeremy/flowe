@@ -15,9 +15,9 @@ interface NodeBaseProps {
 
 // Toolbar button under the selected node — Figma EL-54f39c21
 const toolBtnStyle: React.CSSProperties = {
-  background: '#0D0D11',
-  border: '1px solid #293035',
-  boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.1)',
+  background: 'var(--color-chip)',
+  border: '1px solid var(--color-chip-border)',
+  boxShadow: 'inset 0px 2px 8px 0px var(--inset-hi)',
 }
 
 /**
@@ -62,7 +62,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
         className={`node-shell relative overflow-hidden rounded-2xl ${shellState}`}
         style={{
           '--node-accent': accentHex,
-          background: 'rgba(255, 255, 255, 0.08)',
+          background: 'var(--color-shell)',
           minHeight: 90,
           border: isSelected ? `1px solid ${accentHex}` : '1px solid transparent',
         } as React.CSSProperties}
@@ -79,14 +79,14 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           }}
         />
 
-        {/* Inner card — #0D0D11, radius 12, -46deg gradient border */}
+        {/* Inner card — radius 12, -46deg gradient border */}
         <div
           className="relative m-1 flex flex-col gap-1 rounded-xl p-2"
           style={{
             border: '1px solid transparent',
             background:
-              'linear-gradient(rgba(13, 13, 17, 0.92), rgba(13, 13, 17, 0.92)) padding-box, ' +
-              'linear-gradient(-46deg, rgba(33, 47, 60, 0) 1%, rgba(33, 47, 60, 1) 100%) border-box',
+              'linear-gradient(var(--color-node-card), var(--color-node-card)) padding-box, ' +
+              'linear-gradient(-46deg, transparent 1%, var(--color-chip-border2) 100%) border-box',
             backdropFilter: 'blur(2px)',
           }}
         >
@@ -97,9 +97,9 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
               style={{
                 borderRadius: 8,
                 padding: icon ? 7 : 0,
-                background: '#0D0D11',
-                border: '1px solid #2B2B3F',
-                boxShadow: 'inset 0px 2px 8px 1px rgba(255, 255, 255, 0.15)',
+                background: 'var(--color-chip)',
+                border: '1px solid var(--color-chip-border)',
+                boxShadow: 'inset 0px 2px 8px 1px var(--inset-hi-strong)',
                 overflow: 'visible',
               }}
             >
@@ -115,23 +115,23 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
                 </svg>
               )}
             </div>
-            <span className="truncate text-[14px] font-medium leading-tight text-white">
+            <span className="truncate text-[14px] font-medium leading-tight text-[var(--color-text)]">
               {label}
             </span>
           </div>
 
           {/* Node-specific description / content + Handles */}
-          <div className="text-[10px] leading-relaxed text-[#667179]" style={{ maxWidth: 190 }}>
+          <div className="text-[10px] leading-relaxed text-[var(--color-dim)]" style={{ maxWidth: 190 }}>
             {children}
           </div>
         </div>
       </div>
 
-      {/* "Action Required" badge — Figma: below the card, #261917 / #FF7E4F */}
+      {/* "Action Required" badge — below the card */}
       {isWaiting && (
         <div
           className="mt-2 self-start rounded-lg px-2 py-1 text-[12px] font-medium"
-          style={{ background: '#261917', color: '#FF7E4F' }}
+          style={{ background: 'var(--tint-hold)', color: 'var(--color-hold)' }}
         >
           Action Required
         </div>
@@ -143,7 +143,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else startRun() }}
-            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[#667179] hover:text-white"
+            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)]"
             style={toolBtnStyle}
           >
             {isRunning ? (
@@ -160,7 +160,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setLogPanelOpen(true) }}
-            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[#667179] hover:text-white"
+            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)]"
             style={toolBtnStyle}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
@@ -171,7 +171,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setConfigPanelOpen(true) }}
-            className="pressable flex h-7 w-7 items-center justify-center rounded-lg text-[#667179] hover:text-white"
+            className="pressable flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-dim)] hover:text-[var(--color-text)]"
             style={toolBtnStyle}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">

@@ -72,5 +72,15 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         linearDescription: '',
         linearPriority: 3,
       }
+    case 'github':
+      return { nodeType: 'github', label: 'GitHub', integrationOp: 'create_issue', githubRepo: '', githubState: 'open', githubLimit: 10 }
+    case 'gitlab':
+      return { nodeType: 'gitlab', label: 'GitLab', integrationOp: 'create_issue', gitlabProjectId: '', gitlabState: 'opened', gitlabLimit: 10 }
+    case 'gmail':
+      return { nodeType: 'gmail', label: 'Gmail', integrationOp: 'send_email', gmailTo: '', gmailSubject: '', gmailBody: '', gmailLimit: 10 }
+    case 'stripe':
+      return { nodeType: 'stripe', label: 'Stripe', integrationOp: 'list_customers', stripeLimit: 10, stripeQuantity: 1 }
+    case 'shopify':
+      return { nodeType: 'shopify', label: 'Shopify', integrationOp: 'list_orders', shopifyStatus: 'any', shopifyLimit: 10 }
   }
 }

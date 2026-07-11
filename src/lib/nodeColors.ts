@@ -16,6 +16,11 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   scheduledTrigger: '#ff8ce8',
   notion:           '#e5e4e5',
   linear:           '#5e6ad2',
+  github:           '#e5e4e5',
+  gitlab:           '#fc6d26',
+  gmail:            '#ea4335',
+  stripe:           '#635bff',
+  shopify:          '#96bf48',
 }
 
 export const NODE_ACCENT_COLORS: Record<NodeType, string> = NODE_ACCENT_HEX
@@ -35,6 +40,11 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   scheduledTrigger: 'M8 2a6 6 0 100 12A6 6 0 008 2zM8 5v3l2.5 1.5',
   notion:           'M3 2.5h7l3 3V14H3V2.5zM10 2.5V5.5H13M5.5 7h5M5.5 9.5h5M5.5 12h3',
   linear:           'M3 3h10v10H3zM3 7h10M7 3v10',
+  github:           'M8 1.5a6.5 6.5 0 00-2 12.7c.3.05.4-.15.4-.32v-1.2c-1.8.4-2.2-.8-2.2-.8-.3-.75-.7-.95-.7-.95-.6-.4 0-.4 0-.4.65.05 1 .67 1 .67.6 1 1.5.72 1.9.55.05-.42.22-.72.4-.88-1.45-.16-2.97-.72-2.97-3.2 0-.7.25-1.3.67-1.75-.07-.16-.3-.82.06-1.7 0 0 .55-.18 1.8.67a6.2 6.2 0 013.3 0c1.24-.85 1.79-.67 1.79-.67.36.88.13 1.54.06 1.7.42.45.67 1.05.67 1.75 0 2.5-1.52 3.04-2.97 3.2.23.2.44.6.44 1.2v1.8c0 .18.1.38.44.32A6.5 6.5 0 008 1.5z',
+  gitlab:           'M8 14L2.5 6.5 4 2l1.5 4.5h5L12 2l1.5 4.5L8 14z',
+  gmail:            'M2 4.5h12v7H2zM2 4.5l6 4.5 6-4.5',
+  stripe:           'M4 5.5c0-1 1-1.5 2.3-1.5 1 0 2 .3 2.7.7M11 10.5c0 1-1 1.5-2.3 1.5-1 0-2.2-.35-3-1M7.5 3v10',
+  shopify:          'M9.5 2c-.8 0-1.4.6-1.7 1.4C7.2 3.2 6.5 3 6 3.4c-.5.4-.6 1.2-.6 1.9L3.5 5.8 3 13.5l7 1 1-8-1.5-.4c0-1.3-.3-2.8-1-4.1zM8 3.8c.4.7.6 1.6.6 2.4L7 6.6c0-.6.05-1.3.35-1.8.15-.3.4-.6.65-1z',
 }
 
 export const NODE_LABELS: Record<NodeType, string> = {
@@ -51,6 +61,11 @@ export const NODE_LABELS: Record<NodeType, string> = {
   scheduledTrigger: 'Scheduled Trigger',
   notion:           'Notion',
   linear:           'Linear',
+  github:           'GitHub',
+  gitlab:           'GitLab',
+  gmail:            'Gmail',
+  stripe:           'Stripe',
+  shopify:          'Shopify',
 }
 
 export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
@@ -67,4 +82,9 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   scheduledTrigger: 'Run on a schedule',
   notion:           'Pages & databases',
   linear:           'Issues & projects',
+  github:           'Issues & pull requests',
+  gitlab:           'Issues & merge requests',
+  gmail:            'Send & read email',
+  stripe:           'Customers & payments',
+  shopify:          'Orders & products',
 }

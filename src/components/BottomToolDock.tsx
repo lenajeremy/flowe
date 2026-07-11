@@ -3,14 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { serializeToAST } from '@/lib/executor'
-import { listWorkflows, type SavedWorkflow } from '@/lib/workflowApi'
+import { listWorkflows, type SavedWorkflow, type WorkflowSummary } from '@/lib/workflowApi'
 import { consumeRunStream } from '@/lib/runStream'
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 
 function Divider() {
-  return <div className="mx-1 h-4 w-px flex-shrink-0 bg-white/10" />
+  return <div className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--color-hover2)]" />
 }
 
 function ToolBtn({
@@ -30,7 +30,7 @@ function ToolBtn({
       className={`pressable flex h-8 w-8 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-40 ${
         active
           ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
-          : 'text-[var(--color-muted)] hover:bg-white/10 hover:text-[var(--color-text)]'
+          : 'text-[var(--color-muted)] hover:bg-[var(--color-hover2)] hover:text-[var(--color-text)]'
       }`}
     >
       {children}
@@ -56,7 +56,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
   const runAbortRef = useRef<AbortController | null>(null)
   const [tabsOpen, setTabsOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [savedWorkflows, setSavedWorkflows] = useState<SavedWorkflow[]>([])
+  const [savedWorkflows, setSavedWorkflows] = useState<WorkflowSummary[]>([])
   const [savedLoading, setSavedLoading] = useState(false)
   const [creating, setCreating] = useState(false)
 

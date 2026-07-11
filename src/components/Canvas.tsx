@@ -216,7 +216,7 @@ export function Canvas({ theme }: CanvasProps) {
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          color={theme === 'dark' ? '#26262c' : '#d8d8d8'}
+          color="var(--color-canvas-dot)"
         />
       </ReactFlow>
 

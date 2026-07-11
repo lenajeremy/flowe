@@ -176,6 +176,36 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
       </g>
     </svg>
   ),
+  github: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 1.5a6.5 6.5 0 00-2.05 12.67c.32.06.44-.14.44-.31v-1.1c-1.8.4-2.19-.87-2.19-.87-.3-.75-.72-.95-.72-.95-.59-.4.04-.4.04-.4.65.05 1 .67 1 .67.58 1 1.52.71 1.89.54.06-.42.23-.71.41-.87-1.44-.16-2.96-.72-2.96-3.2 0-.71.25-1.29.67-1.74-.07-.17-.29-.83.06-1.72 0 0 .55-.18 1.8.66a6.2 6.2 0 013.28 0c1.25-.84 1.8-.66 1.8-.66.35.89.13 1.55.06 1.72.42.45.67 1.03.67 1.74 0 2.49-1.52 3.04-2.97 3.2.23.2.44.6.44 1.2v1.79c0 .17.12.38.44.31A6.5 6.5 0 008 1.5z"
+        stroke="#e5e4e5" strokeWidth="1.1" strokeLinejoin="round"/>
+    </svg>
+  ),
+  gitlab: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 13.8L2.6 6.6 4.1 2l1.55 4.6h4.7L11.9 2l1.5 4.6L8 13.8z"
+        stroke="#fc6d26" strokeWidth="1.3" strokeLinejoin="round"/>
+    </svg>
+  ),
+  gmail: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="4" width="12" height="8" rx="1" stroke="#ea4335" strokeWidth="1.3"/>
+      <path d="M2.5 4.5L8 9l5.5-4.5" stroke="#ea4335" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  stripe: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.2 5.6c0-1 1-1.6 2.4-1.6 1 0 2 .3 2.8.75M11.2 10.4c0 1-1 1.6-2.4 1.6-1.1 0-2.3-.37-3.1-1.05M7.7 2.8v10.4"
+        stroke="#635bff" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  ),
+  shopify: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.6 2.2c-.85 0-1.5.65-1.8 1.5-.65-.25-1.4-.45-1.95 0-.5.4-.62 1.25-.62 2L3.4 6.1 2.9 13.6l7.1 1 1-8.1-1.55-.4c0-1.35-.3-2.9-1.05-4.3zM8 4.1c.4.7.6 1.6.6 2.45L7 6.8c0-.6.05-1.35.35-1.85.16-.35.4-.6.65-1z"
+        stroke="#96bf48" strokeWidth="1.1" strokeLinejoin="round"/>
+    </svg>
+  ),
   loop: (
     <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g clipPath="url(#clip_lp)">

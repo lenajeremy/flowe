@@ -62,6 +62,32 @@
   --color-fail: #f4554a;
   --color-hold: #f5a623;
 
+  /* Chrome — deep control surfaces (node chips, canvas pills, toolbars) */
+  --color-dim:          #667179;                  /* secondary chrome text */
+  --color-chip:         #0d0d11;                  /* deepest control surface */
+  --color-chip-border:  #2a2a3e;
+  --color-chip-border2: #212f3c;                  /* gradient-border strong end */
+  --color-shell:        rgba(255, 255, 255, 0.08); /* node outer shell */
+  --color-node-card:    rgba(13, 13, 17, 0.92);    /* node inner card */
+  --inset-hi:           rgba(255, 255, 255, 0.1);  /* top-light inset on chips */
+  --inset-hi-strong:    rgba(255, 255, 255, 0.15);
+  --color-canvas-dot:   #26262c;
+  --color-scrim:        rgba(0, 0, 0, 0.6);
+  --color-hover:        rgba(255, 255, 255, 0.05); /* row hover wash */
+  --color-hover2:       rgba(255, 255, 255, 0.1);
+
+  /* Status tints — background washes behind ok/hold/fail text */
+  --tint-ok:   rgba(61, 214, 140, 0.1);
+  --tint-hold: rgba(245, 166, 35, 0.1);
+  --tint-fail: rgba(244, 85, 74, 0.1);
+
+  /* JSON syntax highlighting */
+  --syn-key:  #a78bfa;
+  --syn-str:  #34d399;
+  --syn-num:  #f59e0b;
+  --syn-bool: #60a5fa;
+  --syn-null: #f87171;
+
   /* Motion */
   --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -73,6 +99,65 @@
   --panel-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
   --dock-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.07);
   --pop-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* ── Light theme ──────────────────────────────────────────────
+   Same semantic roles, inverted values. Accent and status colors
+   darken slightly to hold contrast on white. */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --color-canvas:   #f6f6f8;
+  --color-surface:  #ffffff;
+  --color-surface2: #f0f0f3;
+  --color-elevated: #ffffff;
+  --color-border:   #e3e3e9;
+  --color-border2:  #d2d2db;
+  --color-text:     #1b1b22;
+  --color-muted:    #5d5d6a;
+  --color-subtle:   #90909d;
+  --color-accent:   #6e56e0;
+
+  --color-ok:   #0f9d63;
+  --color-fail: #d93a30;
+  --color-hold: #b3720a;
+
+  --color-dim:          #6b7482;
+  --color-chip:         #ffffff;
+  --color-chip-border:  #dedee6;
+  --color-chip-border2: #c8ccd6;
+  --color-shell:        rgba(20, 20, 30, 0.06);
+  --color-node-card:    rgba(255, 255, 255, 0.94);
+  --inset-hi:           rgba(255, 255, 255, 0.7);
+  --inset-hi-strong:    rgba(255, 255, 255, 0.9);
+  --color-canvas-dot:   #d9d9df;
+  --color-scrim:        rgba(24, 24, 32, 0.4);
+  --color-hover:        rgba(20, 20, 30, 0.045);
+  --color-hover2:       rgba(20, 20, 30, 0.08);
+
+  --tint-ok:   rgba(15, 157, 99, 0.1);
+  --tint-hold: rgba(179, 114, 10, 0.12);
+  --tint-fail: rgba(217, 58, 48, 0.1);
+
+  --syn-key:  #6d43d8;
+  --syn-str:  #0c8354;
+  --syn-num:  #b3720a;
+  --syn-bool: #1d63d8;
+  --syn-null: #d43d33;
+
+  --panel-shadow: 0 1px 0 rgba(20, 20, 30, 0.04);
+  --dock-shadow: 0 16px 40px rgba(20, 20, 30, 0.16), 0 0 0 1px rgba(20, 20, 30, 0.06);
+  --pop-shadow: 0 8px 28px rgba(20, 20, 30, 0.14), 0 0 0 1px rgba(20, 20, 30, 0.05);
+}
+
+/* Theme switch: ease the brightness jump (Apple: never hard-cut
+   dark↔light). The class is added for one frame batch by setTheme. */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color 220ms ease, color 220ms ease,
+    border-color 220ms ease, fill 220ms ease, stroke 220ms ease !important;
 }
 
 body {
@@ -98,6 +183,7 @@ textarea:focus-visible,
 select:focus-visible { outline: none; }
 
 ::selection { background: rgba(160, 140, 255, 0.28); }
+[data-theme='light'] ::selection { background: rgba(110, 86, 224, 0.2); }
 
 /* ── Shared voices ────────────────────────────────────────── */
 
@@ -126,6 +212,28 @@ select:focus-visible { outline: none; }
 .rise-in {
   opacity: 0;
   animation: rise-in var(--dur-slow) var(--ease-out) forwards;
+}
+
+/* Aurora drift — slow decorative motion on the landing hero. Transform-only
+   (GPU), 26s so it reads as atmosphere, not animation. */
+@keyframes aurora-drift {
+  from { transform: scale(1.04) translate(0, 0); }
+  to   { transform: scale(1.12) translate(-2%, 2.5%); }
+}
+.aurora-drift {
+  animation: aurora-drift 26s var(--ease-in-out) infinite alternate;
+  will-change: transform;
+}
+
+/* Popover/menu entrance — scales from its trigger, never from nothing.
+   Set --pop-origin per menu (defaults to top center). */
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.pop-in {
+  transform-origin: var(--pop-origin, top center);
+  animation: pop-in 140ms var(--ease-out);
 }
 
 /* ── React Flow: the canvas ───────────────────────────────── */
@@ -173,7 +281,7 @@ select:focus-visible { outline: none; }
   height: 8px !important;
   border-radius: 999px !important;
   border: none !important;
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: var(--color-hover2) !important;
   transition: background var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out);
 }
@@ -259,7 +367,11 @@ select:focus-visible { outline: none; }
 /* ── Reduced motion: keep meaning, drop movement ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .rise-in { animation-duration: 1ms; }
+  .pop-in { animation: none; }
+  .aurora-drift { animation: none; }
   .pressable:active { transform: none; }
+  html.theme-switching,
+  html.theme-switching * { transition: none !important; }
   .react-flow__edge.animated .react-flow__edge-path { animation: none; stroke-dasharray: none; }
   .node-shell.is-running { animation: none; box-shadow: 0 0 0 1.5px var(--color-accent); }
   .node-shell.is-waiting { animation: none; box-shadow: 0 0 0 1.5px var(--color-hold); }

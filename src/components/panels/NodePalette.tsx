@@ -10,7 +10,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
   { category: 'Input/Output', items: ['textInput', 'imageInput', 'textOutput'] },
   { category: 'Actions', items: ['llm', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
-  { category: 'Integrations', items: ['notion', 'linear'] },
+  { category: 'Integrations', items: ['notion', 'linear', 'github', 'gitlab', 'gmail', 'stripe', 'shopify'] },
 ]
 
 function PaletteItem({ type }: { type: NodeType }) {
@@ -123,7 +123,7 @@ export function NodePalette({ onCollapse, tab, onTabChange }: {
           <button
             type="button"
             onClick={onCollapse}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:border-white/20 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-border2)] transition-colors"
             title="Collapse panel"
           >
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">

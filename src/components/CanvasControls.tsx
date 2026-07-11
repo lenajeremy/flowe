@@ -5,9 +5,9 @@ import { useWorkflowStore } from '@/store/workflowStore'
 // cursor and hand tool buttons.
 
 const btnStyle: React.CSSProperties = {
-  background: '#0D0D11',
-  border: '1px solid #293035',
-  boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.1)',
+  background: 'var(--color-chip)',
+  border: '1px solid var(--color-chip-border)',
+  boxShadow: 'inset 0px 2px 8px 0px var(--inset-hi)',
 }
 
 export function CanvasControls() {
@@ -23,20 +23,20 @@ export function CanvasControls() {
         <button
           type="button"
           onClick={() => zoomIn({ duration: 150 })}
-          className="text-[#667179] transition-colors hover:text-white"
+          className="text-[var(--color-dim)] transition-colors hover:text-[var(--color-text)]"
           title="Zoom in"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
         </button>
-        <span className="min-w-[26px] text-center text-[10px] font-medium text-[#667179] tabular-nums">
+        <span className="min-w-[26px] text-center text-[10px] font-medium text-[var(--color-dim)] tabular-nums">
           {Math.round(zoom * 100)}%
         </span>
         <button
           type="button"
           onClick={() => zoomOut({ duration: 150 })}
-          className="text-[#667179] transition-colors hover:text-white"
+          className="text-[var(--color-dim)] transition-colors hover:text-[var(--color-text)]"
           title="Zoom out"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -51,7 +51,7 @@ export function CanvasControls() {
         onClick={() => setActiveTool('select')}
         title="Select (V)"
         className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-          activeTool === 'select' ? 'text-white' : 'text-[#667179] hover:text-white'
+          activeTool === 'select' ? 'text-[var(--color-text)]' : 'text-[var(--color-dim)] hover:text-[var(--color-text)]'
         }`}
         style={btnStyle}
       >
@@ -66,7 +66,7 @@ export function CanvasControls() {
         onClick={() => setActiveTool('hand')}
         title="Pan (H)"
         className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-          activeTool === 'hand' ? 'text-white' : 'text-[#667179] hover:text-white'
+          activeTool === 'hand' ? 'text-[var(--color-text)]' : 'text-[var(--color-dim)] hover:text-[var(--color-text)]'
         }`}
         style={btnStyle}
       >

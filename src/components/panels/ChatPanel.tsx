@@ -369,7 +369,7 @@ export function ChatPanel() {
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="flex items-center gap-1.5 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+                  className="flex items-center gap-1.5 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--color-hover)]"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <path d="M1.5 6a4.5 4.5 0 1 1 .9 2.7M1.5 9.5V6.5H4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -417,7 +417,7 @@ export function ChatPanel() {
             style={{
               zIndex: 2,
               border: '1px solid transparent',
-              background: 'linear-gradient(var(--color-canvas), var(--color-canvas)) padding-box, linear-gradient(135deg, #4D4D5B, #2A2A3E) border-box',
+              background: 'linear-gradient(var(--color-canvas), var(--color-canvas)) padding-box, linear-gradient(135deg, var(--color-border2), var(--color-chip-border)) border-box',
             }}
           >
             <textarea
@@ -434,7 +434,7 @@ export function ChatPanel() {
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-hover)] text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-hover2)] transition-colors"
                   tabIndex={-1}
                 >
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -497,7 +497,7 @@ function ModelPicker({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 items-center gap-1.5 rounded-lg bg-white/5 px-2.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/10 transition-colors"
+        className="flex h-8 items-center gap-1.5 rounded-lg bg-[var(--color-hover)] px-2.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-hover2)] transition-colors"
       >
         <span>{current?.name ?? 'Model'}</span>
         <svg
@@ -511,7 +511,10 @@ function ModelPicker({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[440px] w-[260px] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+          <div
+            className="pop-in absolute bottom-full left-0 z-50 mb-2 max-h-[440px] w-[260px] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-1 shadow-[var(--pop-shadow)]"
+            style={{ '--pop-origin': 'bottom left' } as React.CSSProperties}
+          >
             {groups.map((group) => (
               <div key={group.label}>
                 <div className="px-2.5 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)] opacity-70">
@@ -525,7 +528,7 @@ function ModelPicker({
                       type="button"
                       disabled={!m.available}
                       onClick={() => { onChange(m.id); setOpen(false) }}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                      className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     >
                       <div className="min-w-0">
                         <div className={`text-[12px] ${active ? 'text-[var(--color-text)] font-medium' : 'text-[var(--color-text)]'}`}>
@@ -582,9 +585,9 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
             >
               <span
                 className="text-left pr-3"
-                style={{ color: '#667179', fontSize: 12, lineHeight: '16px', fontWeight: 400 }}
+                style={{ color: 'var(--color-dim)', fontSize: 12, lineHeight: '16px', fontWeight: 400 }}
               >{s}</span>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0" style={{ color: '#667179' }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0" style={{ color: 'var(--color-dim)' }}>
                 <path d="M5 10.5l4-3.5-4-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>

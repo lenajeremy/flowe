@@ -102,7 +102,7 @@ export function VersionsPanel({ workflowId }: { workflowId: string }) {
             <button
               onClick={() => void restoreVersion(v.id)}
               disabled={restoring === v.id}
-              className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-[10px] text-[var(--color-muted)] transition-colors hover:border-white/20 hover:text-[var(--color-text)] disabled:opacity-40"
+              className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-[10px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-border2)] hover:text-[var(--color-text)] disabled:opacity-40"
             >
               {restoring === v.id ? 'Restoring…' : 'Restore'}
             </button>

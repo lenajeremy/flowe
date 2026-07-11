@@ -93,7 +93,7 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
               <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold tracking-wide ${
                 sched.repeat
                   ? 'bg-[#ff8ce8]/15 text-[#ff8ce8]'
-                  : 'bg-white/10 text-[var(--color-muted)]'
+                  : 'bg-[var(--color-hover2)] text-[var(--color-muted)]'
               }`}>
                 {sched.repeat ? 'Repeats' : 'Once'}
               </span>

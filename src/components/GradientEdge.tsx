@@ -31,7 +31,7 @@ export function GradientEdge(props: EdgeProps) {
           x1={sourceX} y1={sourceY}
           x2={targetX} y2={targetY}
         >
-          <stop offset="0%" stopColor="rgba(255, 255, 255, 0.1)" />
+          <stop offset="0%" stopColor="var(--color-hover2)" />
           <stop offset="100%" stopColor={accent} />
         </linearGradient>
       </defs>
@@ -45,8 +45,8 @@ export function GradientEdge(props: EdgeProps) {
         }}
       />
 
-      {/* Endpoint dots — source: white 20%, target: accent 20% */}
-      <circle cx={sourceX} cy={sourceY} r={4} fill="rgba(255, 255, 255, 0.2)" />
+      {/* Endpoint dots — source: neutral wash, target: accent */}
+      <circle cx={sourceX} cy={sourceY} r={4} fill="var(--color-hover2)" />
       <circle cx={targetX} cy={targetY} r={4} fill={accent} opacity={0.35} />
     </>
   )

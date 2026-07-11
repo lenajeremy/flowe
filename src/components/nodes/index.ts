@@ -11,6 +11,11 @@ import { WebhookTriggerNode }   from './WebhookTriggerNode'
 import { ScheduledTriggerNode } from './ScheduledTriggerNode'
 import { NotionNode }           from './NotionNode'
 import { LinearNode }           from './LinearNode'
+import { GithubNode }           from './GithubNode'
+import { GitlabNode }           from './GitlabNode'
+import { GmailNode }            from './GmailNode'
+import { StripeNode }           from './StripeNode'
+import { ShopifyNode }          from './ShopifyNode'
 
 // Must be defined at module scope — never inside a component body
 export const nodeTypes = {
@@ -27,4 +32,9 @@ export const nodeTypes = {
   scheduledTrigger: ScheduledTriggerNode,
   notion:           NotionNode,
   linear:           LinearNode,
+  github:           GithubNode,
+  gitlab:           GitlabNode,
+  gmail:            GmailNode,
+  stripe:           StripeNode,
+  shopify:          ShopifyNode,
 }

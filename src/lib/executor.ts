@@ -332,10 +332,16 @@ async function executeNode(
       return `{"trigger":"scheduled","time":"${new Date().toISOString()}"}`
 
     case 'notion':
-      return JSON.stringify({ status: 'ok', note: 'Notion operations run via backend. Use the Run button.' })
-
     case 'linear':
-      return JSON.stringify({ status: 'ok', note: 'Linear operations run via backend. Use the Run button.' })
+    case 'github':
+    case 'gitlab':
+    case 'gmail':
+    case 'stripe':
+    case 'shopify':
+      // Integration nodes use the owner's OAuth connection, which only exists
+      // server-side — they run through the backend Run button, not this
+      // in-browser preview executor.
+      return JSON.stringify({ status: 'ok', note: `${data.nodeType} operations run via backend. Use the Run button.` })
   }
 }
 

@@ -15,6 +15,8 @@ import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
 import { serializeToAST } from '@/lib/executor'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import { useTheme } from '@/lib/theme'
+import { UserMenu } from '@/components/ui/UserMenu'
 
 // ── Resize logic (unchanged from original App.tsx) ───────────
 
@@ -22,19 +24,10 @@ const MIN_LEFT = 120
 const MAX_LEFT = 480
 const DEFAULT_LEFT = 450
 
-
-type Theme = 'dark' | 'light'
-
 function formatRunTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', {
     hour: '2-digit', minute: '2-digit', hour12: true,
   }).toLowerCase().replace(' ', '')
-}
-
-function getInitialTheme(): Theme {
-  const saved = window.localStorage.getItem('workflow-ai-theme')
-  if (saved === 'dark' || saved === 'light') return saved
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 function useResizable(defaultWidth: number, min: number, max: number, direction: 'left' | 'right') {
@@ -129,7 +122,7 @@ export function WorkflowEditorPage() {
   const [leftOpen, setLeftOpen] = useState(true)
   const [paletteTab, setPaletteTab] = useState<LeftTab>('chat')
   const left = useResizable(DEFAULT_LEFT, MIN_LEFT, MAX_LEFT, 'left')
-  const [theme] = useState<Theme>(getInitialTheme)
+  const { resolved: theme } = useTheme()
   const [lastRun, setLastRun] = useState<{ id: string; createdAt: string } | null>(null)
 
   // Connects ?runId= streams + scheduled/webhook run pushes to the canvas
@@ -312,16 +305,18 @@ export function WorkflowEditorPage() {
       className="flex flex-col overflow-hidden bg-[var(--color-canvas)] text-[var(--color-text)]"
       style={{ height: '100dvh' }}
     >
-      {/* Top header — Figma spec: 60px, #0D0D11, 24px bottom radii */}
+      {/* Top header — Figma spec: 60px chrome bar, 24px bottom radii */}
       <header
         className="flex-shrink-0 flex items-center justify-between px-4"
         style={{
           height: 60,
-          background: '#0D0D11',
-          borderBottom: '1px solid #212F3C',
+          background: 'var(--color-chip)',
+          borderBottom: '1px solid var(--color-chip-border2)',
           borderBottomLeftRadius: 24,
           borderBottomRightRadius: 24,
-          zIndex: 10,
+          // Above the floating config/versions overlays (z-20) so header
+          // dropdowns (UserMenu) aren't caught under their backdrop blur.
+          zIndex: 30,
           position: 'relative',
         }}
       >
@@ -329,14 +324,14 @@ export function WorkflowEditorPage() {
         <div className="flex items-center gap-1" style={{ minWidth: 160 }}>
           <button
             onClick={() => navigate('/workflows')}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-white/5"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-[var(--color-hover)]"
             title="All Workflows"
           >
             <FloweIcon size={20} />
           </button>
           <button
             onClick={() => navigate('/')}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-hover)]"
             title="Home"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -354,13 +349,13 @@ export function WorkflowEditorPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
             aria-label="Workflow name"
             size={Math.max(workflowName.length, 8)}
-            className="rounded-md border border-transparent bg-transparent px-1 py-0.5 text-center text-[14px] font-semibold text-[var(--color-text)] outline-none transition-colors duration-150 hover:border-white/10 focus:border-white/20 focus:bg-white/5"
+            className="rounded-md border border-transparent bg-transparent px-1 py-0.5 text-center text-[14px] font-semibold text-[var(--color-text)] outline-none transition-colors duration-150 hover:border-[var(--color-border)] focus:border-[var(--color-border2)] focus:bg-[var(--color-hover)]"
           />
           {/* "live" badge — Figma frames 163-167 */}
           {published && (
             <span
               className="rounded-[15px] px-2 py-0.5 text-[10px] font-medium uppercase"
-              style={{ color: '#7BE679', background: 'rgba(82, 255, 79, 0.1)', letterSpacing: '0.04em' }}
+              style={{ color: 'var(--color-ok)', background: 'var(--tint-ok)', letterSpacing: '0.04em' }}
             >
               live
             </span>
@@ -389,7 +384,7 @@ export function WorkflowEditorPage() {
           <button
             onClick={handleSave}
             disabled={saveStatus === 'saving' || saveStatus === 'saved'}
-            className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-white/5 disabled:opacity-50"
+            className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)] disabled:opacity-50"
           >
             {saveStatus === 'saving' ? (
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="animate-spin">
@@ -413,10 +408,12 @@ export function WorkflowEditorPage() {
           {/* Publish */}
           <button
             onClick={handlePublish}
-            className="pressable flex items-center px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-semibold hover:opacity-90"
+            className="pressable flex items-center px-3 py-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-canvas)] text-[12px] font-semibold hover:opacity-90"
           >
             {published ? 'Published' : 'Publish'}
           </button>
+
+          <UserMenu />
         </div>
       </header>
 
@@ -449,7 +446,7 @@ export function WorkflowEditorPage() {
           /* Collapsed icon rail — Figma frame 163: 52px, stacked tab icons */
           <div
             className="m-2 flex w-[52px] flex-shrink-0 flex-col items-center gap-[15px] rounded-xl py-4"
-            style={{ background: '#0D0D11' }}
+            style={{ background: 'var(--color-chip)' }}
           >
             <button
               type="button"
@@ -457,9 +454,9 @@ export function WorkflowEditorPage() {
               title="AI builder"
               className="flex h-7 w-7 items-center justify-center rounded-lg border transition-colors"
               style={{
-                background: paletteTab === 'chat' ? '#202024' : 'transparent',
-                borderColor: '#212F3C',
-                boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.15)',
+                background: paletteTab === 'chat' ? 'var(--color-surface2)' : 'transparent',
+                borderColor: 'var(--color-chip-border2)',
+                boxShadow: 'inset 0px 2px 8px 0px var(--inset-hi-strong)',
               }}
             >
               <FloweIcon size={14} className={paletteTab === 'chat' ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)]'} />
@@ -470,9 +467,9 @@ export function WorkflowEditorPage() {
               title="Elements"
               className="flex h-7 w-7 items-center justify-center rounded-lg border text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
               style={{
-                background: paletteTab === 'nodes' ? '#202024' : 'transparent',
-                borderColor: '#212F3C',
-                boxShadow: 'inset 0px 2px 8px 0px rgba(255, 255, 255, 0.15)',
+                background: paletteTab === 'nodes' ? 'var(--color-surface2)' : 'transparent',
+                borderColor: 'var(--color-chip-border2)',
+                boxShadow: 'inset 0px 2px 8px 0px var(--inset-hi-strong)',
               }}
             >
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -493,18 +490,18 @@ export function WorkflowEditorPage() {
               {/* Config / Versions panel — floating overlay, Figma frames 161-167 */}
               {isConfigPanelOpen && (
                 <div
-                  className="absolute flex flex-col overflow-hidden rounded-3xl border border-white/5"
+                  className="absolute flex flex-col overflow-hidden rounded-3xl border border-[var(--color-border)]"
                   style={{
                     top: 8, right: 8, bottom: 8, width: 349, zIndex: 20,
-                    background: 'rgba(27, 27, 29, 0.6)',
+                    background: 'color-mix(in srgb, var(--color-elevated) 72%, transparent)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                   }}
                 >
-                  {/* Close button — Figma: 24px square, #2A2A3E border */}
+                  {/* Close button — Figma: 24px square */}
                   <button
                     onClick={() => setConfigPanelOpen(false)}
-                    className="absolute top-4 right-4 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-[#2A2A3E] text-[var(--color-text)]/60 hover:text-[var(--color-text)] transition-colors"
+                    className="absolute top-4 right-4 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-[var(--color-chip-border)] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
                     title="Close panel"
                   >
                     <svg width="11" height="11" viewBox="0 0 12 12" fill="none">

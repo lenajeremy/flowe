@@ -208,7 +208,7 @@ export function RunDetailPage() {
               <button
                 onClick={() => void handleDecision(true)}
                 disabled={approving}
-                className="pressable flex-1 rounded-lg bg-[var(--color-ok)] px-4 py-2.5 text-sm font-semibold text-[#052e1b] disabled:opacity-50"
+                className="pressable flex-1 rounded-lg bg-[var(--color-ok)] px-4 py-2.5 text-sm font-semibold text-[var(--color-canvas)] disabled:opacity-50"
               >
                 {approving ? 'Saving…' : 'Approve'}
               </button>
