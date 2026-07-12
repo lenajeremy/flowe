@@ -1,5 +1,6 @@
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import { getToken, setToken, clearToken } from '@/lib/tokenStore'
 
 export interface AuthUser {
   id: string
@@ -22,17 +23,21 @@ export function startEmail(email: string): Promise<{ ok: boolean }> {
   }).then((r) => json(r))
 }
 
-export function verifyEmail(
+export async function verifyEmail(
   payload: { email: string; code: string } | { token: string },
 ): Promise<{ user: AuthUser }> {
-  return apiFetch(`${API}/api/auth/email/verify`, {
+  const data = await apiFetch(`${API}/api/auth/email/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  }).then((r) => json(r))
+  }).then((r) => json<{ user: AuthUser; token: string }>(r))
+  setToken(data.token)
+  return { user: data.user }
 }
 
 export async function me(): Promise<AuthUser | null> {
+  // No token → definitely signed out; skip the round-trip.
+  if (!getToken()) return null
   try {
     const res = await apiFetch(`${API}/api/auth/me`)
     if (!res.ok) return null
@@ -43,6 +48,7 @@ export async function me(): Promise<AuthUser | null> {
   }
 }
 
-export function logout(): Promise<Response> {
-  return apiFetch(`${API}/api/auth/logout`, { method: 'POST' })
+export async function logout(): Promise<void> {
+  await apiFetch(`${API}/api/auth/logout`, { method: 'POST' }).catch(() => {})
+  clearToken()
 }

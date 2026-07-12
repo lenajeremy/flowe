@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { startEmail, verifyEmail, me } from '@/lib/authApi'
+import { setToken } from '@/lib/tokenStore'
 import { useAuthStore } from '@/store/authStore'
 import { FloweIcon } from '@/components/FloweIcon'
 import { inputClass } from '@/components/ui/FormField'
@@ -40,9 +41,10 @@ export function LoginPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.origin !== apiOrigin) return
-      const d = e.data as { type?: string; status?: string; error?: string }
+      const d = e.data as { type?: string; status?: string; error?: string; token?: string }
       if (d?.type !== 'auth-oauth') return
       if (d.status === 'ok') {
+        if (d.token) setToken(d.token)
         void me().then((user) => {
           if (user) {
             setUser(user)

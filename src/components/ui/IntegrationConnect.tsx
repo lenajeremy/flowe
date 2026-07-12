@@ -56,15 +56,24 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   }, [provider, refresh])
 
   function connect() {
-    // Pass our origin so the popup's postMessage can target it exactly —
-    // the dev server port changes between runs. Shopify additionally needs the
-    // shop domain to build its per-store authorize URL.
+    if (provider === 'shopify' && !shop.trim()) return
+    // The connect endpoint needs our bearer token (Authorization header), so we
+    // can't just point a popup at it. Open a blank popup synchronously — inside
+    // the click gesture, so it isn't blocked — then send it to the provider's
+    // authorize URL once the authed request returns it. The origin param sets
+    // the popup's postMessage target; shopify also needs the shop domain.
+    const win = window.open('about:blank', `connect-${provider}`, 'width=560,height=720,menubar=no,toolbar=no')
     let connectUrl = `${API}/api/integrations/${provider}/connect?origin=${encodeURIComponent(window.location.origin)}`
     if (provider === 'shopify') {
-      if (!shop.trim()) return
       connectUrl += `&shop=${encodeURIComponent(shop.trim())}`
     }
-    window.open(connectUrl, `connect-${provider}`, 'width=560,height=720,menubar=no,toolbar=no')
+    apiFetch(connectUrl)
+      .then((r) => r.json())
+      .then((d: { url?: string }) => {
+        if (d.url && win) win.location.href = d.url
+        else win?.close()
+      })
+      .catch(() => win?.close())
   }
 
   async function disconnect() {
