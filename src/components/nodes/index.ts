@@ -16,6 +16,12 @@ import { GitlabNode }           from './GitlabNode'
 import { GmailNode }            from './GmailNode'
 import { StripeNode }           from './StripeNode'
 import { ShopifyNode }          from './ShopifyNode'
+import { GoogleCalendarNode }   from './GoogleCalendarNode'
+import { OutlookNode }          from './OutlookNode'
+import { SlackNode }            from './SlackNode'
+import { GoogleDriveNode }      from './GoogleDriveNode'
+import { GoogleDocsNode }       from './GoogleDocsNode'
+import { GoogleSheetsNode }     from './GoogleSheetsNode'
 
 // Must be defined at module scope — never inside a component body
 export const nodeTypes = {
@@ -37,4 +43,10 @@ export const nodeTypes = {
   gmail:            GmailNode,
   stripe:           StripeNode,
   shopify:          ShopifyNode,
+  googlecalendar:   GoogleCalendarNode,
+  outlook:          OutlookNode,
+  slack:            SlackNode,
+  googledrive:      GoogleDriveNode,
+  googledocs:       GoogleDocsNode,
+  googlesheets:     GoogleSheetsNode,
 }

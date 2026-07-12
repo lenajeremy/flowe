@@ -21,6 +21,12 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   gmail:            '#ea4335',
   stripe:           '#635bff',
   shopify:          '#96bf48',
+  googlecalendar:   '#4285f4',
+  outlook:          '#0a6ed1',
+  slack:            '#36c5f0',
+  googledrive:      '#1fa463',
+  googledocs:       '#4c8bf5',
+  googlesheets:     '#0f9d58',
 }
 
 export const NODE_ACCENT_COLORS: Record<NodeType, string> = NODE_ACCENT_HEX
@@ -45,6 +51,12 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   gmail:            'M2 4.5h12v7H2zM2 4.5l6 4.5 6-4.5',
   stripe:           'M4 5.5c0-1 1-1.5 2.3-1.5 1 0 2 .3 2.7.7M11 10.5c0 1-1 1.5-2.3 1.5-1 0-2.2-.35-3-1M7.5 3v10',
   shopify:          'M9.5 2c-.8 0-1.4.6-1.7 1.4C7.2 3.2 6.5 3 6 3.4c-.5.4-.6 1.2-.6 1.9L3.5 5.8 3 13.5l7 1 1-8-1.5-.4c0-1.3-.3-2.8-1-4.1zM8 3.8c.4.7.6 1.6.6 2.4L7 6.6c0-.6.05-1.3.35-1.8.15-.3.4-.6.65-1z',
+  googlecalendar:   'M3 4h10v9.5H3zM3 7h10M6 2.5v3M10 2.5v3',
+  outlook:          'M2 4.5h12v7H2zM2 4.5l6 4.5 6-4.5',
+  slack:            'M6 2.5 5 13.5M11 2.5 10 13.5M2.5 6h11M2.5 10h11',
+  googledrive:      'M8 3 14 13H2z',
+  googledocs:       'M4 2h5l3 3v9H4V2zM9 2v3h3M6 8h4M6 10.5h4',
+  googlesheets:     'M3 3h10v10H3zM3 6.5h10M3 10h10M6.5 3v10M9.5 3v10',
 }
 
 export const NODE_LABELS: Record<NodeType, string> = {
@@ -66,6 +78,12 @@ export const NODE_LABELS: Record<NodeType, string> = {
   gmail:            'Gmail',
   stripe:           'Stripe',
   shopify:          'Shopify',
+  googlecalendar:   'Google Calendar',
+  outlook:          'Outlook',
+  slack:            'Slack',
+  googledrive:      'Google Drive',
+  googledocs:       'Google Docs',
+  googlesheets:     'Google Sheets',
 }
 
 export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
@@ -87,4 +105,10 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   gmail:            'Send & read email',
   stripe:           'Customers & payments',
   shopify:          'Orders & products',
+  googlecalendar:   'Events & scheduling',
+  outlook:          'Mail & calendar',
+  slack:            'Messages & channels',
+  googledrive:      'Files & folders',
+  googledocs:       'Documents',
+  googlesheets:     'Spreadsheets',
 }

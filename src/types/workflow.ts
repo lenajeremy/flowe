@@ -20,6 +20,12 @@ export type NodeType =
   | 'gmail'
   | 'stripe'
   | 'shopify'
+  | 'googlecalendar'
+  | 'outlook'
+  | 'slack'
+  | 'googledrive'
+  | 'googledocs'
+  | 'googlesheets'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -160,6 +166,50 @@ export type FlowNodeData = {
   shopifyTitle?: string
   shopifyDescription?: string
   shopifyPrice?: string
+
+  // googlecalendar
+  gcalCalendarId?: string
+  gcalEventId?: string
+  gcalSummary?: string
+  gcalDescription?: string
+  gcalStart?: string           // RFC3339
+  gcalEnd?: string
+  gcalAttendees?: string       // comma-separated emails
+  gcalLimit?: number
+
+  // outlook
+  outlookTo?: string
+  outlookCc?: string
+  outlookSubject?: string
+  outlookBody?: string
+  outlookQuery?: string
+  outlookMessageId?: string
+  outlookLimit?: number
+  outlookStart?: string
+  outlookEnd?: string
+
+  // slack
+  slackChannel?: string
+  slackText?: string
+  slackLimit?: number
+
+  // googledrive
+  gdriveFileId?: string
+  gdriveName?: string
+  gdriveQuery?: string
+  gdriveParentId?: string
+  gdriveLimit?: number
+
+  // googledocs
+  gdocsDocumentId?: string
+  gdocsTitle?: string
+  gdocsText?: string
+
+  // googlesheets
+  gsheetsSpreadsheetId?: string
+  gsheetsRange?: string        // A1 notation
+  gsheetsValues?: string       // comma-separated cells
+  gsheetsTitle?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

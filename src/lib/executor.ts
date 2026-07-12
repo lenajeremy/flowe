@@ -338,6 +338,12 @@ async function executeNode(
     case 'gmail':
     case 'stripe':
     case 'shopify':
+    case 'googlecalendar':
+    case 'outlook':
+    case 'slack':
+    case 'googledrive':
+    case 'googledocs':
+    case 'googlesheets':
       // Integration nodes use the owner's OAuth connection, which only exists
       // server-side — they run through the backend Run button, not this
       // in-browser preview executor.

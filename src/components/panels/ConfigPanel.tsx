@@ -69,8 +69,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'stripe'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price'
+type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -88,7 +88,7 @@ function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeD
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -1594,6 +1594,180 @@ export function ConfigPanel() {
               <AreaField label="Description" field="shopifyDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
               <TextField label="Price" field="shopifyPrice" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="19.99" />
             </>)}
+          </IntegrationSection>
+        )}
+
+        {/* Google Calendar */}
+        {nodeType === 'googlecalendar' && (
+          <IntegrationSection
+            provider="googlecalendar" label="Google Calendar" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="list_events"
+            ops={[
+              { value: 'list_events', label: 'List Events' },
+              { value: 'create_event', label: 'Create Event' },
+              { value: 'delete_event', label: 'Delete Event' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            <ResourceField label="Calendar" provider="googlecalendar" kind="calendar" field="gcalCalendarId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="primary" />
+            {data.integrationOp === 'list_events' && (
+              <NumField label="Limit" field="gcalLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+            )}
+            {data.integrationOp === 'create_event' && (<>
+              <TextField label="Title" field="gcalSummary" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <AreaField label="Description" field="gcalDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <TextField label="Start (RFC3339)" field="gcalStart" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T15:00:00Z" />
+              <TextField label="End (RFC3339)" field="gcalEnd" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T16:00:00Z" />
+              <TextField label="Attendees (comma-separated)" field="gcalAttendees" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="a@x.com, b@y.com" />
+            </>)}
+            {data.integrationOp === 'delete_event' && (
+              <TextField label="Event ID" field="gcalEventId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+            )}
+          </IntegrationSection>
+        )}
+
+        {/* Outlook */}
+        {nodeType === 'outlook' && (
+          <IntegrationSection
+            provider="outlook" label="Outlook" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="send_email"
+            ops={[
+              { value: 'send_email', label: 'Send Email' },
+              { value: 'list_messages', label: 'List Messages' },
+              { value: 'get_message', label: 'Get Message' },
+              { value: 'create_event', label: 'Create Event' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            {data.integrationOp === 'send_email' && (<>
+              <TextField label="To" field="outlookTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="team@example.com" />
+              <TextField label="Cc (optional)" field="outlookCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+              <TextField label="Subject" field="outlookSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <AreaField label="Body (HTML)" field="outlookBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            </>)}
+            {data.integrationOp === 'list_messages' && (<>
+              <TextField label="Search query (optional)" field="outlookQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="from:jane subject:invoice" />
+              <NumField label="Limit" field="outlookLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+            </>)}
+            {data.integrationOp === 'get_message' && (
+              <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+            )}
+            {data.integrationOp === 'create_event' && (<>
+              <TextField label="Title" field="outlookSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <AreaField label="Body (HTML)" field="outlookBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <TextField label="Start (RFC3339)" field="outlookStart" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T15:00:00" />
+              <TextField label="End (RFC3339)" field="outlookEnd" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T16:00:00" />
+            </>)}
+          </IntegrationSection>
+        )}
+
+        {/* Slack */}
+        {nodeType === 'slack' && (
+          <IntegrationSection
+            provider="slack" label="Slack" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="send_message"
+            ops={[
+              { value: 'send_message', label: 'Send Message' },
+              { value: 'list_channels', label: 'List Channels' },
+              { value: 'get_channel_history', label: 'Channel History' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            {(data.integrationOp === 'send_message' || data.integrationOp === 'get_channel_history') && (
+              <ResourceField label="Channel" provider="slack" kind="channel" field="slackChannel" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="#general or C0123..." />
+            )}
+            {data.integrationOp === 'send_message' && (
+              <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            )}
+            {(data.integrationOp === 'list_channels' || data.integrationOp === 'get_channel_history') && (
+              <NumField label="Limit" field="slackLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={data.integrationOp === 'list_channels' ? 100 : 20} />
+            )}
+          </IntegrationSection>
+        )}
+
+        {/* Google Drive */}
+        {nodeType === 'googledrive' && (
+          <IntegrationSection
+            provider="googledrive" label="Google Drive" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="list_files"
+            ops={[
+              { value: 'list_files', label: 'List Files' },
+              { value: 'search', label: 'Search' },
+              { value: 'get_file', label: 'Get File' },
+              { value: 'create_folder', label: 'Create Folder' },
+              { value: 'delete_file', label: 'Delete File' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            {(data.integrationOp === 'list_files' || data.integrationOp === 'search') && (<>
+              <TextField label="Query (optional)" field="gdriveQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="name contains 'report'" />
+              <NumField label="Limit" field="gdriveLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={20} />
+            </>)}
+            {(data.integrationOp === 'get_file' || data.integrationOp === 'delete_file') && (
+              <TextField label="File ID" field="gdriveFileId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+            )}
+            {data.integrationOp === 'create_folder' && (<>
+              <TextField label="Folder name" field="gdriveName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              <ResourceField label="Parent folder (optional)" provider="googledrive" kind="folder" field="gdriveParentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="root" />
+            </>)}
+          </IntegrationSection>
+        )}
+
+        {/* Google Docs */}
+        {nodeType === 'googledocs' && (
+          <IntegrationSection
+            provider="googledocs" label="Google Docs" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="create_document"
+            ops={[
+              { value: 'create_document', label: 'Create Document' },
+              { value: 'get_document', label: 'Get Document' },
+              { value: 'append_text', label: 'Append Text' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            {data.integrationOp === 'create_document' && (
+              <TextField label="Title" field="gdocsTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            )}
+            {(data.integrationOp === 'get_document' || data.integrationOp === 'append_text') && (
+              <TextField label="Document ID" field="gdocsDocumentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+            )}
+            {data.integrationOp === 'append_text' && (
+              <AreaField label="Text to append" field="gdocsText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            )}
+          </IntegrationSection>
+        )}
+
+        {/* Google Sheets */}
+        {nodeType === 'googlesheets' && (
+          <IntegrationSection
+            provider="googlesheets" label="Google Sheets" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            defaultOp="read_range"
+            ops={[
+              { value: 'read_range', label: 'Read Range' },
+              { value: 'append_row', label: 'Append Row' },
+              { value: 'update_range', label: 'Update Range' },
+              { value: 'create_spreadsheet', label: 'Create Spreadsheet' },
+            ]}
+            tokenPlaceholder=""
+            hideManual
+          >
+            {data.integrationOp !== 'create_spreadsheet' && (
+              <TextField label="Spreadsheet ID" field="gsheetsSpreadsheetId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+            )}
+            {(data.integrationOp === 'read_range' || data.integrationOp === 'append_row' || data.integrationOp === 'update_range') && (
+              <TextField label="Range (A1)" field="gsheetsRange" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Sheet1!A1:C10" />
+            )}
+            {(data.integrationOp === 'append_row' || data.integrationOp === 'update_range') && (
+              <TextField label="Values (comma-separated)" field="gsheetsValues" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane, jane@x.com, {{llm-1.output}}" />
+            )}
+            {data.integrationOp === 'create_spreadsheet' && (
+              <TextField label="Title" field="gsheetsTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            )}
           </IntegrationSection>
         )}
 

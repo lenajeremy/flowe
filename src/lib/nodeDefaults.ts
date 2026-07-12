@@ -82,5 +82,17 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'stripe', label: 'Stripe', integrationOp: 'list_customers', stripeLimit: 10, stripeQuantity: 1 }
     case 'shopify':
       return { nodeType: 'shopify', label: 'Shopify', integrationOp: 'list_orders', shopifyStatus: 'any', shopifyLimit: 10 }
+    case 'googlecalendar':
+      return { nodeType: 'googlecalendar', label: 'Google Calendar', integrationOp: 'list_events', gcalCalendarId: '', gcalLimit: 10 }
+    case 'outlook':
+      return { nodeType: 'outlook', label: 'Outlook', integrationOp: 'send_email', outlookTo: '', outlookSubject: '', outlookBody: '', outlookLimit: 10 }
+    case 'slack':
+      return { nodeType: 'slack', label: 'Slack', integrationOp: 'send_message', slackChannel: '', slackText: '', slackLimit: 100 }
+    case 'googledrive':
+      return { nodeType: 'googledrive', label: 'Google Drive', integrationOp: 'list_files', gdriveQuery: '', gdriveLimit: 20 }
+    case 'googledocs':
+      return { nodeType: 'googledocs', label: 'Google Docs', integrationOp: 'create_document', gdocsTitle: '', gdocsText: '' }
+    case 'googlesheets':
+      return { nodeType: 'googlesheets', label: 'Google Sheets', integrationOp: 'read_range', gsheetsSpreadsheetId: '', gsheetsRange: '' }
   }
 }

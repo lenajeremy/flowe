@@ -10,7 +10,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
   { category: 'Input/Output', items: ['textInput', 'imageInput', 'textOutput'] },
   { category: 'Actions', items: ['llm', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
-  { category: 'Integrations', items: ['notion', 'linear', 'github', 'gitlab', 'gmail', 'stripe', 'shopify'] },
+  { category: 'Integrations', items: ['notion', 'linear', 'github', 'gitlab', 'gmail', 'googlecalendar', 'outlook', 'slack', 'googledrive', 'googledocs', 'googlesheets', 'stripe', 'shopify'] },
 ]
 
 function PaletteItem({ type }: { type: NodeType }) {

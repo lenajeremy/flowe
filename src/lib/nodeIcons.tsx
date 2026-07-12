@@ -206,6 +206,41 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
         stroke="#96bf48" strokeWidth="1.1" strokeLinejoin="round"/>
     </svg>
   ),
+  googlecalendar: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2.5" y="3.5" width="11" height="10" rx="1" stroke="#4285f4" strokeWidth="1.3"/>
+      <path d="M2.5 6.5h11M5.5 2.2v2.4M10.5 2.2v2.4" stroke="#4285f4" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  outlook: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="4" width="12" height="8" rx="1" stroke="#0a6ed1" strokeWidth="1.3"/>
+      <path d="M2.5 4.5L8 9l5.5-4.5" stroke="#0a6ed1" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  slack: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.2 2.5 5 13.5M11 2.5 9.8 13.5M2.5 6.2h11M2.5 9.8h11" stroke="#36c5f0" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  ),
+  googledrive: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 3 14 13H2z" stroke="#1fa463" strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M5 9h6" stroke="#1fa463" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  googledocs: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 2.2h4.5L12 5.5v8.3H4z" stroke="#4c8bf5" strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M8.5 2.2v3.3H12M6 8h4M6 10.5h4" stroke="#4c8bf5" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  googlesheets: (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="10" height="10" rx="1" stroke="#0f9d58" strokeWidth="1.3"/>
+      <path d="M3 6.5h10M3 10h10M6.5 3.2v9.6M9.5 3.2v9.6" stroke="#0f9d58" strokeWidth="1.1"/>
+    </svg>
+  ),
   loop: (
     <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g clipPath="url(#clip_lp)">

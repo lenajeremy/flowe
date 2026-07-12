@@ -18,7 +18,7 @@ interface IntegrationStatus {
  * server has no OAuth app configured, or behind a toggle as an override.
  */
 export function IntegrationConnect({ provider, label, hasManualToken, manualField }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify'
+  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets'
   label: string
   hasManualToken: boolean
   manualField: ReactNode
