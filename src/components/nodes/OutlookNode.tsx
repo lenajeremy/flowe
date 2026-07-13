@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { send_email: 'Send Email', list_messages: 'List Messages', get_message: 'Get Message', create_event: 'Create Event' }
+const OP_LABELS: Record<string, string> = { send_email: 'Send Email', reply_to_message: 'Reply to Message', forward_message: 'Forward Message', create_draft: 'Create Draft', list_messages: 'List Messages', get_message: 'Get Message', move_message: 'Move Message', mark_read: 'Mark as Read', flag_message: 'Flag Message', delete_message: 'Delete Message', list_folders: 'List Folders', create_event: 'Create Event', list_events: 'List Events', update_event: 'Update Event', delete_event: 'Delete Event', respond_to_event: 'Respond to Event', list_contacts: 'List Contacts', create_contact: 'Create Contact' }
 
 export function OutlookNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'send_email'

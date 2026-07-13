@@ -152,6 +152,10 @@ export type FlowNodeData = {
   gmailQuery?: string          // Gmail search syntax
   gmailMessageId?: string
   gmailLimit?: number
+  gmailThreadId?: string
+  gmailLabelId?: string
+  gmailLabelName?: string
+  gmailDraftId?: string
 
   // stripe
   stripeLimit?: number
@@ -187,6 +191,12 @@ export type FlowNodeData = {
   outlookLimit?: number
   outlookStart?: string
   outlookEnd?: string
+  outlookFolderId?: string
+  outlookEventId?: string
+  outlookComment?: string
+  outlookResponse?: string
+  outlookContactName?: string
+  outlookContactEmail?: string
 
   // slack
   slackChannel?: string
@@ -195,6 +205,16 @@ export type FlowNodeData = {
   slackSendAs?: 'bot' | 'user'
   slackUserId?: string
   slackBotName?: string
+  slackThreadTs?: string
+  slackMessageTs?: string
+  slackEmoji?: string
+  slackChannelName?: string
+  slackPrivate?: string
+  slackTopic?: string
+  slackFileName?: string
+  slackFileContent?: string
+  slackEmail?: string
+  slackPostAt?: string
 
   // googledrive
   gdriveFileId?: string

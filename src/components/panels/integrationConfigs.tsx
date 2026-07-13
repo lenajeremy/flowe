@@ -73,8 +73,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user'
+type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -588,31 +588,65 @@ export function GitlabConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
 }
 
 export function GmailConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_email'
   return (
       <IntegrationSection
         provider="gmail" label="Gmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
         defaultOp="send_email"
         ops={[
           { value: 'send_email', label: 'Send Email' },
-          { value: 'create_draft', label: 'Create Draft' },
+          { value: 'reply_to_message', label: 'Reply to Message' },
           { value: 'list_messages', label: 'List Messages' },
           { value: 'get_message', label: 'Get Message' },
+          { value: 'get_thread', label: 'Get Thread' },
+          { value: 'create_draft', label: 'Create Draft' },
+          { value: 'list_drafts', label: 'List Drafts' },
+          { value: 'send_draft', label: 'Send Draft' },
+          { value: 'list_labels', label: 'List Labels' },
+          { value: 'create_label', label: 'Create Label' },
+          { value: 'add_label', label: 'Add Label to Message' },
+          { value: 'remove_label', label: 'Remove Label from Message' },
+          { value: 'mark_read', label: 'Mark as Read' },
+          { value: 'mark_unread', label: 'Mark as Unread' },
+          { value: 'archive_message', label: 'Archive Message' },
+          { value: 'trash_message', label: 'Move to Trash' },
         ]}
         tokenPlaceholder=""
         hideManual
       >
-        {(data.integrationOp === 'send_email' || data.integrationOp === 'create_draft') && (<>
+        {(op === 'send_email' || op === 'create_draft') && (<>
           <TextField label="To" field="gmailTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="team@example.com" />
           <TextField label="Cc (optional)" field="gmailCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
           <TextField label="Subject" field="gmailSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <AreaField label="Body" field="gmailBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
         </>)}
-        {data.integrationOp === 'list_messages' && (<>
+        {op === 'reply_to_message' && (<>
+          <TextField label="Message ID" field="gmailMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <TextField label="To (optional — defaults to sender)" field="gmailTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <AreaField label="Reply body" field="gmailBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {op === 'list_messages' && (<>
           <TextField label="Search query" field="gmailQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="is:unread newer_than:1d" />
           <NumField label="Limit" field="gmailLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         </>)}
-        {data.integrationOp === 'get_message' && (
-          <TextField label="Message ID" field="gmailMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        {(op === 'get_message' || op === 'mark_read' || op === 'mark_unread' || op === 'archive_message' || op === 'trash_message') && (
+          <TextField label="Message ID" field="gmailMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+        )}
+        {op === 'get_thread' && (
+          <TextField label="Thread ID" field="gmailThreadId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.threadId}}" />
+        )}
+        {(op === 'add_label' || op === 'remove_label') && (<>
+          <TextField label="Message ID" field="gmailMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <ResourceField label="Label" provider="gmail" kind="label" field="gmailLabelId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Label_123 or IMPORTANT" />
+        </>)}
+        {op === 'create_label' && (
+          <TextField label="Label name" field="gmailLabelName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Automated" />
+        )}
+        {op === 'list_drafts' && (
+          <NumField label="Limit" field="gmailLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        )}
+        {op === 'send_draft' && (
+          <TextField label="Draft ID" field="gmailDraftId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
         )}
       </IntegrationSection>
   )
@@ -713,43 +747,106 @@ export function GoogleCalendarConfig({ data, nodeId, updateNodeData }: ProviderC
 }
 
 export function OutlookConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_email'
   return (
       <IntegrationSection
         provider="outlook" label="Outlook" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
         defaultOp="send_email"
         ops={[
           { value: 'send_email', label: 'Send Email' },
+          { value: 'reply_to_message', label: 'Reply to Message' },
+          { value: 'forward_message', label: 'Forward Message' },
+          { value: 'create_draft', label: 'Create Draft' },
           { value: 'list_messages', label: 'List Messages' },
           { value: 'get_message', label: 'Get Message' },
+          { value: 'move_message', label: 'Move Message' },
+          { value: 'mark_read', label: 'Mark as Read' },
+          { value: 'flag_message', label: 'Flag Message' },
+          { value: 'delete_message', label: 'Delete Message' },
+          { value: 'list_folders', label: 'List Folders' },
           { value: 'create_event', label: 'Create Event' },
+          { value: 'list_events', label: 'List Events' },
+          { value: 'update_event', label: 'Update Event' },
+          { value: 'delete_event', label: 'Delete Event' },
+          { value: 'respond_to_event', label: 'Respond to Event' },
+          { value: 'list_contacts', label: 'List Contacts' },
+          { value: 'create_contact', label: 'Create Contact' },
         ]}
         tokenPlaceholder=""
         hideManual
       >
-        {data.integrationOp === 'send_email' && (<>
+        {(op === 'send_email' || op === 'create_draft') && (<>
           <TextField label="To" field="outlookTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="team@example.com" />
           <TextField label="Cc (optional)" field="outlookCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
           <TextField label="Subject" field="outlookSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <AreaField label="Body (HTML)" field="outlookBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
         </>)}
-        {data.integrationOp === 'list_messages' && (<>
+        {op === 'reply_to_message' && (<>
+          <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <AreaField label="Reply" field="outlookComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {op === 'forward_message' && (<>
+          <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <TextField label="To" field="outlookTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="team@example.com" />
+          <AreaField label="Comment (optional)" field="outlookComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="FYI" />
+        </>)}
+        {op === 'list_messages' && (<>
           <TextField label="Search query (optional)" field="outlookQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="from:jane subject:invoice" />
           <NumField label="Limit" field="outlookLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         </>)}
-        {data.integrationOp === 'get_message' && (
-          <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        {(op === 'get_message' || op === 'mark_read' || op === 'flag_message' || op === 'delete_message') && (
+          <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
         )}
-        {data.integrationOp === 'create_event' && (<>
+        {op === 'move_message' && (<>
+          <TextField label="Message ID" field="outlookMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <ResourceField label="Destination folder" provider="outlook" kind="folder" field="outlookFolderId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Folder id from List Folders" />
+        </>)}
+        {op === 'create_event' && (<>
           <TextField label="Title" field="outlookSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <AreaField label="Body (HTML)" field="outlookBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <TextField label="Start (RFC3339)" field="outlookStart" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T15:00:00" />
           <TextField label="End (RFC3339)" field="outlookEnd" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T16:00:00" />
+        </>)}
+        {op === 'list_events' && (<>
+          <TextField label="Window start (optional, RFC3339)" field="outlookStart" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T00:00:00Z" />
+          <TextField label="Window end (optional, RFC3339)" field="outlookEnd" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-27T00:00:00Z" />
+          <NumField label="Limit" field="outlookLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        </>)}
+        {op === 'update_event' && (<>
+          <TextField label="Event ID" field="outlookEventId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <TextField label="Title (optional)" field="outlookSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <AreaField label="Body (optional, HTML)" field="outlookBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <TextField label="Start (optional, RFC3339)" field="outlookStart" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <TextField label="End (optional, RFC3339)" field="outlookEnd" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+        </>)}
+        {op === 'delete_event' && (
+          <TextField label="Event ID" field="outlookEventId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+        )}
+        {op === 'respond_to_event' && (<>
+          <TextField label="Event ID" field="outlookEventId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
+          <SelectField label="Response" field="outlookResponse" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="accept"
+            options={[{ value: 'accept', label: 'Accept' }, { value: 'decline', label: 'Decline' }, { value: 'tentativelyAccept', label: 'Tentative' }]} />
+          <TextField label="Comment (optional)" field="outlookComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+        </>)}
+        {op === 'list_contacts' && (<>
+          <TextField label="Search (optional)" field="outlookQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane" />
+          <NumField label="Limit" field="outlookLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
+        {op === 'create_contact' && (<>
+          <TextField label="Name" field="outlookContactName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane Doe" />
+          <TextField label="Email" field="outlookContactEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
         </>)}
       </IntegrationSection>
   )
 }
 
 export function SlackConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_message'
+  const needsChannel = ['send_message', 'reply_in_thread', 'update_message', 'delete_message', 'schedule_message',
+    'add_reaction', 'pin_message', 'archive_channel', 'join_channel', 'invite_to_channel', 'set_channel_topic',
+    'upload_file', 'get_channel_history'].includes(op)
+  const needsMessageTs = ['update_message', 'delete_message', 'add_reaction', 'pin_message'].includes(op)
+  const needsText = ['send_message', 'send_dm', 'reply_in_thread', 'update_message', 'schedule_message'].includes(op)
   return (
       <IntegrationSection
         provider="slack" label="Slack" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
@@ -757,36 +854,86 @@ export function SlackConfig({ data, nodeId, updateNodeData }: ProviderConfigProp
         ops={[
           { value: 'send_message', label: 'Send Message' },
           { value: 'send_dm', label: 'Send Direct Message' },
+          { value: 'reply_in_thread', label: 'Reply in Thread' },
+          { value: 'update_message', label: 'Update Message' },
+          { value: 'delete_message', label: 'Delete Message' },
+          { value: 'schedule_message', label: 'Schedule Message' },
+          { value: 'add_reaction', label: 'Add Reaction' },
+          { value: 'pin_message', label: 'Pin Message' },
+          { value: 'upload_file', label: 'Upload File' },
+          { value: 'create_channel', label: 'Create Channel' },
+          { value: 'archive_channel', label: 'Archive Channel' },
+          { value: 'join_channel', label: 'Join Channel' },
+          { value: 'invite_to_channel', label: 'Invite to Channel' },
+          { value: 'set_channel_topic', label: 'Set Channel Topic' },
           { value: 'list_channels', label: 'List Channels' },
           { value: 'get_channel_history', label: 'Conversation History' },
+          { value: 'list_users', label: 'List Users' },
+          { value: 'get_user_by_email', label: 'Find User by Email' },
+          { value: 'search_messages', label: 'Search Messages' },
         ]}
         tokenPlaceholder=""
         hideManual
       >
-        {((data.integrationOp ?? 'send_message') === 'send_message' || data.integrationOp === 'get_channel_history') && (
+        {needsChannel && (
           <ResourceField label="Channel" provider="slack" kind="channel" field="slackChannel" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="#general or C0123..." />
         )}
-        {(data.integrationOp ?? 'send_message') === 'send_message' && (
-          <>
-            <SelectField label="Send as" field="slackSendAs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="bot"
-              options={[{ value: 'bot', label: 'Bot (app identity)' }, { value: 'user', label: 'Me (my Slack identity)' }]} />
-            {(data.slackSendAs ?? 'bot') === 'bot' && (
-              <TextField label="Bot name (optional)" field="slackBotName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Flowe Reporter" />
-            )}
-            <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-          </>
+        {(op === 'send_message' || op === 'reply_in_thread') && (<>
+          <SelectField label="Send as" field="slackSendAs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="bot"
+            options={[{ value: 'bot', label: 'Bot (app identity)' }, { value: 'user', label: 'Me (my Slack identity)' }]} />
+          {op === 'send_message' && (data.slackSendAs ?? 'bot') === 'bot' && (
+            <TextField label="Bot name (optional)" field="slackBotName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Flowe Reporter" />
+          )}
+        </>)}
+        {op === 'reply_in_thread' && (
+          <TextField label="Thread ts" field="slackThreadTs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.ts}}" />
         )}
-        {data.integrationOp === 'send_dm' && (
-          <>
-            <ResourceField label="Recipient" provider="slack" kind="user" field="slackUserId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="@teammate or U0123..." />
-            <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-            <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-muted)]">
-              Direct messages are always sent as you, from your Slack account.
-            </p>
-          </>
+        {needsMessageTs && (
+          <TextField label="Message ts" field="slackMessageTs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.ts}}" />
         )}
-        {(data.integrationOp === 'list_channels' || data.integrationOp === 'get_channel_history') && (
-          <NumField label="Limit" field="slackLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={data.integrationOp === 'list_channels' ? 100 : 20} />
+        {op === 'send_dm' && (
+          <ResourceField label="Recipient" provider="slack" kind="user" field="slackUserId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="@teammate or U0123..." />
+        )}
+        {needsText && (
+          <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'send_dm' && (
+          <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-muted)]">
+            Direct messages are always sent as you, from your Slack account.
+          </p>
+        )}
+        {op === 'schedule_message' && (
+          <TextField label="Post at (RFC3339)" field="slackPostAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="2026-07-20T15:00:00Z" />
+        )}
+        {op === 'add_reaction' && (
+          <TextField label="Emoji (no colons)" field="slackEmoji" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="tada" />
+        )}
+        {op === 'upload_file' && (<>
+          <TextField label="File name" field="slackFileName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
+          <AreaField label="File content" field="slackFileContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {op === 'create_channel' && (<>
+          <TextField label="Channel name" field="slackChannelName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="launch-updates" />
+          <SelectField label="Visibility" field="slackPrivate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Public' }, { value: 'true', label: 'Private' }]} />
+        </>)}
+        {op === 'invite_to_channel' && (
+          <TextField label="User IDs (comma-separated)" field="slackUserId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="U0123, U0456" />
+        )}
+        {op === 'set_channel_topic' && (
+          <TextField label="Topic" field="slackTopic" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'get_user_by_email' && (
+          <TextField label="Email" field="slackEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
+        )}
+        {op === 'search_messages' && (<>
+          <TextField label="Search query" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="deploy failed in:#alerts" />
+          <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-muted)]">
+            Search runs as you (your Slack identity), not the bot.
+          </p>
+        </>)}
+        {(op === 'list_channels' || op === 'get_channel_history' || op === 'list_users' || op === 'search_messages') && (
+          <NumField label="Limit" field="slackLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={op === 'list_channels' || op === 'list_users' ? 100 : 20} />
         )}
       </IntegrationSection>
   )
