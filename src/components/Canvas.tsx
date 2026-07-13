@@ -81,8 +81,11 @@ export function Canvas({ theme }: CanvasProps) {
   // ── Keyboard handler ─────────────────────────────────────
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const tag = (document.activeElement as HTMLElement)?.tagName
-      const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
+      const active = document.activeElement as HTMLElement | null
+      const tag = active?.tagName
+      // isContentEditable covers the TemplateField divs — without it, Backspace
+      // while typing in one would fall through and delete the selected node.
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || !!active?.isContentEditable
 
       if (!inInput && e.key === 'v') { setActiveTool('select'); return }
       if (!inInput && e.key === 'h') { setActiveTool('hand'); return }

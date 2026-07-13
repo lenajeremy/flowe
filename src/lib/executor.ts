@@ -202,12 +202,32 @@ export async function callGemini(
 
 // ── Helpers ──────────────────────────────────────────────────
 
-/** Replace {{nodeId.output}} tokens with actual node outputs.
- *  Node IDs can be UUIDs (contain hyphens), so the pattern uses [\w-]+ */
+/** Replace {{nodeId.output}} tokens — and {{nodeId.output.field}} field paths —
+ *  with actual node outputs. Node IDs can be UUIDs (hyphens), so the pattern
+ *  uses [\w-]+; an optional dotted path indexes into the node's JSON output. */
 function substituteTemplates(text: string, outputs: Map<string, string>): string {
-  return text.replace(/\{\{([\w-]+)\.output\}\}/g, (_match, nodeId: string) => {
-    return outputs.get(nodeId) ?? `[no output from ${nodeId}]`
+  return text.replace(/\{\{([\w-]+)\.output((?:\.[\w-]+)*)\}\}/g, (_match, nodeId: string, path: string) => {
+    const base = outputs.get(nodeId)
+    if (base === undefined) return `[no output from ${nodeId}]`
+    if (!path) return base
+    return resolveJsonPath(base, path)
   })
+}
+
+/** Walk a leading-dot path (".a.b") into a JSON-encoded string. */
+function resolveJsonPath(raw: string, path: string): string {
+  let v: unknown
+  try {
+    v = JSON.parse(raw)
+  } catch {
+    return `[${path.slice(1)} unavailable — output is not JSON]`
+  }
+  for (const key of path.slice(1).split('.')) {
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) return `[no field ${key}]`
+    v = (v as Record<string, unknown>)[key]
+    if (v === undefined) return `[no field ${key}]`
+  }
+  return typeof v === 'string' ? v : JSON.stringify(v)
 }
 
 /**
@@ -292,7 +312,7 @@ async function executeNode(
       const url = substituteTemplates(typeof data.url === 'string' ? data.url : '', outputs)
       let headers: Record<string, string> = {}
       try {
-        headers = JSON.parse(typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}')
+        headers = JSON.parse(substituteTemplates(typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}', outputs))
       } catch {
         // ignore malformed headers
       }

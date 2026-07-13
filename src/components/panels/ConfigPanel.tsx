@@ -1,10 +1,11 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
+import { TemplateField } from '@/components/ui/TemplateField'
 import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
-import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_LABELS } from '@/lib/nodeColors'
 import { NodeStatusTab, NodeLogsTab } from '@/components/panels/NodeRunTabs'
 import { IntegrationConnect } from '@/components/ui/IntegrationConnect'
 import { ResourcePicker } from '@/components/ui/ResourcePicker'
@@ -31,9 +32,9 @@ interface FieldProps {
 function TextField({ label, field, data, nodeId, updateNodeData, placeholder }: FieldProps) {
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
-      <input id={`cfg-${nodeId}-${field}`} type="text" className={inputClass} placeholder={placeholder}
+      <TemplateField id={`cfg-${nodeId}-${field}`} placeholder={placeholder}
         value={typeof data[field] === 'string' ? (data[field] as string) : ''}
-        onChange={(e) => updateNodeData(nodeId, { [field]: e.target.value })} />
+        onChange={(v) => updateNodeData(nodeId, { [field]: v })} />
     </FormField>
   )
 }
@@ -41,9 +42,9 @@ function TextField({ label, field, data, nodeId, updateNodeData, placeholder }: 
 function AreaField({ label, field, data, nodeId, updateNodeData, placeholder }: FieldProps) {
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
-      <textarea id={`cfg-${nodeId}-${field}`} rows={3} className={textareaClass} placeholder={placeholder}
+      <TemplateField id={`cfg-${nodeId}-${field}`} multiline rows={3} placeholder={placeholder}
         value={typeof data[field] === 'string' ? (data[field] as string) : ''}
-        onChange={(e) => updateNodeData(nodeId, { [field]: e.target.value })} />
+        onChange={(v) => updateNodeData(nodeId, { [field]: v })} />
     </FormField>
   )
 }
@@ -189,68 +190,6 @@ function getUpstreamNodes(targetId: string, nodes: FlowNode[], edges: FlowEdge[]
   return nodes.filter((n) => sourceIds.includes(n.id))
 }
 
-// ── Available Inputs chip strip ──────────────────────────────
-interface AvailableInputsProps {
-  upstreamNodes: FlowNode[]
-  onInsert: (token: string) => void
-}
-
-function AvailableInputs({ upstreamNodes, onInsert }: AvailableInputsProps) {
-  const [copied, setCopied] = useState<string | null>(null)
-
-  if (upstreamNodes.length === 0) return null
-
-  function handleClick(node: FlowNode) {
-    const token = `{{${node.id}.output}}`
-    onInsert(token)
-    setCopied(node.id)
-    setTimeout(() => setCopied(null), 1200)
-  }
-
-  return (
-    <div className="mb-3 p-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)]">
-      <p className="micro text-[var(--color-subtle)] mb-2">
-        Available Inputs
-      </p>
-      <div className="flex flex-col gap-1.5">
-        {upstreamNodes.map((node) => {
-          const token = `{{${node.id}.output}}`
-          const isCopied = copied === node.id
-          return (
-            <button
-              key={node.id}
-              onClick={() => handleClick(node)}
-              title={`Click to insert ${token} at cursor`}
-              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface2)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface)] transition-colors group"
-            >
-              {/* Color dot */}
-              <div
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: NODE_ACCENT_HEX[node.data.nodeType] }}
-              />
-              {/* Label */}
-              <span className="text-[11px] text-[var(--color-text)] font-medium truncate flex-1">
-                {node.data.label}
-              </span>
-              {/* Token preview */}
-              <code className="text-[10px] text-[var(--color-accent)] font-[var(--font-mono)] truncate max-w-[110px] opacity-60 group-hover:opacity-100 transition-opacity">
-                {token}
-              </code>
-              {/* Action hint */}
-              <span className={`text-[9px] flex-shrink-0 transition-colors ${isCopied ? 'text-[var(--color-ok)]' : 'text-[var(--color-muted)] group-hover:text-[var(--color-accent)]'}`}>
-                {isCopied ? '✓ inserted' : '+ insert'}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="text-[10px] text-[var(--color-muted)] mt-2 leading-relaxed">
-        Click a node to insert its output token at your cursor position.
-      </p>
-    </div>
-  )
-}
-
 // ── Branch upstream hint ─────────────────────────────────────
 function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
   if (upstreamNodes.length === 0) return null
@@ -283,13 +222,6 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
   )
 }
 
-// ── Tracked focus state for token insertion ──────────────────
-interface FocusedField {
-  el: HTMLTextAreaElement | HTMLInputElement
-  /** The FlowNodeData key that this element maps to */
-  field: string
-}
-
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
   const { nodes, edges, selectedNodeId, selectedNodeIds, updateNodeData, dbId } = useWorkflowStore(
@@ -305,39 +237,6 @@ export function ConfigPanel() {
 
   // Configure / Status / Logs — Figma frames 162-166
   const [activeTab, setActiveTab] = useState<InspectorTab>('configure')
-
-  // Refs to textareas so we can insert at cursor position (LLM node)
-  const systemRef = useRef<HTMLTextAreaElement>(null)
-  const userRef   = useRef<HTMLTextAreaElement>(null)
-
-  /**
-   * Tracks the last field that had focus, including the cursor offsets at the
-   * moment focus moved away. This is captured via onBlur so that when an
-   * "Available Input" button is clicked (which steals focus from the field),
-   * insertToken still knows where to write.
-   */
-  const lastFocusedRef = useRef<FocusedField & { start: number; end: number } | null>(null)
-
-  function handleFieldFocus(el: HTMLTextAreaElement | HTMLInputElement, field: string) {
-    // Update on every focus so the ref always holds the current element.
-    lastFocusedRef.current = {
-      el,
-      field,
-      start: el.selectionStart ?? el.value.length,
-      end:   el.selectionEnd   ?? el.value.length,
-    }
-  }
-
-  function handleFieldBlur(el: HTMLTextAreaElement | HTMLInputElement, field: string) {
-    // Capture the cursor position at the moment focus leaves the field,
-    // because by the time the button's onClick fires, selectionStart is gone.
-    lastFocusedRef.current = {
-      el,
-      field,
-      start: el.selectionStart ?? el.value.length,
-      end:   el.selectionEnd   ?? el.value.length,
-    }
-  }
 
   // ── Webhook URL state ────────────────────────────────────────
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null)
@@ -383,11 +282,6 @@ export function ConfigPanel() {
   const [schedNextRun, setSchedNextRun] = useState<string | null>(null)
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null
-
-  // Clear the tracked focus whenever the user switches to a different node
-  useEffect(() => {
-    lastFocusedRef.current = null
-  }, [selectedNodeId])
 
   useEffect(() => {
     if (selectedNode?.data.nodeType === 'webhookTrigger') {
@@ -479,81 +373,6 @@ export function ConfigPanel() {
   const { data, id: nodeId } = selectedNode
   const nodeType = data.nodeType
   const upstreamNodes = getUpstreamNodes(nodeId, nodes, edges)
-
-  /** Insert token at the cursor position of the last-focused field.
-   *
-   *  Strategy: clicking the "Available Input" button steals focus away from the
-   *  field the user was editing, so `document.activeElement` is the button by
-   *  the time this runs.  Instead we rely on `lastFocusedRef`, which is written
-   *  both onFocus and onBlur for every insertable field, so it always contains
-   *  the last field the user touched together with the exact cursor offsets
-   *  captured at blur time.
-   *
-   *  We also keep the old `document.activeElement` path as a secondary fallback
-   *  (handles the edge case where the user clicks a chip without ever having
-   *  clicked away from a field in the same render cycle).
-   */
-  function insertToken(token: string) {
-    // ── 1. Try the tracked last-focused field (primary path) ──
-    const tracked = lastFocusedRef.current
-    if (tracked && tracked.field && tracked.el) {
-      const { el, field, start, end } = tracked
-      const newValue = el.value.slice(0, start) + token + el.value.slice(end)
-      const cursorPos = start + token.length
-      updateNodeData(nodeId, { [field]: newValue })
-      requestAnimationFrame(() => {
-        el.focus()
-        el.setSelectionRange(cursorPos, cursorPos)
-      })
-      // Advance the stored cursor so repeated inserts chain correctly
-      lastFocusedRef.current = { el, field, start: cursorPos, end: cursorPos }
-      return
-    }
-
-    // ── 2. Fallback: check document.activeElement (e.g. still-focused field) ──
-    const activeEl = document.activeElement
-    if (
-      (activeEl instanceof HTMLTextAreaElement || activeEl instanceof HTMLInputElement) &&
-      activeEl.id !== 'cfg-label'
-    ) {
-      const fieldMap: Record<string, string> = {
-        'cfg-http-url':      'url',
-        'cfg-http-body':     'requestBody',
-        'cfg-http-headers':  'requestHeaders',
-        'cfg-email-to':      'emailTo',
-        'cfg-email-subject': 'emailSubject',
-        'cfg-email-body':    'emailBody',
-        'cfg-approval-msg':  'approvalMessage',
-        'cfg-system':        'systemPrompt',
-        'cfg-user':          'userPrompt',
-      }
-      const field = fieldMap[activeEl.id]
-      if (field) {
-        const start = activeEl.selectionStart ?? activeEl.value.length
-        const end   = activeEl.selectionEnd   ?? activeEl.value.length
-        const newValue = activeEl.value.slice(0, start) + token + activeEl.value.slice(end)
-        const cursorPos = start + token.length
-        updateNodeData(nodeId, { [field]: newValue })
-        requestAnimationFrame(() => {
-          activeEl.focus()
-          activeEl.setSelectionRange(cursorPos, cursorPos)
-        })
-        return
-      }
-    }
-
-    // ── 3. Last resort: LLM user prompt ──────────────────────
-    const el = userRef.current
-    if (!el) return
-    const start = el.selectionStart ?? el.value.length
-    const end   = el.selectionEnd   ?? el.value.length
-    const newValue = el.value.slice(0, start) + token + el.value.slice(end)
-    updateNodeData(nodeId, { userPrompt: newValue })
-    requestAnimationFrame(() => {
-      el.focus()
-      el.setSelectionRange(start + token.length, start + token.length)
-    })
-  }
 
   const hasOutput = typeof data.executionOutput === 'string' && data.executionOutput.length > 0
   const isCompleted = data.executionStatus === 'completed'
@@ -703,32 +522,23 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            {/* Available inputs — shown above system prompt so user sees them before writing */}
-            <AvailableInputs upstreamNodes={upstreamNodes} onInsert={insertToken} />
-
             <FormField label="System Prompt" htmlFor="cfg-system">
-              <textarea
+              <TemplateField
                 id="cfg-system"
-                ref={systemRef}
+                multiline
                 rows={4}
                 value={typeof data.systemPrompt === 'string' ? data.systemPrompt : ''}
-                onChange={(e) => updateNodeData(nodeId, { systemPrompt: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'systemPrompt')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'systemPrompt')}
-                className={textareaClass}
+                onChange={(v) => updateNodeData(nodeId, { systemPrompt: v })}
                 placeholder="You are a helpful assistant…"
               />
             </FormField>
             <FormField label="User Prompt" htmlFor="cfg-user">
-              <textarea
+              <TemplateField
                 id="cfg-user"
-                ref={userRef}
+                multiline
                 rows={4}
                 value={typeof data.userPrompt === 'string' ? data.userPrompt : ''}
-                onChange={(e) => updateNodeData(nodeId, { userPrompt: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'userPrompt')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'userPrompt')}
-                className={textareaClass}
+                onChange={(v) => updateNodeData(nodeId, { userPrompt: v })}
                 placeholder="{{nodeId.output}}"
               />
             </FormField>
@@ -860,7 +670,6 @@ export function ConfigPanel() {
         {/* httpRequest */}
         {nodeType === 'httpRequest' && (
           <>
-            <AvailableInputs upstreamNodes={upstreamNodes} onInsert={insertToken} />
             <FormField label="Method" htmlFor="cfg-http-method">
               <Select
                 id="cfg-http-method"
@@ -870,14 +679,10 @@ export function ConfigPanel() {
               />
             </FormField>
             <FormField label="URL" htmlFor="cfg-http-url">
-              <input
+              <TemplateField
                 id="cfg-http-url"
-                type="text"
                 value={typeof data.url === 'string' ? data.url : ''}
-                onChange={(e) => updateNodeData(nodeId, { url: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'url')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'url')}
-                className={inputClass}
+                onChange={(v) => updateNodeData(nodeId, { url: v })}
                 placeholder="https://api.example.com/endpoint"
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1">
@@ -885,27 +690,23 @@ export function ConfigPanel() {
               </p>
             </FormField>
             <FormField label="Request Headers (JSON)" htmlFor="cfg-http-headers">
-              <textarea
+              <TemplateField
                 id="cfg-http-headers"
+                multiline
                 rows={3}
                 value={typeof data.requestHeaders === 'string' ? data.requestHeaders : '{}'}
-                onChange={(e) => updateNodeData(nodeId, { requestHeaders: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'requestHeaders')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'requestHeaders')}
-                className={textareaClass}
+                onChange={(v) => updateNodeData(nodeId, { requestHeaders: v })}
                 placeholder={'{"Authorization": "Bearer token", "Content-Type": "application/json"}'}
               />
             </FormField>
             {(data.method === 'POST' || data.method === 'PUT' || data.method === 'PATCH') && (
               <FormField label="Request Body" htmlFor="cfg-http-body">
-                <textarea
+                <TemplateField
                   id="cfg-http-body"
+                  multiline
                   rows={4}
                   value={typeof data.requestBody === 'string' ? data.requestBody : ''}
-                  onChange={(e) => updateNodeData(nodeId, { requestBody: e.target.value })}
-                  onFocus={(e) => handleFieldFocus(e.currentTarget, 'requestBody')}
-                  onBlur={(e)  => handleFieldBlur(e.currentTarget,  'requestBody')}
-                  className={textareaClass}
+                  onChange={(v) => updateNodeData(nodeId, { requestBody: v })}
                   placeholder={'{"key": "{{nodeId.output}}"}'}
                 />
                 <p className="text-[10px] text-[var(--color-muted)] mt-1">
@@ -919,40 +720,29 @@ export function ConfigPanel() {
         {/* emailSend */}
         {nodeType === 'emailSend' && (
           <>
-            <AvailableInputs upstreamNodes={upstreamNodes} onInsert={insertToken} />
             <FormField label="To" htmlFor="cfg-email-to">
-              <input
+              <TemplateField
                 id="cfg-email-to"
-                type="text"
                 value={typeof data.emailTo === 'string' ? data.emailTo : ''}
-                onChange={(e) => updateNodeData(nodeId, { emailTo: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailTo')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailTo')}
-                className={inputClass}
+                onChange={(v) => updateNodeData(nodeId, { emailTo: v })}
                 placeholder="recipient@example.com"
               />
             </FormField>
             <FormField label="Subject" htmlFor="cfg-email-subject">
-              <input
+              <TemplateField
                 id="cfg-email-subject"
-                type="text"
                 value={typeof data.emailSubject === 'string' ? data.emailSubject : ''}
-                onChange={(e) => updateNodeData(nodeId, { emailSubject: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailSubject')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailSubject')}
-                className={inputClass}
+                onChange={(v) => updateNodeData(nodeId, { emailSubject: v })}
                 placeholder="Email subject…"
               />
             </FormField>
             <FormField label="Body" htmlFor="cfg-email-body">
-              <textarea
+              <TemplateField
                 id="cfg-email-body"
+                multiline
                 rows={5}
                 value={typeof data.emailBody === 'string' ? data.emailBody : ''}
-                onChange={(e) => updateNodeData(nodeId, { emailBody: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'emailBody')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'emailBody')}
-                className={textareaClass}
+                onChange={(v) => updateNodeData(nodeId, { emailBody: v })}
                 placeholder="Email body… template tokens supported."
               />
             </FormField>
@@ -969,14 +759,12 @@ export function ConfigPanel() {
         {nodeType === 'humanApproval' && (
           <>
             <FormField label="Approval Message" htmlFor="cfg-approval-msg">
-              <textarea
+              <TemplateField
                 id="cfg-approval-msg"
+                multiline
                 rows={4}
                 value={typeof data.approvalMessage === 'string' ? data.approvalMessage : ''}
-                onChange={(e) => updateNodeData(nodeId, { approvalMessage: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'approvalMessage')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'approvalMessage')}
-                className={textareaClass}
+                onChange={(v) => updateNodeData(nodeId, { approvalMessage: v })}
                 placeholder="Please review and approve or reject this step."
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
@@ -991,8 +779,6 @@ export function ConfigPanel() {
                 type="email"
                 value={typeof data.approvalEmail === 'string' ? data.approvalEmail : ''}
                 onChange={(e) => updateNodeData(nodeId, { approvalEmail: e.target.value })}
-                onFocus={(e) => handleFieldFocus(e.currentTarget, 'approvalEmail')}
-                onBlur={(e)  => handleFieldBlur(e.currentTarget,  'approvalEmail')}
                 className={inputClass}
                 placeholder="you@email.com"
               />
@@ -1105,22 +891,20 @@ export function ConfigPanel() {
                   />
                 </FormField>
                 <FormField label="Title" htmlFor="cfg-notion-title">
-                  <input
+                  <TemplateField
                     id="cfg-notion-title"
-                    type="text"
                     value={typeof data.notionTitle === 'string' ? data.notionTitle : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionTitle: e.target.value })}
-                    className={inputClass}
+                    onChange={(v) => updateNodeData(nodeId, { notionTitle: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
                 <FormField label="Content" htmlFor="cfg-notion-content">
-                  <textarea
+                  <TemplateField
                     id="cfg-notion-content"
+                    multiline
                     rows={3}
                     value={typeof data.notionContent === 'string' ? data.notionContent : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionContent: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { notionContent: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
@@ -1141,12 +925,12 @@ export function ConfigPanel() {
                   />
                 </FormField>
                 <FormField label="Filter (JSON, optional)" htmlFor="cfg-notion-filter">
-                  <textarea
+                  <TemplateField
                     id="cfg-notion-filter"
+                    multiline
                     rows={3}
                     value={typeof data.notionFilter === 'string' ? data.notionFilter : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionFilter: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { notionFilter: v })}
                     placeholder='{"property":"Status","select":{"equals":"Done"}}'
                   />
                 </FormField>
@@ -1167,12 +951,12 @@ export function ConfigPanel() {
                   />
                 </FormField>
                 <FormField label="Content" htmlFor="cfg-notion-content-ap">
-                  <textarea
+                  <TemplateField
                     id="cfg-notion-content-ap"
+                    multiline
                     rows={3}
                     value={typeof data.notionContent === 'string' ? data.notionContent : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionContent: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { notionContent: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
@@ -1192,10 +976,10 @@ export function ConfigPanel() {
             )}
             {data.integrationOp === 'add_comment' && (
               <FormField label="Comment" htmlFor="cfg-notion-comment">
-                <textarea id="cfg-notion-comment" rows={3}
+                <TemplateField id="cfg-notion-comment" multiline rows={3}
                   value={typeof data.notionContent === 'string' ? data.notionContent : ''}
-                  onChange={(e) => updateNodeData(nodeId, { notionContent: e.target.value })}
-                  className={textareaClass} placeholder="{{llm-1.output}}" />
+                  onChange={(v) => updateNodeData(nodeId, { notionContent: v })}
+                  placeholder="{{llm-1.output}}" />
               </FormField>
             )}
             {data.integrationOp === 'update_page' && (
@@ -1209,20 +993,19 @@ export function ConfigPanel() {
                   />
                 </FormField>
                 <FormField label="Properties (JSON)" htmlFor="cfg-notion-props">
-                  <textarea id="cfg-notion-props" rows={4}
+                  <TemplateField id="cfg-notion-props" multiline rows={4}
                     value={typeof data.notionProperties === 'string' ? data.notionProperties : ''}
-                    onChange={(e) => updateNodeData(nodeId, { notionProperties: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { notionProperties: v })}
                     placeholder='{"Status":{"select":{"name":"Done"}}}' />
                 </FormField>
               </>
             )}
             {data.integrationOp === 'search' && (
               <FormField label="Search query" htmlFor="cfg-notion-query">
-                <input id="cfg-notion-query" type="text"
+                <TemplateField id="cfg-notion-query"
                   value={typeof data.notionQuery === 'string' ? data.notionQuery : ''}
-                  onChange={(e) => updateNodeData(nodeId, { notionQuery: e.target.value })}
-                  className={inputClass} placeholder="meeting notes" />
+                  onChange={(v) => updateNodeData(nodeId, { notionQuery: v })}
+                  placeholder="meeting notes" />
               </FormField>
             )}
           </div>
@@ -1287,22 +1070,20 @@ export function ConfigPanel() {
                   />
                 </FormField>
                 <FormField label="Title" htmlFor="cfg-linear-title">
-                  <input
+                  <TemplateField
                     id="cfg-linear-title"
-                    type="text"
                     value={typeof data.linearTitle === 'string' ? data.linearTitle : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearTitle: e.target.value })}
-                    className={inputClass}
+                    onChange={(v) => updateNodeData(nodeId, { linearTitle: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
                 <FormField label="Description" htmlFor="cfg-linear-desc">
-                  <textarea
+                  <TemplateField
                     id="cfg-linear-desc"
+                    multiline
                     rows={3}
                     value={typeof data.linearDescription === 'string' ? data.linearDescription : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearDescription: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { linearDescription: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
@@ -1353,22 +1134,20 @@ export function ConfigPanel() {
             {data.integrationOp === 'create_comment' && (
               <>
                 <FormField label="Issue ID" htmlFor="cfg-linear-issue">
-                  <input
+                  <TemplateField
                     id="cfg-linear-issue"
-                    type="text"
                     value={typeof data.linearIssueId === 'string' ? data.linearIssueId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearIssueId: e.target.value })}
-                    className={inputClass}
+                    onChange={(v) => updateNodeData(nodeId, { linearIssueId: v })}
                     placeholder="{{prev-node.output}} or issue ID"
                   />
                 </FormField>
                 <FormField label="Comment" htmlFor="cfg-linear-comment">
-                  <textarea
+                  <TemplateField
                     id="cfg-linear-comment"
+                    multiline
                     rows={3}
                     value={typeof data.linearCommentBody === 'string' ? data.linearCommentBody : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearCommentBody: e.target.value })}
-                    className={textareaClass}
+                    onChange={(v) => updateNodeData(nodeId, { linearCommentBody: v })}
                     placeholder="{{llm-1.output}}"
                   />
                 </FormField>
@@ -1378,10 +1157,10 @@ export function ConfigPanel() {
             {/* get_issue fields */}
             {data.integrationOp === 'get_issue' && (
               <FormField label="Issue ID" htmlFor="cfg-linear-issue-g">
-                <input id="cfg-linear-issue-g" type="text"
+                <TemplateField id="cfg-linear-issue-g"
                   value={typeof data.linearIssueId === 'string' ? data.linearIssueId : ''}
-                  onChange={(e) => updateNodeData(nodeId, { linearIssueId: e.target.value })}
-                  className={inputClass} placeholder="{{prev-node.output}} or issue ID" />
+                  onChange={(v) => updateNodeData(nodeId, { linearIssueId: v })}
+                  placeholder="{{prev-node.output}} or issue ID" />
               </FormField>
             )}
 
@@ -1389,10 +1168,10 @@ export function ConfigPanel() {
             {data.integrationOp === 'search_issues' && (
               <>
                 <FormField label="Search text" htmlFor="cfg-linear-query">
-                  <input id="cfg-linear-query" type="text"
+                  <TemplateField id="cfg-linear-query"
                     value={typeof data.linearQuery === 'string' ? data.linearQuery : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearQuery: e.target.value })}
-                    className={inputClass} placeholder="login bug" />
+                    onChange={(v) => updateNodeData(nodeId, { linearQuery: v })}
+                    placeholder="login bug" />
                 </FormField>
                 <FormField label="Limit" htmlFor="cfg-linear-limit-s">
                   <input id="cfg-linear-limit-s" type="number"
@@ -1407,22 +1186,22 @@ export function ConfigPanel() {
             {data.integrationOp === 'update_issue' && (
               <>
                 <FormField label="Issue ID" htmlFor="cfg-linear-issue-u">
-                  <input id="cfg-linear-issue-u" type="text"
+                  <TemplateField id="cfg-linear-issue-u"
                     value={typeof data.linearIssueId === 'string' ? data.linearIssueId : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearIssueId: e.target.value })}
-                    className={inputClass} placeholder="{{prev-node.output}} or issue ID" />
+                    onChange={(v) => updateNodeData(nodeId, { linearIssueId: v })}
+                    placeholder="{{prev-node.output}} or issue ID" />
                 </FormField>
                 <FormField label="Title (optional)" htmlFor="cfg-linear-title-u">
-                  <input id="cfg-linear-title-u" type="text"
+                  <TemplateField id="cfg-linear-title-u"
                     value={typeof data.linearTitle === 'string' ? data.linearTitle : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearTitle: e.target.value })}
-                    className={inputClass} placeholder="Leave blank to keep" />
+                    onChange={(v) => updateNodeData(nodeId, { linearTitle: v })}
+                    placeholder="Leave blank to keep" />
                 </FormField>
                 <FormField label="Description (optional)" htmlFor="cfg-linear-desc-u">
-                  <textarea id="cfg-linear-desc-u" rows={3}
+                  <TemplateField id="cfg-linear-desc-u" multiline rows={3}
                     value={typeof data.linearDescription === 'string' ? data.linearDescription : ''}
-                    onChange={(e) => updateNodeData(nodeId, { linearDescription: e.target.value })}
-                    className={textareaClass} placeholder="{{llm-1.output}}" />
+                    onChange={(v) => updateNodeData(nodeId, { linearDescription: v })}
+                    placeholder="{{llm-1.output}}" />
                 </FormField>
                 <FormField label="Move to project (optional)" htmlFor="cfg-linear-project-u">
                   <ResourcePicker

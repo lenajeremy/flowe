@@ -44,6 +44,13 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* contenteditable placeholder (TemplateField) — shown only when empty */
+.tmpl-field:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-placeholder);
+  pointer-events: none;
+}
+
 :root {
   color-scheme: dark;
 
@@ -57,6 +64,7 @@
   --color-muted:    #9c9ca8;
   --color-subtle:   #5f5f6b;
   --color-accent:   #a08cff;
+  --color-placeholder: #726a92; /* muted-accent — distinguishes hint text from typed input */
 
   --color-ok:   #3dd68c;
   --color-fail: #f4554a;
@@ -117,6 +125,7 @@
   --color-muted:    #5d5d6a;
   --color-subtle:   #90909d;
   --color-accent:   #6e56e0;
+  --color-placeholder: #9a92bd; /* muted-accent hint text */
 
   --color-ok:   #0f9d63;
   --color-fail: #d93a30;

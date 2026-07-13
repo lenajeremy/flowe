@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { NodePalette, type LeftTab } from '@/components/panels/NodePalette'
 import { ConfigPanel } from '@/components/panels/ConfigPanel'
+import { InputPanel } from '@/components/panels/InputPanel'
 import { VersionsPanel } from '@/components/panels/VersionsPanel'
 import { Canvas } from '@/components/Canvas'
 import { ExecutionPanel } from '@/components/ExecutionPanel'
@@ -528,6 +529,9 @@ export function WorkflowEditorPage() {
                   )}
                 </div>
               )}
+
+              {/* Input picker — floating overlay, Figma frame 170 */}
+              <InputPanel />
             </div>
           </ReactFlowProvider>
           <ExecutionPanel />
