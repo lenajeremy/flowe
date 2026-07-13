@@ -31,8 +31,9 @@ export function GradientEdge(props: EdgeProps) {
           x1={sourceX} y1={sourceY}
           x2={targetX} y2={targetY}
         >
-          <stop offset="0%" stopColor="var(--color-hover2)" />
-          <stop offset="100%" stopColor={accent} />
+          {/* var() only resolves via style, not SVG presentation attributes */}
+          <stop offset="0%" style={{ stopColor: 'var(--color-hover2)' }} />
+          <stop offset="100%" style={{ stopColor: accent }} />
         </linearGradient>
       </defs>
 
@@ -46,8 +47,8 @@ export function GradientEdge(props: EdgeProps) {
       />
 
       {/* Endpoint dots — source: neutral wash, target: accent */}
-      <circle cx={sourceX} cy={sourceY} r={4} fill="var(--color-hover2)" />
-      <circle cx={targetX} cy={targetY} r={4} fill={accent} opacity={0.35} />
+      <circle cx={sourceX} cy={sourceY} r={4} style={{ fill: 'var(--color-hover2)' }} />
+      <circle cx={targetX} cy={targetY} r={4} style={{ fill: accent }} opacity={0.35} />
     </>
   )
 }

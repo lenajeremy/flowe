@@ -5,6 +5,7 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useAuthStore } from '@/store/authStore'
 import { useShallow } from 'zustand/react/shallow'
 import { API } from '@/lib/config'
+import { consumePendingPrompt } from '@/lib/pendingPrompt'
 import { FloweIcon } from '@/components/FloweIcon'
 import LiquidGlass from 'liquid-glass-react'
 import { apiFetch } from '@/lib/http'
@@ -61,10 +62,11 @@ const SUGGESTIONS = [
 ]
 
 const MODEL_STORAGE_KEY = 'flowe:chat-model'
-const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6'
+const DEFAULT_CHAT_MODEL = 'gpt-5.5'
 
 // Used until /api/ai/models responds (or if it never does)
 const FALLBACK_MODELS: ChatModelInfo[] = [
+  { id: 'gpt-5.5', name: 'GPT-5.5', description: "OpenAI's flagship — strong all-round reasoning", providerLabel: 'OpenAI', keyEnv: 'OPENAI_API_KEY', available: true },
   { id: 'claude-fable-5', name: 'Fable 5', description: 'Most capable — complex multi-step workflows', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
   { id: 'claude-opus-4-8', name: 'Opus 4.8', description: 'Deep reasoning for demanding builds', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
   { id: 'claude-sonnet-4-6', name: 'Sonnet 4.6', description: 'Balanced speed and intelligence', providerLabel: 'Anthropic', keyEnv: 'ANTHROPIC_API_KEY', available: true },
@@ -132,15 +134,37 @@ export function ChatPanel() {
     localStorage.setItem(MODEL_STORAGE_KEY, id)
   }, [])
 
+  // Stable handle on the latest handleSend for effects that fire it (the
+  // Build-page handoff below) without re-running when its deps change.
+  const handleSendRef = useRef<(text?: string) => Promise<void>>(async () => {})
+
   // ── Load chat history ────────────────────────────────────────
+  // The Build-page handoff runs strictly AFTER the history response: firing
+  // it earlier lets the (empty) history land later and wipe the sent message.
   useEffect(() => {
     if (!dbId) { setMessages([]); return }
+    let stale = false // guards StrictMode double-runs and dbId switches
+    const maybeHandoff = (restored: ChatMessage[]) => {
+      if (restored.length > 0) return
+      const prompt = consumePendingPrompt(dbId)
+      if (prompt) void handleSendRef.current(prompt)
+    }
     setLoadingHistory(true)
     apiFetch(`${API}/api/workflows/${dbId}/chat`)
       .then((r) => r.json())
-      .then((data: { messages: StoredMessage[] }) => setMessages(fromStored(data.messages ?? [])))
-      .catch(() => setMessages([]))
-      .finally(() => setLoadingHistory(false))
+      .then((data: { messages: StoredMessage[] }) => {
+        if (stale) return
+        const restored = fromStored(data.messages ?? [])
+        setMessages(restored)
+        maybeHandoff(restored)
+      })
+      .catch(() => {
+        if (stale) return
+        setMessages([])
+        maybeHandoff([])
+      })
+      .finally(() => { if (!stale) setLoadingHistory(false) })
+    return () => { stale = true }
   }, [dbId])
 
   // ── Persist chat ─────────────────────────────────────────────
@@ -165,8 +189,8 @@ export function ChatPanel() {
   }, [input])
 
   // ── Send ─────────────────────────────────────────────────────
-  const handleSend = useCallback(async () => {
-    const text = input.trim()
+  const handleSend = useCallback(async (textOverride?: string) => {
+    const text = (textOverride ?? input).trim()
     if (!text || isGenerating) return
 
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text }
@@ -323,6 +347,8 @@ export function ChatPanel() {
       abortRef.current = null
     }
   }, [input, isGenerating, messages, nodes, edges, chatModel, importWorkflowVersion, applyPatch, saveChat])
+
+  handleSendRef.current = handleSend
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -571,23 +597,24 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
         </div>
       </div>
 
-      {/* Suggestions pinned to bottom — fade from transparent (top) to opaque (bottom) */}
+      {/* Suggestions pinned to bottom — gentle fade toward the top, but every
+          row stays readable (the old 0.3 top row failed contrast entirely) */}
       <div className="pb-2">
         {suggestions.map((s, i) => {
-          const opacity = i === 0 ? 0.3 : i === 1 ? 0.65 : 1
+          const opacity = i === 0 ? 0.55 : i === 1 ? 0.8 : 1
           return (
             <button
               key={s}
               type="button"
               onClick={() => onSelect(s)}
-              className="flex items-center justify-between w-full px-4 py-4 transition-opacity hover:opacity-100"
+              className="group flex w-full items-center justify-between px-4 py-4 transition-all hover:opacity-100 hover:bg-[var(--color-hover)]"
               style={{ opacity }}
             >
               <span
-                className="text-left pr-3"
-                style={{ color: 'var(--color-dim)', fontSize: 12, lineHeight: '16px', fontWeight: 400 }}
+                className="pr-3 text-left transition-colors group-hover:text-[var(--color-text)]"
+                style={{ color: 'var(--color-muted)', fontSize: 12, lineHeight: '16px', fontWeight: 400 }}
               >{s}</span>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0" style={{ color: 'var(--color-dim)' }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 transition-transform group-hover:translate-x-0.5" style={{ color: 'var(--color-dim)' }}>
                 <path d="M5 10.5l4-3.5-4-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
@@ -595,6 +622,39 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
         })}
       </div>
     </div>
+  )
+}
+
+// ── Copy-to-clipboard (shown on message hover) ──────────────────
+
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false)
+
+  function copy() {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    }).catch(() => {})
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={copied ? 'Copied!' : 'Copy message'}
+      className={`flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-elevated)] text-[var(--color-muted)] opacity-0 transition-all hover:text-[var(--color-text)] group-hover/msg:opacity-100 ${copied ? 'opacity-100 text-[var(--color-ok)] hover:text-[var(--color-ok)]' : ''} ${className}`}
+    >
+      {copied ? (
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6.5 5 9.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <rect x="4" y="4" width="6.5" height="6.5" rx="1.2" stroke="currentColor" strokeWidth="1.1" />
+          <path d="M8 4V2.7A1.2 1.2 0 0 0 6.8 1.5H2.7A1.2 1.2 0 0 0 1.5 2.7v4.1A1.2 1.2 0 0 0 2.7 8H4" stroke="currentColor" strokeWidth="1.1" />
+        </svg>
+      )}
+    </button>
   )
 }
 
@@ -608,7 +668,8 @@ function MessageBubble({ message, onRollback }: { message: ChatMessage; onRollba
   if (message.role === 'user') {
     const initial = ((user?.name || user?.email || '?')[0] ?? '?').toUpperCase()
     return (
-      <div className="flex justify-end items-start gap-2">
+      <div className="group/msg flex items-start justify-end gap-2">
+        <CopyButton text={message.content} className="mt-2" />
         <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] break-words">
           {message.content}
         </div>
@@ -660,7 +721,10 @@ function MessageBubble({ message, onRollback }: { message: ChatMessage; onRollba
 
       {/* Main content */}
       {(message.content || message.loading) && (
-        <div className="min-w-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[13px] leading-relaxed text-[var(--color-text)]">
+        <div className="group/msg relative min-w-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[13px] leading-relaxed text-[var(--color-text)]">
+          {!message.loading && message.content && (
+            <CopyButton text={message.content} className="absolute right-2 top-2 z-10" />
+          )}
           {message.loading && !message.content ? (
             <div className="flex items-center gap-1.5">
               <div className="flex gap-1">

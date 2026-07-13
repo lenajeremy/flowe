@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
@@ -49,17 +50,20 @@ export function InputPanel() {
   }
 
   return (
-    <div
+    <motion.div
       className="absolute flex max-h-[calc(100%-16px)] flex-col overflow-hidden rounded-3xl border border-[var(--color-border)]"
       style={{
         top: 8,
-        right,
         width: 344,
         zIndex: 15,
         background: 'color-mix(in srgb, var(--color-elevated) 82%, transparent)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: 'var(--panel-shadow)',
       }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0, right }}
+      transition={{ type: 'spring', stiffness: 480, damping: 42, mass: 0.8 }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
@@ -86,7 +90,7 @@ export function InputPanel() {
           <UpstreamCard key={group.node.id} group={group} />
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -103,7 +107,7 @@ function UpstreamCard({ group }: { group: InputGroup }) {
       >
         <span
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: `color-mix(in srgb, ${accent} 18%, transparent)` }}
+          style={{ background: `color-mix(in srgb, ${accent} 16%, transparent)`, color: accent }}
         >
           <span className="h-4 w-4">{NODE_ICONS[node.data.nodeType]}</span>
         </span>
@@ -122,13 +126,22 @@ function UpstreamCard({ group }: { group: InputGroup }) {
         </svg>
       </button>
 
-      {expanded && (
-        <div className="flex flex-col gap-1 px-2.5 pb-2.5">
-          {fields.map((f) => (
-            <FieldChip key={f.token} field={f} />
-          ))}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            className="flex flex-col gap-1 overflow-hidden px-2.5"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          >
+            {fields.map((f) => (
+              <FieldChip key={f.token} field={f} />
+            ))}
+            <div className="h-2.5 flex-shrink-0" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

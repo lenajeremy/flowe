@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ReactFlowProvider } from '@xyflow/react'
 import { NodePalette, type LeftTab } from '@/components/panels/NodePalette'
 import { ConfigPanel } from '@/components/panels/ConfigPanel'
@@ -489,15 +490,21 @@ export function WorkflowEditorPage() {
               <Canvas theme={theme} />
 
               {/* Config / Versions panel — floating overlay, Figma frames 161-167 */}
+              <AnimatePresence>
               {isConfigPanelOpen && (
-                <div
+                <motion.div
                   className="absolute flex flex-col overflow-hidden rounded-3xl border border-[var(--color-border)]"
                   style={{
                     top: 8, right: 8, bottom: 8, width: 349, zIndex: 20,
                     background: 'color-mix(in srgb, var(--color-elevated) 72%, transparent)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: 'var(--panel-shadow)',
                   }}
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 24 }}
+                  transition={{ type: 'spring', stiffness: 480, damping: 42, mass: 0.8 }}
                 >
                   {/* Close button — Figma: 24px square */}
                   <button
@@ -527,8 +534,9 @@ export function WorkflowEditorPage() {
                   ) : (
                     <ConfigPanel />
                   )}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
 
               {/* Input picker — floating overlay, Figma frame 170 */}
               <InputPanel />

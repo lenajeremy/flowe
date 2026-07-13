@@ -16,9 +16,27 @@ export interface SavedWorkflow {
 export interface WorkflowSummary {
   id: string
   name: string
+  description: string
   node_count: number
+  node_types: string[] | null // distinct nodeType values, for card icons
   created_at: string
   updated_at: string
+}
+
+/** Create an empty workflow shell (dashboard / AI-builder entry points). */
+export async function createWorkflow(opts?: { name?: string; description?: string }): Promise<SavedWorkflow> {
+  const res = await apiFetch(`${API}/api/workflows`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: opts?.name ?? 'New Workflow',
+      description: opts?.description ?? '',
+      nodes: [],
+      edges: [],
+    }),
+  })
+  if (!res.ok) throw new Error(`Failed to create workflow: ${res.status}`)
+  return res.json() as Promise<SavedWorkflow>
 }
 
 export async function saveWorkflow(

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
@@ -394,14 +395,20 @@ export function ConfigPanel() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-2 text-[12px] font-medium transition-colors ${
+              className={`relative pb-2 text-[12px] font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'text-[var(--color-text)]'
                   : 'text-[var(--color-dim)] hover:text-[var(--color-text)]'
               }`}
-              style={activeTab === tab.id ? { boxShadow: 'inset 0 -2px 0 0 var(--color-accent)' } : undefined}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <motion.span
+                  layoutId="cfg-tab-underline"
+                  className="absolute inset-x-0 bottom-0 h-[2px] rounded-full bg-[var(--color-accent)]"
+                  transition={{ type: 'spring', stiffness: 600, damping: 45 }}
+                />
+              )}
             </button>
           ))}
         </div>

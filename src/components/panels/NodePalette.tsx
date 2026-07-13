@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import type { NodeType } from '@/types/workflow'
-import { NODE_LABELS } from '@/lib/nodeColors'
+import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { ChatPanel } from '@/components/panels/ChatPanel'
 import { FloweIcon } from '@/components/FloweIcon'
@@ -15,12 +16,15 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
 
 function PaletteItem({ type }: { type: NodeType }) {
   return (
-    <div
+    <motion.div
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('application/flowe-node-type', type)
         e.dataTransfer.effectAllowed = 'copy'
       }}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 700, damping: 40 }}
       className="group flex cursor-grab items-center bg-[var(--color-surface)] transition-colors duration-150 hover:border-[var(--color-border2)] hover:bg-[var(--color-surface2)] active:cursor-grabbing"
       style={{
         height: 46,
@@ -40,6 +44,7 @@ function PaletteItem({ type }: { type: NodeType }) {
           border: '1px solid var(--color-border2)',
           background: 'var(--color-elevated)',
           overflow: 'visible',
+          color: NODE_ACCENT_HEX[type],
         }}
       >
         {NODE_ICONS[type]}
@@ -47,7 +52,7 @@ function PaletteItem({ type }: { type: NodeType }) {
       <span className="truncate text-[12px] font-medium leading-tight text-[var(--color-text)]">
         {NODE_LABELS[type]}
       </span>
-    </div>
+    </motion.div>
   )
 }
 

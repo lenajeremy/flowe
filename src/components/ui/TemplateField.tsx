@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { availableTokens, latestOutputs, outputFor, type TokenOption } from '@/lib/nodeInputs'
 
@@ -355,10 +356,15 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
         style={multiline ? { minHeight: `${rows * 1.7 + 0.4}em` } : undefined}
       />
 
+      <AnimatePresence>
       {hover && hoverInfo && (
-        <div
-          className="pointer-events-none absolute left-0 right-0 z-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-2.5 py-2 shadow-xl"
-          style={{ top: hover.top }}
+        <motion.div
+          className="pointer-events-none absolute left-0 right-0 z-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-2.5 py-2"
+          style={{ top: hover.top, boxShadow: 'var(--pop-shadow)' }}
+          initial={{ opacity: 0, y: -3, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -3, scale: 0.98 }}
+          transition={{ duration: 0.13, ease: [0.23, 1, 0.32, 1] }}
         >
           <p className="micro mb-1 truncate text-[var(--color-subtle)]">{hoverInfo.title}</p>
           {hoverInfo.state === 'value' ? (
@@ -372,11 +378,20 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
                 : 'Run the workflow to view values.'}
             </p>
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {menu.open && options.length > 0 && (
-        <ul className="absolute left-0 right-0 z-30 mt-1 max-h-56 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] py-1 shadow-xl">
+        <motion.ul
+          className="absolute left-0 right-0 z-30 mt-1 max-h-56 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] py-1"
+          style={{ boxShadow: 'var(--pop-shadow)', transformOrigin: 'top center' }}
+          initial={{ opacity: 0, scale: 0.97, y: -4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: -4 }}
+          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+        >
           {options.map((opt, i) => (
             <li key={opt.token}>
               <button
@@ -393,8 +408,9 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
               </button>
             </li>
           ))}
-        </ul>
+        </motion.ul>
       )}
+      </AnimatePresence>
     </div>
   )
 }

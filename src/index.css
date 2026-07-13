@@ -70,6 +70,37 @@
   --color-fail: #f4554a;
   --color-hold: #f5a623;
 
+  /* Node accents — pastel-neon on dark; the light theme re-inks every one
+     of these below so icons/edges/glows hold contrast on white. */
+  --na-textInput:        #e5e4e5;
+  --na-imageInput:       #e3fd7c;
+  --na-llm:              #70f17b;
+  --na-branch:           #64f4bf;
+  --na-loop:             #e45fff;
+  --na-textOutput:       #e5e4e5;
+  --na-httpRequest:      #51b4fb;
+  --na-emailSend:        #ffb74b;
+  --na-humanApproval:    #f94b4b;
+  --na-webhookTrigger:   #9889f8;
+  --na-scheduledTrigger: #ff8ce8;
+  --na-notion:           #e5e4e5;
+  --na-linear:           #5e6ad2;
+  --na-github:           #e5e4e5;
+  --na-gitlab:           #fc6d26;
+  --na-gmail:            #ea4335;
+  --na-stripe:           #635bff;
+  --na-shopify:          #96bf48;
+  --na-googlecalendar:   #4285f4;
+  --na-outlook:          #2a8fe8;
+  --na-slack:            #36c5f0;
+  --na-googledrive:      #1fa463;
+  --na-googledocs:       #4c8bf5;
+  --na-googlesheets:     #0f9d58;
+
+  /* Node-card glow: full neon bloom on dark, a whisper on light */
+  --node-glow-o: 0.7;
+  --node-icon-glow: drop-shadow(0 0 3px currentColor);
+
   /* Chrome — deep control surfaces (node chips, canvas pills, toolbars) */
   --color-dim:          #667179;                  /* secondary chrome text */
   --color-chip:         #0d0d11;                  /* deepest control surface */
@@ -115,34 +146,66 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  --color-canvas:   #f6f6f8;
+  /* A cool, slightly inked canvas so white panels and node cards read as
+     objects on a desk instead of white-on-white. */
+  --color-canvas:   #e9ebf1;
   --color-surface:  #ffffff;
-  --color-surface2: #f0f0f3;
+  --color-surface2: #f1f1f5;
   --color-elevated: #ffffff;
-  --color-border:   #e3e3e9;
-  --color-border2:  #d2d2db;
-  --color-text:     #1b1b22;
-  --color-muted:    #5d5d6a;
-  --color-subtle:   #90909d;
+  --color-border:   #dcdde6;
+  --color-border2:  #c4c6d4;
+  --color-text:     #191922;
+  --color-muted:    #4c4c5e;
+  --color-subtle:   #717182;
   --color-accent:   #6e56e0;
   --color-placeholder: #9a92bd; /* muted-accent hint text */
 
-  --color-ok:   #0f9d63;
-  --color-fail: #d93a30;
-  --color-hold: #b3720a;
+  --color-ok:   #0d8a57;
+  --color-fail: #d0322a;
+  --color-hold: #9d6407;
 
-  --color-dim:          #6b7482;
-  --color-chip:         #ffffff;
-  --color-chip-border:  #dedee6;
-  --color-chip-border2: #c8ccd6;
-  --color-shell:        rgba(20, 20, 30, 0.06);
-  --color-node-card:    rgba(255, 255, 255, 0.94);
-  --inset-hi:           rgba(255, 255, 255, 0.7);
-  --inset-hi-strong:    rgba(255, 255, 255, 0.9);
-  --color-canvas-dot:   #d9d9df;
+  --color-dim:          #5b6472;
+  --color-chip:         #f7f7fa;
+  --color-chip-border:  #d4d5e0;
+  --color-chip-border2: #b7bac9;
+  --color-shell:        rgba(18, 20, 44, 0.08);
+  --color-node-card:    rgba(255, 255, 255, 0.96);
+  --inset-hi:           rgba(255, 255, 255, 0.85);
+  --inset-hi-strong:    rgba(255, 255, 255, 1);
+  --color-canvas-dot:   #bfc3d0;
   --color-scrim:        rgba(24, 24, 32, 0.4);
-  --color-hover:        rgba(20, 20, 30, 0.045);
-  --color-hover2:       rgba(20, 20, 30, 0.08);
+  --color-hover:        rgba(22, 22, 44, 0.05);
+  --color-hover2:       rgba(22, 22, 44, 0.1);
+
+  /* Node accents, re-inked: same hues, pulled down to ~45% lightness so a
+     1.5px stroke or a gradient edge is legible on white. */
+  --na-textInput:        #565664;
+  --na-imageInput:       #79930b;
+  --na-llm:              #12943c;
+  --na-branch:           #0b9370;
+  --na-loop:             #ab21cf;
+  --na-textOutput:       #565664;
+  --na-httpRequest:      #0d74cc;
+  --na-emailSend:        #bc6e0d;
+  --na-humanApproval:    #d3312f;
+  --na-webhookTrigger:   #6a55e0;
+  --na-scheduledTrigger: #cb2da4;
+  --na-notion:           #565664;
+  --na-linear:           #4a55c4;
+  --na-github:           #565664;
+  --na-gitlab:           #e05a12;
+  --na-gmail:            #d33427;
+  --na-stripe:           #5348e8;
+  --na-shopify:          #63891b;
+  --na-googlecalendar:   #2a63d4;
+  --na-outlook:          #0a6ed1;
+  --na-slack:            #0d94c4;
+  --na-googledrive:      #128a50;
+  --na-googledocs:       #2f6fe0;
+  --na-googlesheets:     #0b8148;
+
+  --node-glow-o: 0.16;
+  --node-icon-glow: none;
 
   --tint-ok:   rgba(15, 157, 99, 0.1);
   --tint-hold: rgba(179, 114, 10, 0.12);
@@ -154,9 +217,9 @@
   --syn-bool: #1d63d8;
   --syn-null: #d43d33;
 
-  --panel-shadow: 0 1px 0 rgba(20, 20, 30, 0.04);
-  --dock-shadow: 0 16px 40px rgba(20, 20, 30, 0.16), 0 0 0 1px rgba(20, 20, 30, 0.06);
-  --pop-shadow: 0 8px 28px rgba(20, 20, 30, 0.14), 0 0 0 1px rgba(20, 20, 30, 0.05);
+  --panel-shadow: 0 1px 2px rgba(22, 24, 48, 0.05), 0 4px 16px rgba(22, 24, 48, 0.05);
+  --dock-shadow: 0 16px 40px rgba(22, 24, 48, 0.18), 0 0 0 1px rgba(22, 24, 48, 0.07);
+  --pop-shadow: 0 8px 28px rgba(22, 24, 48, 0.16), 0 2px 8px rgba(22, 24, 48, 0.07), 0 0 0 1px rgba(22, 24, 48, 0.06);
 }
 
 /* Theme switch: ease the brightness jump (Apple: never hard-cut
@@ -283,6 +346,10 @@ select:focus-visible { outline: none; }
   background: var(--color-surface2) !important;
   fill: var(--color-text) !important;
 }
+
+/* Node icons — stroke glyphs that inherit the node accent via currentColor;
+   the neon self-glow only exists on dark (on white it reads as smudge). */
+.node-ico { filter: var(--node-icon-glow); }
 
 /* Sockets — Figma frames 161-168: 8px translucent dots */
 .react-flow__handle {

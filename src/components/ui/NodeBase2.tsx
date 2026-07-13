@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { startRun, stopRun } from '@/lib/runController'
 import type { ExecutionStatus } from '@/types/workflow'
@@ -51,9 +52,12 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
     isSelected  ? 'is-selected' : ''
 
   return (
-    <div
+    <motion.div
       className="flex flex-col"
       style={{ width: 214 }}
+      initial={{ opacity: 0, scale: 0.94 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 550, damping: 38, mass: 0.7 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -67,14 +71,15 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           border: isSelected ? `1px solid ${accentHex}` : '1px solid transparent',
         } as React.CSSProperties}
       >
-        {/* Blurred accent glow — Figma: 91px ellipse, blur 33px, 70% opacity */}
+        {/* Blurred accent glow — full neon bloom on dark, a whisper on light
+            (--node-glow-o) so it never reads as a smudge on white. */}
         <span
           aria-hidden
           className="pointer-events-none absolute rounded-full"
           style={{
             width: 91, height: 91, left: -24, top: -4,
             background: accentHex,
-            opacity: 0.7,
+            opacity: 'var(--node-glow-o)' as unknown as number,
             filter: 'blur(33px)',
           }}
         />
@@ -101,13 +106,13 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
                 border: '1px solid var(--color-chip-border)',
                 boxShadow: 'inset 0px 2px 8px 1px var(--inset-hi-strong)',
                 overflow: 'visible',
+                color: accentTop, // node icons stroke currentColor
               }}
             >
               {icon ?? (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ overflow: 'visible' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="node-ico" style={{ overflow: 'visible', stroke: accentTop }}>
                   <path
                     d={iconPath}
-                    stroke={accentTop}
                     strokeWidth="1.3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -138,8 +143,15 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
       )}
 
       {/* Run / Test / ⋯ toolbar — Figma: shown under the selected node */}
+      <AnimatePresence>
       {(isSelected || isHovered) && (
-        <div className="nodrag mt-2 flex items-center gap-2">
+        <motion.div
+          className="nodrag mt-2 flex items-center gap-2"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+        >
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else startRun() }}
@@ -180,8 +192,9 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
               <circle cx="11" cy="7" r="1.1" />
             </svg>
           </button>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   )
 }

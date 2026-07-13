@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { LandingPage } from '@/pages/LandingPage'
 import { HomePage } from '@/pages/HomePage'
+import { BuildPage } from '@/pages/BuildPage'
 import { WorkflowEditorPage } from '@/pages/WorkflowEditorPage'
 import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
 import { RunDetailPage } from '@/pages/RunDetailPage'
@@ -40,6 +41,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/verify" element={<AuthVerifyPage />} />
         <Route path="/workflows" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/build" element={<ProtectedRoute><BuildPage /></ProtectedRoute>} />
         <Route path="/workflow/:id" element={<ProtectedRoute><WorkflowEditorPage /></ProtectedRoute>} />
         <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
         <Route path="/run/:runId" element={<RunDetailPage />} />

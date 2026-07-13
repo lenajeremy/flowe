@@ -1,32 +1,34 @@
 import type { NodeType } from '@/types/workflow'
 
-// One color language across palette icons, node cards, and config panels:
-// the pastel-neon set from the palette icon artwork.
+// One color language across palette icons, node cards, and config panels.
+// Values are CSS variables (see index.css) so every accent re-inks itself
+// when the theme flips: pastel-neon on dark, ~45%-lightness inks on light.
+// Always apply via style/color-mix — never string-math these.
 export const NODE_ACCENT_HEX: Record<NodeType, string> = {
-  textInput:        '#e5e4e5',
-  imageInput:       '#e3fd7c',
-  llm:              '#70f17b',
-  branch:           '#64f4bf',
-  loop:             '#e45fff',
-  textOutput:       '#e5e4e5',
-  httpRequest:      '#51b4fb',
-  emailSend:        '#ffb74b',
-  humanApproval:    '#f94b4b',
-  webhookTrigger:   '#9889f8',
-  scheduledTrigger: '#ff8ce8',
-  notion:           '#e5e4e5',
-  linear:           '#5e6ad2',
-  github:           '#e5e4e5',
-  gitlab:           '#fc6d26',
-  gmail:            '#ea4335',
-  stripe:           '#635bff',
-  shopify:          '#96bf48',
-  googlecalendar:   '#4285f4',
-  outlook:          '#0a6ed1',
-  slack:            '#36c5f0',
-  googledrive:      '#1fa463',
-  googledocs:       '#4c8bf5',
-  googlesheets:     '#0f9d58',
+  textInput:        'var(--na-textInput)',
+  imageInput:       'var(--na-imageInput)',
+  llm:              'var(--na-llm)',
+  branch:           'var(--na-branch)',
+  loop:             'var(--na-loop)',
+  textOutput:       'var(--na-textOutput)',
+  httpRequest:      'var(--na-httpRequest)',
+  emailSend:        'var(--na-emailSend)',
+  humanApproval:    'var(--na-humanApproval)',
+  webhookTrigger:   'var(--na-webhookTrigger)',
+  scheduledTrigger: 'var(--na-scheduledTrigger)',
+  notion:           'var(--na-notion)',
+  linear:           'var(--na-linear)',
+  github:           'var(--na-github)',
+  gitlab:           'var(--na-gitlab)',
+  gmail:            'var(--na-gmail)',
+  stripe:           'var(--na-stripe)',
+  shopify:          'var(--na-shopify)',
+  googlecalendar:   'var(--na-googlecalendar)',
+  outlook:          'var(--na-outlook)',
+  slack:            'var(--na-slack)',
+  googledrive:      'var(--na-googledrive)',
+  googledocs:       'var(--na-googledocs)',
+  googlesheets:     'var(--na-googlesheets)',
 }
 
 export const NODE_ACCENT_COLORS: Record<NodeType, string> = NODE_ACCENT_HEX
