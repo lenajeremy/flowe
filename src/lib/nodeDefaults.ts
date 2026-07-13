@@ -87,7 +87,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
     case 'outlook':
       return { nodeType: 'outlook', label: 'Outlook', integrationOp: 'send_email', outlookTo: '', outlookSubject: '', outlookBody: '', outlookLimit: 10 }
     case 'slack':
-      return { nodeType: 'slack', label: 'Slack', integrationOp: 'send_message', slackChannel: '', slackText: '', slackLimit: 100 }
+      return { nodeType: 'slack', label: 'Slack', integrationOp: 'send_message', slackChannel: '', slackText: '', slackSendAs: 'bot', slackLimit: 100 }
     case 'googledrive':
       return { nodeType: 'googledrive', label: 'Google Drive', integrationOp: 'list_files', gdriveQuery: '', gdriveLimit: 20 }
     case 'googledocs':

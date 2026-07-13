@@ -192,6 +192,9 @@ export type FlowNodeData = {
   slackChannel?: string
   slackText?: string
   slackLimit?: number
+  slackSendAs?: 'bot' | 'user'
+  slackUserId?: string
+  slackBotName?: string
 
   // googledrive
   gdriveFileId?: string

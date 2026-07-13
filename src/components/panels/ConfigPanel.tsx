@@ -71,7 +71,7 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
 }
 
 type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -1449,17 +1449,34 @@ export function ConfigPanel() {
             defaultOp="send_message"
             ops={[
               { value: 'send_message', label: 'Send Message' },
+              { value: 'send_dm', label: 'Send Direct Message' },
               { value: 'list_channels', label: 'List Channels' },
-              { value: 'get_channel_history', label: 'Channel History' },
+              { value: 'get_channel_history', label: 'Conversation History' },
             ]}
             tokenPlaceholder=""
             hideManual
           >
-            {(data.integrationOp === 'send_message' || data.integrationOp === 'get_channel_history') && (
+            {((data.integrationOp ?? 'send_message') === 'send_message' || data.integrationOp === 'get_channel_history') && (
               <ResourceField label="Channel" provider="slack" kind="channel" field="slackChannel" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="#general or C0123..." />
             )}
-            {data.integrationOp === 'send_message' && (
-              <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+            {(data.integrationOp ?? 'send_message') === 'send_message' && (
+              <>
+                <SelectField label="Send as" field="slackSendAs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="bot"
+                  options={[{ value: 'bot', label: 'Bot (app identity)' }, { value: 'user', label: 'Me (my Slack identity)' }]} />
+                {(data.slackSendAs ?? 'bot') === 'bot' && (
+                  <TextField label="Bot name (optional)" field="slackBotName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Flowe Reporter" />
+                )}
+                <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+              </>
+            )}
+            {data.integrationOp === 'send_dm' && (
+              <>
+                <ResourceField label="Recipient" provider="slack" kind="user" field="slackUserId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="@teammate or U0123..." />
+                <AreaField label="Message" field="slackText" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+                <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-muted)]">
+                  Direct messages are always sent as you, from your Slack account.
+                </p>
+              </>
             )}
             {(data.integrationOp === 'list_channels' || data.integrationOp === 'get_channel_history') && (
               <NumField label="Limit" field="slackLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={data.integrationOp === 'list_channels' ? 100 : 20} />

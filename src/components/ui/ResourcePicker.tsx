@@ -18,7 +18,7 @@ import {
  */
 export function ResourcePicker({ provider, kind, id, value, onChange, placeholder }: {
   provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
-  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel'
+  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user'
   id: string
   value: string
   onChange: (value: string) => void
