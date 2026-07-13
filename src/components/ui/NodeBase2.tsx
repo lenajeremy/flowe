@@ -65,7 +65,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           The glow gets its own clipping layer (not overflow on the shell) so
           handle labels like the branch true/false chips can hang outside. */}
       <div
-        className={`node-shell relative rounded-2xl ${shellState}`}
+        className={`node-shell relative flex flex-col rounded-2xl ${shellState}`}
         style={{
           '--node-accent': accentHex,
           background: 'var(--color-shell)',
@@ -87,9 +87,11 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           />
         </span>
 
-        {/* Inner card — radius 12, -46deg gradient border */}
+        {/* Inner card — radius 12, -46deg gradient border. flex-1 stretches it
+            to the shell's minHeight so short content never leaves bare shell
+            showing beneath the card. */}
         <div
-          className="relative m-1 flex flex-col gap-1 rounded-xl p-2"
+          className="relative m-1 flex flex-1 flex-col gap-1 rounded-xl p-2"
           style={{
             border: '1px solid transparent',
             background:
