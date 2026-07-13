@@ -61,9 +61,13 @@ export function InputPanel() {
         WebkitBackdropFilter: 'blur(12px)',
         boxShadow: 'var(--panel-shadow)',
       }}
-      initial={{ opacity: 0, y: -8 }}
+      // right lives in BOTH initial and animate: capturing it at mount stops
+      // framer tweening right from 0 → 365 (a huge horizontal slide-in), while
+      // keeping the smooth dodge when the config panel opens/closes. Entry is
+      // a short, soft drop — small distance, gentle ease, no spring snap.
+      initial={{ opacity: 0, y: -6, right }}
       animate={{ opacity: 1, y: 0, right }}
-      transition={{ type: 'spring', stiffness: 480, damping: 42, mass: 0.8 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.6, 0.35, 1] }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
