@@ -4,59 +4,7 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { ExecutionEvent } from '@/types/workflow'
 import { approveRun, rejectRun, listRuns, getRun, type WorkflowRun } from '@/lib/workflowApi'
-
-// ── JSON pretty-printing with syntax highlighting ─────────────
-
-function tryParseJson(str: string): unknown | null {
-  try {
-    return JSON.parse(str)
-  } catch {
-    return null
-  }
-}
-
-function syntaxHighlight(json: string): string {
-  return json
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(
-      /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-      (match) => {
-        let cls = 'color:var(--syn-num)'
-        if (/^"/.test(match)) {
-          if (/:$/.test(match)) {
-            cls = 'color:var(--syn-key)'
-          } else {
-            cls = 'color:var(--syn-str)'
-          }
-        } else if (/true|false/.test(match)) {
-          cls = 'color:var(--syn-bool)'
-        } else if (/null/.test(match)) {
-          cls = 'color:var(--syn-null)'
-        }
-        return `<span style="${cls}">${match}</span>`
-      },
-    )
-}
-
-function JsonOutput({ raw }: { raw: string }) {
-  const parsed = tryParseJson(raw)
-  if (parsed === null) {
-    return (
-      <pre className="mt-1.5 text-[10px] text-[var(--color-text)] bg-[var(--color-canvas)] border border-[var(--color-border)] rounded px-2 py-1.5 whitespace-pre-wrap break-words max-h-40 overflow-y-auto font-[var(--font-mono)]">
-        {raw}
-      </pre>
-    )
-  }
-  const pretty = JSON.stringify(parsed, null, 2)
-  return (
-    <pre
-      className="mt-1.5 text-[10px] bg-[var(--color-canvas)] border border-[var(--color-border)] rounded px-2 py-1.5 whitespace-pre-wrap break-words max-h-40 overflow-y-auto font-[var(--font-mono)]"
-      dangerouslySetInnerHTML={{ __html: syntaxHighlight(pretty) }}
-    />
-  )
-}
+import { JsonView } from '@/components/ui/JsonView'
 
 // ── Event dot & row ───────────────────────────────────────────
 
@@ -103,7 +51,7 @@ function EventRow({ event }: { event: ExecutionEvent }) {
           )}
         </div>
         {expanded && event.output && (
-          <JsonOutput raw={event.output} />
+          <JsonView className="mt-1.5 max-h-40 overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-canvas)] px-2 py-1.5 text-[10px]" raw={event.output} />
         )}
       </div>
     </div>
@@ -387,9 +335,7 @@ export function ExecutionPanel() {
               </button>
             </div>
             {prevOutput && (
-              <pre className="text-[11px] text-[var(--color-text)] bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-lg px-3 py-2 whitespace-pre-wrap break-words max-h-40 overflow-y-auto leading-relaxed">
-                {prevOutput}
-              </pre>
+              <JsonView className="max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-2 text-[11px] leading-relaxed text-[var(--color-text)]" raw={prevOutput} />
             )}
           </div>
         )
@@ -412,9 +358,7 @@ export function ExecutionPanel() {
                   <div className="mb-1 text-[10px] font-medium text-[var(--color-muted)]">
                     {nodeLabel ?? nodeId}
                   </div>
-                  <pre className="whitespace-pre-wrap break-all text-[11px] text-[var(--color-text)] font-mono max-h-32 overflow-y-auto">
-                    {output}
-                  </pre>
+                  <JsonView className="max-h-32 overflow-y-auto text-[11px] text-[var(--color-text)]" raw={output} />
                 </div>
               ))
             )}

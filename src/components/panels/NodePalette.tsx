@@ -18,7 +18,9 @@ function PaletteItem({ type }: { type: NodeType }) {
   return (
     <motion.div
       draggable
-      onDragStart={(e) => {
+      // NB: framer-motion intercepts onDragStart for its own gesture system —
+      // the capture-phase handler reaches the DOM, so native HTML5 drag works.
+      onDragStartCapture={(e) => {
         e.dataTransfer.setData('application/flowe-node-type', type)
         e.dataTransfer.effectAllowed = 'copy'
       }}

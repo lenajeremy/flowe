@@ -67,7 +67,18 @@ function prepareRunState(runId: string | null) {
   s.setCurrentRunId(runId)
 }
 
-export function startRun() {
+/** Entry point for Run buttons. Flows that start from a webhook trigger get
+ *  the payload-simulation modal first (it calls startRun with the payload);
+ *  everything else runs immediately. */
+export function requestRun() {
+  const s = useWorkflowStore.getState()
+  if (s.executionState === 'running') return
+  const hasWebhook = s.nodes.some((n) => n.data.nodeType === 'webhookTrigger')
+  if (hasWebhook) s.setWebhookRunPromptOpen(true)
+  else startRun()
+}
+
+export function startRun(opts?: { webhookPayload?: string }) {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
   prepareRunState(null)
@@ -78,6 +89,15 @@ export function startRun() {
   void (async () => {
     const { nodes, edges, workflowName, dbId } = useWorkflowStore.getState()
     const ast = serializeToAST(nodes, edges, workflowName)
+    // Simulated webhook payload rides in the trigger node's defaultValue —
+    // the same slot the real ReceiveWebhook handler injects into.
+    if (opts?.webhookPayload !== undefined) {
+      ast.nodes = ast.nodes.map((n) =>
+        n.data.nodeType === 'webhookTrigger'
+          ? { ...n, data: { ...n.data, defaultValue: opts.webhookPayload } }
+          : n,
+      )
+    }
     const startTime = Date.now()
     try {
       const response = await apiFetch(`${API}/api/run`, {

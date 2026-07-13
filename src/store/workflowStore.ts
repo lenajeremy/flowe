@@ -110,6 +110,11 @@ interface WorkflowStore {
   isConfigPanelOpen: boolean
   setConfigPanelOpen: (open: boolean) => void
 
+  // Webhook-simulation prompt: Run opens this when the flow starts from a
+  // webhook trigger, so the user can supply the payload the webhook would send.
+  isWebhookRunPromptOpen: boolean
+  setWebhookRunPromptOpen: (open: boolean) => void
+
   // ── Save state ──
   saveStatus: 'idle' | 'unsaved' | 'saving' | 'saved'
   setSaveStatus: (status: 'idle' | 'unsaved' | 'saving' | 'saved') => void
@@ -437,6 +442,9 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   isConfigPanelOpen: true,
   setConfigPanelOpen: (open) => set({ isConfigPanelOpen: open }),
+
+  isWebhookRunPromptOpen: false,
+  setWebhookRunPromptOpen: (open) => set({ isWebhookRunPromptOpen: open }),
 
   isApiKeyModalOpen: false,
   setApiKeyModalOpen: (open) => set({ isApiKeyModalOpen: open }),

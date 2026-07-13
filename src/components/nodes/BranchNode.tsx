@@ -27,20 +27,28 @@ export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
 
       <Handle type="target" position={Position.Left} />
 
-      <Handle type="source" position={Position.Right} id="true" style={{ top: '38%' }} />
+      {/* Two outcome sockets, each with a colored chip so it's obvious which
+          edge fires when the condition is true vs false. */}
+      <Handle type="source" position={Position.Right} id="true" className="handle-true" style={{ top: '38%' }} />
       <div
-        className="micro pointer-events-none absolute text-[var(--color-ok)]"
-        style={{ right: '-40px', top: 'calc(38% - 6px)' }}
+        className="micro pointer-events-none absolute flex items-center gap-1 rounded-full px-1.5 py-0.5"
+        style={{ right: '-52px', top: 'calc(38% - 9px)', color: 'var(--color-ok)', background: 'var(--tint-ok)' }}
       >
-        True
+        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+          <path d="M1 4.5 3 6.5 7 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        true
       </div>
 
-      <Handle type="source" position={Position.Right} id="false" style={{ top: '68%' }} />
+      <Handle type="source" position={Position.Right} id="false" className="handle-false" style={{ top: '68%' }} />
       <div
-        className="micro pointer-events-none absolute text-[var(--color-fail)]"
-        style={{ right: '-44px', top: 'calc(68% - 6px)' }}
+        className="micro pointer-events-none absolute flex items-center gap-1 rounded-full px-1.5 py-0.5"
+        style={{ right: '-56px', top: 'calc(68% - 9px)', color: 'var(--color-fail)', background: 'var(--tint-fail)' }}
       >
-        False
+        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+          <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        false
       </div>
     </NodeBase2>
   )

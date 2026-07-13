@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
+import { JsonView } from '@/components/ui/JsonView'
 import type { ExecutionEvent } from '@/types/workflow'
 
 // ── Figma frames 164–167: run Status / Logs tabs + output modal ──
@@ -194,9 +195,11 @@ export function RunOutputModal({ group, onClose }: { group: EventGroup; onClose:
             </p>
           )}
           <div className="rounded-xl p-4" style={{ background: 'var(--color-chip)' }}>
-            <pre className="whitespace-pre-wrap break-words text-[13px] font-medium leading-5 text-[var(--color-muted)]">
-              {group.output ?? 'No output produced.'}
-            </pre>
+            {group.output ? (
+              <JsonView className="text-[13px] font-medium leading-5 text-[var(--color-muted)]" raw={group.output} />
+            ) : (
+              <p className="text-[13px] font-medium leading-5 text-[var(--color-muted)]">No output produced.</p>
+            )}
           </div>
         </div>
       </div>
@@ -358,9 +361,7 @@ export function NodeStatusTab() {
             {/* Payload block with expand */}
             {group.output && (
               <div className="relative rounded-lg bg-[var(--color-surface2)] p-3 pr-9">
-                <pre className="max-h-24 overflow-hidden whitespace-pre-wrap break-words text-[11px] leading-relaxed text-[var(--color-dim)]">
-                  {group.output.slice(0, 400)}
-                </pre>
+                <JsonView className="max-h-24 overflow-hidden text-[11px] leading-relaxed text-[var(--color-dim)]" raw={group.output.slice(0, 400)} />
                 <button
                   type="button"
                   onClick={() => setModalGroup(group)}

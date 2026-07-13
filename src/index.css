@@ -368,6 +368,10 @@ select:focus-visible { outline: none; }
   box-shadow: 0 0 0 4px rgba(160, 140, 255, 0.18);
 }
 
+/* Branch outcome sockets — colored to match their true/false chips */
+.react-flow__handle.handle-true  { background: var(--color-ok) !important; }
+.react-flow__handle.handle-false { background: var(--color-fail) !important; }
+
 .react-flow__attribution { display: none !important; }
 
 /* ── Node run-state grammar ───────────────────────────────── */

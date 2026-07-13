@@ -9,6 +9,7 @@ import { VersionsPanel } from '@/components/panels/VersionsPanel'
 import { Canvas } from '@/components/Canvas'
 import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
+import { WebhookRunModal } from '@/components/WebhookRunModal'
 import { FloweIcon } from '@/components/FloweIcon'
 import { useRunStreamBridge } from '@/lib/runController'
 import { useWorkflowStore } from '@/store/workflowStore'
@@ -540,6 +541,9 @@ export function WorkflowEditorPage() {
 
               {/* Input picker — floating overlay, Figma frame 170 */}
               <InputPanel />
+
+              {/* Webhook payload simulation — opens when Run hits a webhook flow */}
+              <WebhookRunModal />
             </div>
           </ReactFlowProvider>
           <ExecutionPanel />

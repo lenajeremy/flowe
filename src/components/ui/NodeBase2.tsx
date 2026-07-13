@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
-import { startRun, stopRun } from '@/lib/runController'
+import { requestRun, stopRun } from '@/lib/runController'
 import type { ExecutionStatus } from '@/types/workflow'
 
 interface NodeBaseProps {
@@ -61,9 +61,11 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ── Card shell — rgba(255,255,255,0.08) rounded-16 with accent glow ── */}
+      {/* ── Card shell — rgba(255,255,255,0.08) rounded-16 with accent glow ──
+          The glow gets its own clipping layer (not overflow on the shell) so
+          handle labels like the branch true/false chips can hang outside. */}
       <div
-        className={`node-shell relative overflow-hidden rounded-2xl ${shellState}`}
+        className={`node-shell relative rounded-2xl ${shellState}`}
         style={{
           '--node-accent': accentHex,
           background: 'var(--color-shell)',
@@ -73,16 +75,17 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
       >
         {/* Blurred accent glow — full neon bloom on dark, a whisper on light
             (--node-glow-o) so it never reads as a smudge on white. */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            width: 91, height: 91, left: -24, top: -4,
-            background: accentHex,
-            opacity: 'var(--node-glow-o)' as unknown as number,
-            filter: 'blur(33px)',
-          }}
-        />
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 91, height: 91, left: -24, top: -4,
+              background: accentHex,
+              opacity: 'var(--node-glow-o)' as unknown as number,
+              filter: 'blur(33px)',
+            }}
+          />
+        </span>
 
         {/* Inner card — radius 12, -46deg gradient border */}
         <div
@@ -154,7 +157,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
         >
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else startRun() }}
+            onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else requestRun() }}
             className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)]"
             style={toolBtnStyle}
           >

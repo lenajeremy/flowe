@@ -4,6 +4,8 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
 import { TemplateField } from '@/components/ui/TemplateField'
+import { JsonView } from '@/components/ui/JsonView'
+import { JsonEditor } from '@/components/ui/JsonEditor'
 import { SliderField } from '@/components/ui/SliderField'
 import { Select } from '@/components/ui/Select'
 import { NODE_LABELS } from '@/lib/nodeColors'
@@ -429,9 +431,10 @@ export function ConfigPanel() {
             </svg>
             <span className="micro text-[var(--color-ok)]">Output</span>
           </div>
-          <pre className="px-3 py-2.5 text-[11px] text-[var(--color-ok)] leading-relaxed whitespace-pre-wrap break-words max-h-52 overflow-y-auto font-[var(--font-mono)]">
-            {data.executionOutput as string}
-          </pre>
+          <JsonView
+            className="max-h-52 overflow-y-auto px-3 py-2.5 text-[11px] leading-relaxed text-[var(--color-text)]"
+            raw={data.executionOutput as string}
+          />
         </div>
       )}
 
@@ -572,13 +575,10 @@ export function ConfigPanel() {
               />
             </FormField>
             <FormField label="Expected output schema (JSON)" htmlFor="cfg-schema">
-              <textarea
-                id="cfg-schema"
-                rows={3}
+              <JsonEditor
                 value={typeof data.outputSchema === 'string' ? data.outputSchema : ''}
-                onChange={(e) => updateNodeData(nodeId, { outputSchema: e.target.value })}
-                className={textareaClass}
-                placeholder={'{"sentiment": "string", "score": "number", "summary": "string"}'}
+                onChange={(v) => updateNodeData(nodeId, { outputSchema: v })}
+                height="110px"
               />
               <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-relaxed">
                 If set, the AI is instructed to respond with valid JSON matching this schema.
@@ -660,12 +660,10 @@ export function ConfigPanel() {
         {nodeType === 'textOutput' && (
           <FormField label="Output" htmlFor="cfg-output">
             {typeof data.executionOutput === 'string' && data.executionOutput ? (
-              <pre
-                id="cfg-output"
-                className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-2.5 py-2 text-[11px] text-[var(--color-ok)] leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-[var(--font-mono)]"
-              >
-                {data.executionOutput}
-              </pre>
+              <JsonView
+                className="max-h-48 w-full overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-2 text-[11px] leading-relaxed text-[var(--color-text)]"
+                raw={data.executionOutput}
+              />
             ) : (
               <p id="cfg-output" className="text-[11px] text-[var(--color-muted)] italic">
                 Run the workflow to see output here.

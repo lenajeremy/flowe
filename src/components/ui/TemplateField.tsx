@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { availableTokens, latestOutputs, outputFor, type TokenOption } from '@/lib/nodeInputs'
+import { prettyJson } from '@/lib/prettyJson'
 
 // A template-aware text field built on a contenteditable div. The value keeps
 // raw {{nodeId.output.field}} tokens (the form the executor resolves), but the
@@ -206,7 +207,7 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
     const raw = node ? outputFor(node, outputs) : outputs.get(nid)
     if (raw === undefined) return { title, state: 'norun' as const, text: '' }
     const path = pathStr.split('.').slice(2) // drop leading '' and 'output'
-    if (path.length === 0) return { title, state: 'value' as const, text: raw }
+    if (path.length === 0) return { title, state: 'value' as const, text: prettyJson(raw) }
     try {
       let cur: unknown = JSON.parse(raw)
       for (const key of path) {
@@ -216,7 +217,7 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
           return { title, state: 'nofield' as const, text: '' }
         }
       }
-      return { title, state: 'value' as const, text: typeof cur === 'string' ? cur : JSON.stringify(cur) }
+      return { title, state: 'value' as const, text: typeof cur === 'string' ? cur : JSON.stringify(cur, null, 2) }
     } catch {
       return { title, state: 'nofield' as const, text: '' }
     }

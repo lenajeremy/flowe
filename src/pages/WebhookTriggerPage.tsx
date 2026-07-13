@@ -1,19 +1,35 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import { FloweIcon } from '@/components/FloweIcon'
+import { JsonPayloadField } from '@/components/ui/JsonPayloadField'
+import { useJsonPayload } from '@/lib/useJsonPayload'
+
+// Public webhook trigger page (/trigger/:token) — anyone with the link can
+// fire the workflow with a JSON payload. Styled on the app's token system
+// with the Build-page gradient language.
 
 type PageState = 'loading' | 'ready' | 'triggering' | 'done' | 'error'
+
+function Spinner({ size = 16 }: { size?: number }) {
+  return (
+    <svg className="animate-spin" width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.6" strokeOpacity="0.25" />
+      <path d="M12.5 7A5.5 5.5 0 0 0 7 1.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 export function WebhookTriggerPage() {
   const { token } = useParams<{ token: string }>()
   const [pageState, setPageState] = useState<PageState>('loading')
   const [workflowName, setWorkflowName] = useState('')
   const [workflowId, setWorkflowId] = useState('')
-  const [payload, setPayload] = useState('{}')
-  const [payloadError, setPayloadError] = useState<string | null>(null)
   const [runId, setRunId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const payload = useJsonPayload('{}')
 
   useEffect(() => {
     if (!token) { setPageState('error'); setErrorMsg('Missing token'); return }
@@ -33,22 +49,12 @@ export function WebhookTriggerPage() {
       })
   }, [token])
 
-  function validatePayload(value: string) {
-    setPayload(value)
-    try {
-      JSON.parse(value)
-      setPayloadError(null)
-    } catch {
-      setPayloadError('Invalid JSON')
-    }
-  }
-
   async function handleTrigger() {
-    if (!token || payloadError) return
+    if (!token || payload.error) return
     setPageState('triggering')
     try {
       let body: Record<string, unknown> = {}
-      try { body = JSON.parse(payload) as Record<string, unknown> } catch { /* ignore */ }
+      try { body = JSON.parse(payload.value) as Record<string, unknown> } catch { /* empty → {} */ }
       const res = await apiFetch(`${API}/api/webhooks/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,179 +74,172 @@ export function WebhookTriggerPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#000', fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}
-    >
-      <div className="w-full max-w-md flex flex-col gap-6">
-        {/* Logo / brand */}
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white">
-            <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
-              <path d="M6 2.5h6v4H6zM2.5 6h4v6h-4zM11.5 6h4v6h-4zM6 11.5h6v4H6z" stroke="black" strokeWidth="1.5" />
-            </svg>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-canvas)] px-4 font-[var(--font-sans)] text-[var(--color-text)]">
+      {/* ── Purple gradient backdrop ── */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-48 left-1/2 h-[560px] w-[820px] -translate-x-1/2 rounded-full opacity-35"
+          style={{ background: 'radial-gradient(ellipse, color-mix(in srgb, var(--color-accent) 32%, transparent), transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-56 -left-40 h-[460px] w-[460px] rounded-full opacity-25"
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, #7c5ce0 30%, transparent), transparent 70%)' }}
+        />
+        <div
+          className="absolute -right-44 top-1/3 h-[420px] w-[420px] rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, #ff8ce8 22%, transparent), transparent 70%)' }}
+        />
+      </div>
+
+      <motion.div
+        className="relative flex w-full max-w-xl flex-col gap-5"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      >
+        {/* Brand */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-accent)]">
+            <FloweIcon size={18} />
           </div>
-          <span className="text-[15px] font-semibold text-white">workflow-ai</span>
-          <Link to="/" className="ml-auto text-[11px] text-white/40 hover:text-white/70 transition-colors">
-            Home
+          <span className="text-[15px] font-semibold">Flowe</span>
+          <Link to="/" className="ml-auto text-[11px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]">
+            Open app
           </Link>
         </div>
 
-        {/* Card */}
+        {/* Card — gradient border like the Build page prompt */}
         <div
-          className="rounded-2xl border p-6 flex flex-col gap-5"
+          className="rounded-[22px] p-px"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            borderColor: 'rgba(255,255,255,0.08)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+            background:
+              'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 50%, var(--color-border)), var(--color-border) 45%, color-mix(in srgb, #ff8ce8 35%, var(--color-border)))',
           }}
         >
-          {/* Loading */}
-          {pageState === 'loading' && (
-            <div className="flex flex-col items-center gap-3 py-4">
-              <svg className="animate-spin" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="8" stroke="white" strokeWidth="2" strokeOpacity="0.2" />
-                <path d="M18 10A8 8 0 0 0 10 2" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <p className="text-[13px] text-white/50">Loading…</p>
-            </div>
-          )}
+          <div className="flex flex-col gap-5 rounded-[21px] bg-[var(--color-elevated)] p-6" style={{ boxShadow: 'var(--panel-shadow)' }}>
 
-          {/* Error */}
-          {pageState === 'error' && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.15)' }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1L13 12H1L7 1z" stroke="#ef4444" strokeWidth="1.4" strokeLinejoin="round" />
-                    <path d="M7 5v3M7 10h.01" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <p className="text-[14px] font-semibold text-white">Webhook not found</p>
+            {pageState === 'loading' && (
+              <div className="flex flex-col items-center gap-3 py-6 text-[var(--color-muted)]">
+                <Spinner size={20} />
+                <p className="text-[13px]">Loading…</p>
               </div>
-              <p className="text-[12px] text-white/50 leading-relaxed">{errorMsg ?? 'This webhook link is invalid or has been deleted.'}</p>
-              <Link
-                to="/"
-                className="mt-1 inline-block rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-center text-[12px] text-white/70 hover:bg-white/10 transition-colors"
-              >
-                Go home
-              </Link>
-            </div>
-          )}
+            )}
 
-          {/* Ready to trigger */}
-          {(pageState === 'ready' || pageState === 'triggering') && (
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-1">
-                <p className="text-[11px] uppercase tracking-widest text-white/40">Trigger workflow</p>
-                <h1 className="text-[20px] font-bold text-white leading-tight">{workflowName}</h1>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Clicking the button below will start a new run of this workflow.
-                </p>
-              </div>
-
-              {/* Payload input */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] text-white/50 uppercase tracking-wider">
-                  Input payload <span className="normal-case lowercase">(JSON)</span>
-                </label>
-                <textarea
-                  rows={4}
-                  value={payload}
-                  onChange={(e) => validatePayload(e.target.value)}
-                  spellCheck={false}
-                  className="w-full rounded-xl border px-3 py-2.5 text-[12px] font-mono text-white/80 outline-none transition-colors resize-none"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    borderColor: payloadError ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)',
-                  }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = payloadError ? 'rgba(239,68,68,0.7)' : 'rgba(255,255,255,0.2)' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = payloadError ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)' }}
-                  placeholder="{}"
-                  disabled={pageState === 'triggering'}
-                />
-                {payloadError && (
-                  <p className="text-[11px] text-red-400">{payloadError}</p>
-                )}
-              </div>
-
-              <button
-                onClick={() => void handleTrigger()}
-                disabled={pageState === 'triggering' || !!payloadError}
-                className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-semibold text-black transition-all disabled:cursor-not-allowed disabled:opacity-50"
-                style={{
-                  background: pageState === 'triggering' ? 'rgba(255,255,255,0.7)' : '#fff',
-                  boxShadow: pageState !== 'triggering' ? '0 0 20px rgba(255,255,255,0.15)' : 'none',
-                }}
-              >
-                {pageState === 'triggering' ? (
-                  <>
-                    <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <circle cx="7" cy="7" r="5.5" stroke="black" strokeWidth="1.8" strokeOpacity="0.25" />
-                      <path d="M12.5 7A5.5 5.5 0 0 0 7 1.5" stroke="black" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                    Triggering…
-                  </>
-                ) : (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                      <path d="M2.5 1.5l8 4.5-8 4.5V1.5z" />
-                    </svg>
-                    Trigger Workflow
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Done */}
-          {pageState === 'done' && (
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.15)' }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 7l3.5 3.5 6.5-7" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            {pageState === 'error' && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--tint-fail)' }}>
+                    <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 1L13 12H1L7 1z" stroke="var(--color-fail)" strokeWidth="1.4" strokeLinejoin="round" />
+                      <path d="M7 5v3M7 10h.01" stroke="var(--color-fail)" strokeWidth="1.4" strokeLinecap="round" />
                     </svg>
                   </div>
-                  <p className="text-[14px] font-semibold text-white">Workflow triggered</p>
+                  <p className="text-[15px] font-semibold">Webhook not found</p>
                 </div>
-                <p className="text-[12px] text-white/50 mt-1">
-                  <span className="font-medium text-white/70">{workflowName}</span> is now running.
+                <p className="text-[12.5px] leading-relaxed text-[var(--color-muted)]">
+                  {errorMsg ?? 'This webhook link is invalid or has been deleted.'}
                 </p>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {workflowId && (
-                  <Link
-                    to={`/workflow/${workflowId}?runId=${runId ?? ''}`}
-                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-semibold text-black transition-all"
-                    style={{ background: '#fff', boxShadow: '0 0 20px rgba(255,255,255,0.15)' }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="1" y="1" width="4" height="4" rx="0.5" />
-                      <rect x="7" y="1" width="4" height="4" rx="0.5" />
-                      <rect x="1" y="7" width="4" height="4" rx="0.5" />
-                      <rect x="7" y="7" width="4" height="4" rx="0.5" />
-                    </svg>
-                    View workflow
-                  </Link>
-                )}
-                <button
-                  onClick={() => { setPageState('ready'); setRunId(null) }}
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/10 transition-colors"
+                <Link
+                  to="/"
+                  className="pressable mt-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-center text-[12px] font-medium text-[var(--color-text)] hover:border-[var(--color-border2)]"
                 >
-                  Trigger again
-                </button>
+                  Go home
+                </Link>
               </div>
-            </div>
-          )}
+            )}
+
+            {(pageState === 'ready' || pageState === 'triggering') && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <p className="micro text-[var(--color-accent)]">Trigger workflow</p>
+                  <h1 className="text-[20px] font-semibold leading-tight">{workflowName}</h1>
+                  <p className="mt-0.5 text-[12.5px] leading-relaxed text-[var(--color-muted)]">
+                    The payload below is delivered to the workflow's webhook trigger node.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="micro text-[var(--color-subtle)]">Input payload (JSON)</label>
+                  <JsonPayloadField
+                    value={payload.value}
+                    error={payload.error}
+                    onChange={payload.update}
+                    height="240px"
+                    disabled={pageState === 'triggering'}
+                  />
+                </div>
+
+                <motion.button
+                  onClick={() => void handleTrigger()}
+                  disabled={pageState === 'triggering' || !!payload.error}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-3 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ boxShadow: '0 4px 24px color-mix(in srgb, var(--color-accent) 35%, transparent)' }}
+                >
+                  {pageState === 'triggering' ? (
+                    <>
+                      <Spinner size={14} />
+                      Triggering…
+                    </>
+                  ) : (
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2.5 1.5l8 4.5-8 4.5V1.5z" />
+                      </svg>
+                      Trigger Workflow
+                    </>
+                  )}
+                </motion.button>
+              </>
+            )}
+
+            {pageState === 'done' && (
+              <motion.div
+                className="flex flex-col gap-5"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--tint-ok)' }}>
+                      <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7l3.5 3.5 6.5-7" stroke="var(--color-ok)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <p className="text-[15px] font-semibold">Workflow triggered</p>
+                  </div>
+                  <p className="mt-1 text-[12.5px] text-[var(--color-muted)]">
+                    <span className="font-medium text-[var(--color-text)]">{workflowName}</span> is now running.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {workflowId && (
+                    <Link
+                      to={`/workflow/${workflowId}?runId=${runId ?? ''}`}
+                      className="pressable flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90"
+                      style={{ boxShadow: '0 4px 24px color-mix(in srgb, var(--color-accent) 35%, transparent)' }}
+                    >
+                      Watch the run
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => { setPageState('ready'); setRunId(null) }}
+                    className="pressable rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-[12px] font-medium text-[var(--color-text)] hover:border-[var(--color-border2)]"
+                  >
+                    Trigger again
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/25">
-          Powered by workflow-ai · <Link to="/" className="hover:text-white/50 transition-colors">Open app</Link>
+        <p className="text-center text-[11px] text-[var(--color-subtle)]">
+          Powered by Flowe · <Link to="/" className="transition-colors hover:text-[var(--color-text)]">Open app</Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }
