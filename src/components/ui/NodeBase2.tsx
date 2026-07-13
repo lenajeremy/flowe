@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { requestRun, stopRun } from '@/lib/runController'
@@ -32,9 +32,27 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
   const setLogPanelOpen = useWorkflowStore((s) => s.setLogPanelOpen)
   const setConfigPanelOpen = useWorkflowStore((s) => s.setConfigPanelOpen)
 
+  // Success styling is a moment, not a permanent state: the green outline
+  // fades 10s after completion. Only the visuals fade — executionStatus stays
+  // on the node so outputs/config keep reflecting the finished run. Errors
+  // and waiting states remain until the next run. State resets during render
+  // on status change (React's "adjust state when props change" pattern); the
+  // effect only arms the fade timer.
+  const [expired, setExpired] = useState(false)
+  const [prevStatus, setPrevStatus] = useState(executionStatus)
+  if (prevStatus !== executionStatus) {
+    setPrevStatus(executionStatus)
+    setExpired(false)
+  }
+  useEffect(() => {
+    if (executionStatus !== 'completed') return
+    const t = setTimeout(() => setExpired(true), 10_000)
+    return () => clearTimeout(t)
+  }, [executionStatus])
+
   const isWaiting   = executionStatus === 'waiting'
   const nodeRunning = executionStatus === 'running'
-  const isCompleted = executionStatus === 'completed'
+  const isCompleted = executionStatus === 'completed' && !expired
   const isError     = executionStatus === 'error'
 
   const accentTop =
