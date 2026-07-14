@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { listChatSessions, type ChatSessionSummary } from '@/lib/agentChat'
+import { listChatSessions, deleteChatSession, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
 import { AgentBubble, Composer } from '@/components/agent/AgentMessages'
 import { FloweIcon } from '@/components/FloweIcon'
@@ -110,9 +110,19 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
     setSessionId(id)
   }
 
+  const removeSession = async (id: string) => {
+    try {
+      await deleteChatSession(id)
+      setSessions((s) => s.filter((x) => x.id !== id))
+      if (sessionId === id) selectSession(null)
+    } catch { /* keep it in the list */ }
+  }
+
   const fabVisible = !open && !parked
   const popRight = panelOpen ? POP_RIGHT_SHIFTED : POP_RIGHT
   const popWidth = dims.w + (historyOpen ? HISTORY_W : 0)
+  // Expanded matches the chat page's sidebar; compact stays a slim rail
+  const sidebarW = expanded ? 260 : HISTORY_W
 
   return (
     <>
@@ -178,7 +188,7 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
                 </button>
                 {expanded ? (
                   <button
-                    onClick={() => setExpanded(false)}
+                    onClick={() => { setExpanded(false); setHistoryOpen(false) }}
                     title="Minimize chat"
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
                   >
@@ -188,7 +198,7 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
                   </button>
                 ) : (
                   <button
-                    onClick={() => setExpanded(true)}
+                    onClick={() => { setExpanded(true); setHistoryOpen(true) }}
                     title="Expand chat"
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
                   >
@@ -215,36 +225,69 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
               <AnimatePresence initial={false}>
                 {historyOpen && (
                   <motion.div
-                    className="flex-shrink-0 overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-surface)]"
+                    className={`flex-shrink-0 overflow-hidden bg-[var(--color-surface)] ${expanded ? '' : 'border-r border-[var(--color-border)]'}`}
                     initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: HISTORY_W, opacity: 1 }}
+                    animate={{ width: sidebarW, opacity: 1 }}
                     exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.26, ease: EASE }}
+                    transition={{ duration: expanded ? 0.34 : 0.26, ease: EASE }}
                   >
-                    <div className="flex h-full flex-col" style={{ width: HISTORY_W }}>
+                    <div className="flex h-full flex-col" style={{ width: sidebarW }}>
                       <button
                         onClick={() => selectSession(null)}
-                        className="mx-1.5 mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
+                        className={expanded
+                          ? 'mx-2.5 mt-3 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]'
+                          : 'mx-1.5 mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]'}
                       >
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                          <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                        </svg>
+                        {expanded ? (
+                          <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+                            <path d="M12.9 1.9a1.4 1.4 0 012 2L7.6 11.2l-2.8.8.8-2.8 7.3-7.3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                            <path d="M13 8.5V12a1.5 1.5 0 01-1.5 1.5H3A1.5 1.5 0 011.5 12V3.5A1.5 1.5 0 013 2h3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                          </svg>
+                        ) : (
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                          </svg>
+                        )}
                         New chat
                       </button>
-                      <div className="mt-1 flex-1 overflow-y-auto px-1.5 pb-2">
+                      {expanded && (
+                        <div className="px-5 pb-1 pt-5 text-[11px] font-medium text-[var(--color-subtle)]">
+                          Chats
+                        </div>
+                      )}
+                      <div className={`flex-1 overflow-y-auto pb-2 ${expanded ? 'px-2.5' : 'mt-1 px-1.5'}`}>
                         {sessions.length === 0 && (
-                          <p className="px-2 pt-1 text-[11px] text-[var(--color-subtle)]">No chats yet</p>
+                          <p className={`pt-1 text-[var(--color-subtle)] ${expanded ? 'px-2.5 text-[12px]' : 'px-2 text-[11px]'}`}>
+                            No chats yet
+                          </p>
                         )}
                         {sessions.map((s) => (
-                          <button
+                          <div
                             key={s.id}
-                            onClick={() => selectSession(s.id)}
-                            className={`w-full truncate rounded-lg px-2 py-1.5 text-left text-[12px] text-[var(--color-text)] ${
+                            className={`group/sess relative rounded-lg ${
                               s.id === sessionId ? 'bg-[var(--color-hover2)]' : 'hover:bg-[var(--color-hover)]'
                             }`}
                           >
-                            {s.title || 'New chat'}
-                          </button>
+                            <button
+                              onClick={() => selectSession(s.id)}
+                              className={`w-full truncate text-left text-[var(--color-text)] ${
+                                expanded ? 'px-2.5 py-2 pr-7 text-[13px]' : 'px-2 py-1.5 text-[12px]'
+                              }`}
+                            >
+                              {s.title || 'New chat'}
+                            </button>
+                            {expanded && (
+                              <button
+                                onClick={() => void removeSession(s.id)}
+                                title="Delete chat"
+                                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-[var(--color-subtle)] opacity-0 transition-opacity hover:text-[var(--color-fail)] group-hover/sess:opacity-100"
+                              >
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                  <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
