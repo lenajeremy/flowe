@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { create_issue: 'Create Issue', list_issues: 'List Issues', create_comment: 'Comment', list_pull_requests: 'List PRs', get_pull_request: 'Get PR' }
+const OP_LABELS: Record<string, string> = { create_issue: 'Create Issue', get_issue: 'Get Issue', update_issue: 'Update Issue', list_issues: 'List Issues', search_issues: 'Search Issues', create_comment: 'Comment on Issue', create_pull_request: 'Create PR', merge_pull_request: 'Merge PR', list_pull_requests: 'List PRs', get_pull_request: 'Get PR', list_pr_files: 'List PR Files', list_commits: 'List Commits', list_branches: 'List Branches', get_file: 'Read File', create_or_update_file: 'Commit File', list_releases: 'List Releases', create_release: 'Create Release', trigger_workflow: 'Trigger Workflow', list_workflow_runs: 'List Workflow Runs', list_repos: 'List Repos' }
 
 export function GithubNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'create_issue'

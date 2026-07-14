@@ -147,6 +147,12 @@ export function NotionConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
               { value: 'get_page_content', label: 'Get Page Content' },
               { value: 'search', label: 'Search' },
               { value: 'add_comment', label: 'Add Comment' },
+              { value: 'list_comments', label: 'List Comments' },
+              { value: 'create_subpage', label: 'Create Subpage' },
+              { value: 'archive_page', label: 'Archive Page' },
+              { value: 'create_database', label: 'Create Database' },
+              { value: 'get_database', label: 'Get Database Schema' },
+              { value: 'list_users', label: 'List Users' },
             ]}
           />
         </FormField>
@@ -306,6 +312,45 @@ export function NotionConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
               placeholder="meeting notes" />
           </FormField>
         )}
+
+        {(data.integrationOp === 'list_comments' || data.integrationOp === 'archive_page') && (
+          <FormField label="Page" htmlFor="cfg-notion-page-x">
+            <ResourcePicker
+              provider="notion" kind="page" id="cfg-notion-page-x"
+              value={typeof data.notionPageId === 'string' ? data.notionPageId : ''}
+              onChange={(val) => updateNodeData(nodeId, { notionPageId: val })}
+              placeholder="{{prev-node.output}} or page ID"
+            />
+          </FormField>
+        )}
+        {(data.integrationOp === 'create_subpage' || data.integrationOp === 'create_database') && (
+          <FormField label="Parent page" htmlFor="cfg-notion-parent">
+            <ResourcePicker
+              provider="notion" kind="page" id="cfg-notion-parent"
+              value={typeof data.notionParentPageId === 'string' ? data.notionParentPageId : ''}
+              onChange={(val) => updateNodeData(nodeId, { notionParentPageId: val })}
+              placeholder="Parent page ID"
+            />
+          </FormField>
+        )}
+        {data.integrationOp === 'create_subpage' && (<>
+          <TextField label="Title" field="notionTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label="Content" field="notionContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {data.integrationOp === 'create_database' && (<>
+          <TextField label="Database title" field="notionTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Tasks" />
+          <AreaField label="Schema (JSON properties, optional)" field="notionSchema" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder={'{"Status":{"select":{"options":[{"name":"Todo"}]}}}'} />
+        </>)}
+        {data.integrationOp === 'get_database' && (
+          <FormField label="Database" htmlFor="cfg-notion-db-schema">
+            <ResourcePicker
+              provider="notion" kind="database" id="cfg-notion-db-schema"
+              value={typeof data.notionDatabaseId === 'string' ? data.notionDatabaseId : ''}
+              onChange={(val) => updateNodeData(nodeId, { notionDatabaseId: val })}
+              placeholder="Database ID"
+            />
+          </FormField>
+        )}
       </div>
   )
 }
@@ -327,6 +372,15 @@ export function LinearConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
               { value: 'search_issues', label: 'Search Issues' },
               { value: 'list_projects', label: 'List Projects' },
               { value: 'get_issue', label: 'Get Issue' },
+              { value: 'list_comments', label: 'List Comments' },
+              { value: 'archive_issue', label: 'Archive Issue' },
+              { value: 'add_label', label: 'Add Label to Issue' },
+              { value: 'list_labels', label: 'List Labels' },
+              { value: 'list_states', label: 'List Workflow States' },
+              { value: 'list_teams', label: 'List Teams' },
+              { value: 'list_users', label: 'List Users' },
+              { value: 'list_cycles', label: 'List Cycles' },
+              { value: 'create_project', label: 'Create Project' },
             ]}
           />
         </FormField>
@@ -511,77 +565,200 @@ export function LinearConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
             </FormField>
           </>
         )}
+
+        {(data.integrationOp === 'list_comments' || data.integrationOp === 'archive_issue' || data.integrationOp === 'add_label') && (
+          <TextField label="Issue ID" field="linearIssueId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}} or issue ID" />
+        )}
+        {data.integrationOp === 'add_label' && (
+          <TextField label="Label ID (from List Labels)" field="linearLabelId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="label uuid" />
+        )}
+        {(data.integrationOp === 'list_labels' || data.integrationOp === 'list_states' || data.integrationOp === 'list_cycles' || data.integrationOp === 'create_project') && (
+          <FormField label="Team" htmlFor="cfg-linear-team-x">
+            <ResourcePicker
+              provider="linear" kind="team" id="cfg-linear-team-x"
+              value={typeof data.linearTeamId === 'string' ? data.linearTeamId : ''}
+              onChange={(val) => updateNodeData(nodeId, { linearTeamId: val })}
+              placeholder="Team ID"
+            />
+          </FormField>
+        )}
+        {data.integrationOp === 'create_project' && (<>
+          <TextField label="Project name" field="linearTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Q3 Launch" />
+          <AreaField label="Description" field="linearDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
       </div>
   )
 }
 
 export function GithubConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_issue'
+  const needsRepo = op !== 'list_repos' && op !== 'search_issues'
   return (
       <IntegrationSection
         provider="github" label="GitHub" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
         defaultOp="create_issue"
         ops={[
           { value: 'create_issue', label: 'Create Issue' },
+          { value: 'get_issue', label: 'Get Issue' },
+          { value: 'update_issue', label: 'Update Issue' },
           { value: 'list_issues', label: 'List Issues' },
+          { value: 'search_issues', label: 'Search Issues (all repos)' },
           { value: 'create_comment', label: 'Comment on Issue' },
+          { value: 'create_pull_request', label: 'Create Pull Request' },
+          { value: 'merge_pull_request', label: 'Merge Pull Request' },
           { value: 'list_pull_requests', label: 'List Pull Requests' },
           { value: 'get_pull_request', label: 'Get Pull Request' },
+          { value: 'list_pr_files', label: 'List PR Files' },
+          { value: 'list_commits', label: 'List Commits' },
+          { value: 'list_branches', label: 'List Branches' },
+          { value: 'get_file', label: 'Read File' },
+          { value: 'create_or_update_file', label: 'Commit File' },
+          { value: 'list_releases', label: 'List Releases' },
+          { value: 'create_release', label: 'Create Release' },
+          { value: 'trigger_workflow', label: 'Trigger Actions Workflow' },
+          { value: 'list_workflow_runs', label: 'List Workflow Runs' },
+          { value: 'list_repos', label: 'List My Repos' },
         ]}
         tokenPlaceholder="ghp_..."
       >
-        <ResourceField label="Repository" provider="github" kind="repo" field="githubRepo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="owner/name" />
-        {data.integrationOp === 'create_issue' && (<>
+        {needsRepo && (
+          <ResourceField label="Repository" provider="github" kind="repo" field="githubRepo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="owner/name" />
+        )}
+        {op === 'create_issue' && (<>
           <TextField label="Title" field="githubTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <AreaField label="Body" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <TextField label="Labels (comma-separated)" field="githubLabels" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="bug, urgent" />
         </>)}
-        {data.integrationOp === 'create_comment' && (<>
+        {(op === 'get_issue' || op === 'update_issue' || op === 'create_comment') && (
           <TextField label="Issue number" field="githubIssueNumber" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="42" />
-          <AreaField label="Comment" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'update_issue' && (<>
+          <TextField label="Title (optional)" field="githubTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <AreaField label="Body (optional)" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <SelectField label="State" field="githubState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[{ value: '', label: 'Keep current' }, { value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }]} />
+          <TextField label="Labels (optional, replaces all)" field="githubLabels" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="bug, urgent" />
         </>)}
-        {(data.integrationOp === 'list_issues' || data.integrationOp === 'list_pull_requests') && (<>
+        {op === 'create_comment' && (
+          <AreaField label="Comment" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'search_issues' && (
+          <TextField label="Search query" field="githubQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="is:open label:bug repo:owner/name" />
+        )}
+        {op === 'create_pull_request' && (<>
+          <TextField label="Title" field="githubTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label="Body" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label="Head branch" field="githubBranch" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="feature/my-change" />
+          <TextField label="Base branch" field="githubBase" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        </>)}
+        {(op === 'merge_pull_request' || op === 'get_pull_request' || op === 'list_pr_files') && (
+          <TextField label="PR number" field="githubPrNumber" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="7" />
+        )}
+        {op === 'merge_pull_request' && (
+          <SelectField label="Merge method" field="githubMergeMethod" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="merge"
+            options={[{ value: 'merge', label: 'Merge commit' }, { value: 'squash', label: 'Squash' }, { value: 'rebase', label: 'Rebase' }]} />
+        )}
+        {(op === 'list_issues' || op === 'list_pull_requests') && (
           <SelectField label="State" field="githubState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="open"
             options={[{ value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }, { value: 'all', label: 'All' }]} />
-          <NumField label="Limit" field="githubLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        )}
+        {(op === 'list_commits' || op === 'get_file') && (
+          <TextField label="Branch/ref (optional)" field="githubRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        )}
+        {(op === 'get_file' || op === 'create_or_update_file') && (
+          <TextField label="File path" field="githubPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="docs/report.md" />
+        )}
+        {op === 'create_or_update_file' && (<>
+          <AreaField label="Content" field="githubContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label="Commit message" field="githubCommitMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Update report" />
+          <TextField label="Branch (optional)" field="githubBranch" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
         </>)}
-        {data.integrationOp === 'get_pull_request' && (
-          <TextField label="PR number" field="githubPrNumber" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="7" />
+        {op === 'create_release' && (<>
+          <TextField label="Tag" field="githubTag" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="v1.2.0" />
+          <TextField label="Release title (optional)" field="githubTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="defaults to tag" />
+          <AreaField label="Notes (optional)" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {op === 'trigger_workflow' && (<>
+          <TextField label="Workflow file" field="githubWorkflowId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="deploy.yml" />
+          <TextField label="Ref" field="githubRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+          <AreaField label="Inputs (optional JSON)" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder={'{"environment":"prod"}'} />
+        </>)}
+        {['list_issues', 'list_pull_requests', 'list_commits', 'list_branches', 'list_releases', 'list_workflow_runs', 'search_issues', 'list_repos', 'list_pr_files'].includes(op) && (
+          <NumField label="Limit" field="githubLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         )}
       </IntegrationSection>
   )
 }
 
 export function GitlabConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_issue'
   return (
       <IntegrationSection
         provider="gitlab" label="GitLab" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
         defaultOp="create_issue"
         ops={[
           { value: 'create_issue', label: 'Create Issue' },
+          { value: 'get_issue', label: 'Get Issue' },
+          { value: 'update_issue', label: 'Update Issue' },
           { value: 'list_issues', label: 'List Issues' },
           { value: 'create_comment', label: 'Comment on Issue' },
+          { value: 'create_merge_request', label: 'Create Merge Request' },
+          { value: 'merge_mr', label: 'Merge MR' },
           { value: 'list_merge_requests', label: 'List Merge Requests' },
           { value: 'get_merge_request', label: 'Get Merge Request' },
+          { value: 'list_branches', label: 'List Branches' },
+          { value: 'list_commits', label: 'List Commits' },
+          { value: 'list_pipelines', label: 'List Pipelines' },
+          { value: 'trigger_pipeline', label: 'Trigger Pipeline' },
+          { value: 'get_file', label: 'Read File' },
+          { value: 'commit_file', label: 'Commit File' },
         ]}
         tokenPlaceholder="glpat-..."
       >
         <ResourceField label="Project" provider="gitlab" kind="project" field="gitlabProjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Project ID" />
-        {data.integrationOp === 'create_issue' && (<>
+        {op === 'create_issue' && (<>
           <TextField label="Title" field="gitlabTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <AreaField label="Description" field="gitlabDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
           <TextField label="Labels (comma-separated)" field="gitlabLabels" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="bug, backend" />
         </>)}
-        {data.integrationOp === 'create_comment' && (<>
+        {(op === 'get_issue' || op === 'update_issue' || op === 'create_comment') && (
           <TextField label="Issue IID" field="gitlabIssueIid" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="12" />
-          <AreaField label="Comment" field="gitlabDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'update_issue' && (<>
+          <TextField label="Title (optional)" field="gitlabTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <AreaField label="Description (optional)" field="gitlabDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Leave blank to keep" />
+          <SelectField label="State" field="gitlabStateEvent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[{ value: '', label: 'Keep current' }, { value: 'close', label: 'Close' }, { value: 'reopen', label: 'Reopen' }]} />
+          <TextField label="Labels (optional)" field="gitlabLabels" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="bug, backend" />
         </>)}
-        {(data.integrationOp === 'list_issues' || data.integrationOp === 'list_merge_requests') && (<>
+        {op === 'create_comment' && (
+          <AreaField label="Comment" field="gitlabDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {op === 'create_merge_request' && (<>
+          <TextField label="Title" field="gitlabTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label="Description" field="gitlabDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label="Source branch" field="gitlabSourceBranch" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="feature/my-change" />
+          <TextField label="Target branch" field="gitlabTargetBranch" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        </>)}
+        {(op === 'merge_mr' || op === 'get_merge_request') && (
+          <TextField label="MR IID" field="gitlabMrIid" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="3" />
+        )}
+        {(op === 'list_issues' || op === 'list_merge_requests') && (
           <SelectField label="State" field="gitlabState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="opened"
             options={[{ value: 'opened', label: 'Opened' }, { value: 'closed', label: 'Closed' }, { value: 'all', label: 'All' }]} />
-          <NumField label="Limit" field="gitlabLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        )}
+        {(op === 'list_commits' || op === 'trigger_pipeline' || op === 'get_file' || op === 'commit_file') && (
+          <TextField label="Branch/ref" field="gitlabRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        )}
+        {(op === 'get_file' || op === 'commit_file') && (
+          <TextField label="File path" field="gitlabPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="docs/report.md" />
+        )}
+        {op === 'commit_file' && (<>
+          <AreaField label="Content" field="gitlabContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label="Commit message" field="gitlabCommitMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Update report" />
         </>)}
-        {data.integrationOp === 'get_merge_request' && (
-          <TextField label="MR IID" field="gitlabMrIid" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="3" />
+        {['list_issues', 'list_merge_requests', 'list_branches', 'list_commits', 'list_pipelines'].includes(op) && (
+          <NumField label="Limit" field="gitlabLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         )}
       </IntegrationSection>
   )

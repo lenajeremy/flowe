@@ -4,11 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = {
-  create_page: 'Create Page',
-  query_database: 'Query Database',
-  append_blocks: 'Append Blocks',
-}
+const OP_LABELS: Record<string, string> = { create_page: 'Create Page', create_subpage: 'Create Subpage', query_database: 'Query Database', append_blocks: 'Append Blocks', update_page: 'Update Page', archive_page: 'Archive Page', get_page_content: 'Get Page Content', search: 'Search', add_comment: 'Add Comment', list_comments: 'List Comments', create_database: 'Create Database', get_database: 'Get DB Schema', list_users: 'List Users' }
 
 export function NotionNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'create_page'

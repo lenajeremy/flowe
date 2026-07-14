@@ -4,11 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = {
-  create_issue: 'Create Issue',
-  get_issues: 'Get Issues',
-  create_comment: 'Create Comment',
-}
+const OP_LABELS: Record<string, string> = { create_issue: 'Create Issue', get_issues: 'Get Issues', get_issue: 'Get Issue', update_issue: 'Update Issue', archive_issue: 'Archive Issue', search_issues: 'Search Issues', create_comment: 'Create Comment', list_comments: 'List Comments', add_label: 'Add Label', list_labels: 'List Labels', list_states: 'List States', list_teams: 'List Teams', list_users: 'List Users', list_cycles: 'List Cycles', list_projects: 'List Projects', create_project: 'Create Project' }
 
 export function LinearNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'create_issue'

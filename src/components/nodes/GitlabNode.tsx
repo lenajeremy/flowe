@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { create_issue: 'Create Issue', list_issues: 'List Issues', create_comment: 'Comment', list_merge_requests: 'List MRs', get_merge_request: 'Get MR' }
+const OP_LABELS: Record<string, string> = { create_issue: 'Create Issue', get_issue: 'Get Issue', update_issue: 'Update Issue', list_issues: 'List Issues', create_comment: 'Comment on Issue', create_merge_request: 'Create MR', merge_mr: 'Merge MR', list_merge_requests: 'List MRs', get_merge_request: 'Get MR', list_branches: 'List Branches', list_commits: 'List Commits', list_pipelines: 'List Pipelines', trigger_pipeline: 'Trigger Pipeline', get_file: 'Read File', commit_file: 'Commit File' }
 
 export function GitlabNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'create_issue'

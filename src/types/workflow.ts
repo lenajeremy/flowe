@@ -109,7 +109,9 @@ export type FlowNodeData = {
   notionContent?: string       // supports {{nodeId.output}} templates
   notionFilter?: string        // JSON filter string
   notionQuery?: string         // search text
-  notionProperties?: string    // JSON object of properties for update_page
+  notionProperties?: string
+  notionParentPageId?: string
+  notionSchema?: string    // JSON object of properties for update_page
 
   // linear
   linearTeamId?: string
@@ -123,6 +125,7 @@ export type FlowNodeData = {
   linearAssigneeId?: string
   linearQuery?: string
   linearProjectId?: string
+  linearLabelId?: string
 
   // github
   githubRepo?: string          // owner/name
@@ -132,6 +135,16 @@ export type FlowNodeData = {
   githubLabels?: string        // comma-separated
   githubState?: string         // open | closed | all
   githubLimit?: number
+  githubBranch?: string
+  githubBase?: string
+  githubMergeMethod?: string
+  githubPath?: string
+  githubContent?: string
+  githubCommitMessage?: string
+  githubRef?: string
+  githubTag?: string
+  githubWorkflowId?: string
+  githubQuery?: string
   githubPrNumber?: string
 
   // gitlab
@@ -142,6 +155,13 @@ export type FlowNodeData = {
   gitlabLabels?: string
   gitlabState?: string         // opened | closed | all
   gitlabLimit?: number
+  gitlabSourceBranch?: string
+  gitlabTargetBranch?: string
+  gitlabRef?: string
+  gitlabPath?: string
+  gitlabContent?: string
+  gitlabCommitMessage?: string
+  gitlabStateEvent?: string
   gitlabMrIid?: string
 
   // gmail
