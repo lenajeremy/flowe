@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { listChatSessions, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
@@ -16,34 +15,28 @@ const HISTORY_W = 156
 const EASE = [0.32, 0.72, 0, 1] as const
 
 /**
- * Chat-with-workflow entry point on the editor canvas.
+ * Chat-with-workflow on the editor canvas: FAB → popover → full-screen,
+ * all one overlay. Maximize is NOT a navigation — the same mounted
+ * popover morphs to fill the viewport, so the transcript, scroll
+ * position, and in-flight streams survive minimize/maximize untouched
+ * (and closing leaves nothing behind that a refresh could resurrect).
  *
- * The FAB opens a small chat popover anchored to the same corner: close
- * scales it back into the button, maximize grows it into the full chat
- * page (navigation happens when the grow animation completes, so the
- * page "catches" the transition with the same session). The popover can
- * also slide open an inline history sidebar to switch conversations.
- *
- * `autoOpen` (from the chat page's minimize) mounts with the popover
- * already open on the given session — the receiving end of the page's
- * shrink-into-the-corner transition.
+ * The header toggles an inline history sidebar to switch conversations.
  *
  * When the config panel opens/closes, the FAB doesn't slide — it scales
  * away, repositions while invisible, and scales back in once the panel
  * has settled. The popover, being a panel itself, glides instead.
  */
-export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
+export function ChatFab({ workflowId, workflowName, panelOpen }: {
   workflowId?: string
   workflowName?: string
   panelOpen: boolean
-  autoOpen?: { session: string | null } | null
 }) {
-  const navigate = useNavigate()
-  const [open, setOpen] = useState(!!autoOpen)
-  const [maximizing, setMaximizing] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
-  const [sessionId, setSessionId] = useState<string | null>(autoOpen?.session ?? null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [dims, setDims] = useState(() => ({ w: 390, h: Math.min(560, window.innerHeight - 56) }))
   const endRef = useRef<HTMLDivElement>(null)
@@ -94,7 +87,7 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
 
   const openPopover = () => {
     setDims({ w: 390, h: Math.min(560, window.innerHeight - 56) })
-    setMaximizing(false)
+    setExpanded(false)
     setHistoryOpen(false)
     setOpen(true)
     // Resume the most recent conversation, Intercom-style
@@ -155,24 +148,20 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
             className="fixed z-50 flex flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-canvas)]"
             style={{ transformOrigin: 'bottom right', boxShadow: '0 24px 64px rgba(0,0,0,0.35)' }}
             initial={{ opacity: 0, scale: 0.15, bottom: 20, right: popRight, width: popWidth, height: dims.h, borderRadius: 20 }}
-            animate={maximizing
+            animate={expanded
               ? { opacity: 1, scale: 1, bottom: 0, right: 0, width: window.innerWidth, height: window.innerHeight, borderRadius: 0 }
               : { opacity: 1, scale: 1, bottom: 20, right: popRight, width: popWidth, height: dims.h, borderRadius: 20 }}
             exit={{ opacity: 0, scale: 0.15, bottom: 20, right: popRight }}
-            transition={{ duration: maximizing ? 0.34 : 0.26, ease: EASE }}
-            onAnimationComplete={() => {
-              if (maximizing && workflowId) {
-                navigate(`/workflow/${workflowId}/chat${sessionId ? `?session=${sessionId}` : ''}`)
-              }
-            }}
+            transition={{ duration: expanded ? 0.34 : 0.28, ease: EASE }}
           >
-            {/* Header — history, maximize, close */}
+            {/* Header — history, maximize/minimize, close */}
             <div className="flex h-11 flex-shrink-0 items-center justify-between border-b border-[var(--color-border)] pl-3.5 pr-2">
               <div className="flex min-w-0 items-center gap-2">
                 <FloweIcon size={14} className="flex-shrink-0 text-[var(--color-accent)]" />
                 <span className="truncate text-[12.5px] font-semibold text-[var(--color-text)]">
                   {workflowName || 'Chat'}
                 </span>
+                <span className="text-[10.5px] text-[var(--color-subtle)]">chat</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <button
@@ -187,15 +176,27 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
                     <path d="M6 3.6V6l1.7 1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
-                <button
-                  onClick={() => setMaximizing(true)}
-                  title="Open full chat"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
-                >
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                    <path d="M7 1.5h3.5V5M5 10.5H1.5V7M10.5 1.5L7 5M1.5 10.5L5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                {expanded ? (
+                  <button
+                    onClick={() => setExpanded(false)}
+                    title="Minimize chat"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M10.5 5H7V1.5M1.5 7H5v3.5M7 5l3.5-3.5M5 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setExpanded(true)}
+                    title="Expand chat"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M7 1.5h3.5V5M5 10.5H1.5V7M10.5 1.5L7 5M1.5 10.5L5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                )}
                 <button
                   onClick={() => setOpen(false)}
                   title="Close chat"
@@ -209,8 +210,8 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
             </div>
 
             <div className="flex min-h-0 flex-1">
-              {/* History sidebar — slides in; popover widens to match so the
-                  chat column keeps its width */}
+              {/* History sidebar — slides in; the popover widens to match so
+                  the chat column keeps its width */}
               <AnimatePresence initial={false}>
                 {historyOpen && (
                   <motion.div
@@ -251,17 +252,21 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
                 )}
               </AnimatePresence>
 
-              {/* Chat column */}
+              {/* Chat column — the scroll container is the SAME node in both
+                  modes, so scroll position survives minimize/maximize */}
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex-1 overflow-y-auto">
-                  <div className="flex flex-col gap-3.5 px-4 py-4">
+                  <div className={expanded
+                    ? 'mx-auto flex w-full max-w-[760px] flex-col gap-5 px-6 py-6'
+                    : 'flex flex-col gap-3.5 px-4 py-4'
+                  }>
                     {messages.length === 0 ? (
-                      <div className="flex flex-col items-center gap-2.5 px-6 pt-[18%] text-center">
-                        <FloweIcon size={26} className="text-[var(--color-accent)]" />
-                        <p className="text-[13px] font-medium text-[var(--color-text)]">
+                      <div className={`flex flex-col items-center gap-2.5 px-6 text-center ${expanded ? 'pt-[16vh]' : 'pt-[18%]'}`}>
+                        <FloweIcon size={expanded ? 34 : 26} className="text-[var(--color-accent)]" />
+                        <p className={`font-medium text-[var(--color-text)] ${expanded ? 'text-[17px] font-semibold' : 'text-[13px]'}`}>
                           {workflowName ? `Chat with ${workflowName}` : 'Chat with workflow'}
                         </p>
-                        <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+                        <p className={`leading-relaxed text-[var(--color-muted)] ${expanded ? 'text-[13px]' : 'text-[11.5px]'}`}>
                           Ask anything — nodes run only when your request needs them.
                         </p>
                       </div>
@@ -272,16 +277,23 @@ export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
                   </div>
                 </div>
 
-                <div className="flex-shrink-0 px-3 pb-3 pt-1">
-                  <Composer
-                    value={input}
-                    onChange={setInput}
-                    onSend={handleSend}
-                    onStop={stop}
-                    isStreaming={isStreaming}
-                    compact
-                    autoFocus
-                  />
+                <div className={`flex-shrink-0 ${expanded ? 'px-6 pb-3 pt-1' : 'px-3 pb-3 pt-1'}`}>
+                  <div className={expanded ? 'mx-auto w-full max-w-[760px]' : undefined}>
+                    <Composer
+                      value={input}
+                      onChange={setInput}
+                      onSend={handleSend}
+                      onStop={stop}
+                      isStreaming={isStreaming}
+                      compact={!expanded}
+                      autoFocus
+                    />
+                  </div>
+                  {expanded && (
+                    <p className="mt-2 text-center text-[10.5px] text-[var(--color-subtle)]">
+                      Chat runs this workflow's nodes on demand — the workflow itself is never modified.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { getWorkflow } from '@/lib/workflowApi'
 import { listChatSessions, deleteChatSession, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
@@ -26,7 +25,6 @@ export function WorkflowChatPage() {
   const [toolNodes, setToolNodes] = useState<WorkflowASTNode[]>([])
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [input, setInput] = useState('')
-  const [minimizing, setMinimizing] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, isStreaming, send, stop } = useAgentChat({
@@ -83,19 +81,7 @@ export function WorkflowChatPage() {
   }, [sessionId, selectSession])
 
   return (
-    <motion.div
-      className="flex h-screen bg-[var(--color-canvas)] text-[var(--color-text)]"
-      style={{ transformOrigin: '96% 94%' }}
-      animate={minimizing ? { scale: 0.15, opacity: 0 } : { scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-      onAnimationComplete={() => {
-        // The page shrinks into the corner, then the editor mounts with the
-        // chat popover already open on this session — one continuous motion
-        if (minimizing && workflowId) {
-          navigate(`/workflow/${workflowId}`, { state: { openChat: true, chatSession: sessionId } })
-        }
-      }}
-    >
+    <div className="flex h-screen bg-[var(--color-canvas)] text-[var(--color-text)]">
       {/* ── Sidebar — tinted, borderless, plain rows ─────────── */}
       <aside className="flex w-[260px] flex-shrink-0 flex-col bg-[var(--color-surface)]">
         <div className="flex h-14 items-center px-4">
@@ -176,18 +162,7 @@ export function WorkflowChatPage() {
             <span className="text-[14px] font-semibold">{workflowName || '…'}</span>
             <span className="text-[11px] text-[var(--color-subtle)]">chat</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setMinimizing(true)}
-              title="Minimize to the editor"
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <path d="M10.5 5H7V1.5M1.5 7H5v3.5M7 5l3.5-3.5M5 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <UserMenu />
-          </div>
+          <UserMenu />
         </header>
 
         <div className="flex-1 overflow-y-auto">
@@ -219,7 +194,7 @@ export function WorkflowChatPage() {
           </p>
         </div>
       </main>
-    </motion.div>
+    </div>
   )
 }
 
