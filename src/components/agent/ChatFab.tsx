@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { listChatSessions } from '@/lib/agentChat'
+import { listChatSessions, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
 import { AgentBubble, Composer } from '@/components/agent/AgentMessages'
 import { FloweIcon } from '@/components/FloweIcon'
 
-// FAB geometry — mirrors the config panel overlay (right: 8, width: 349)
+// Geometry mirrors the config panel overlay (right: 8, width: 349): both
+// the FAB and the popover anchor to whichever corner is actually free.
 const FAB_RIGHT = 16
 const FAB_RIGHT_SHIFTED = 8 + 349 + 16
+const POP_RIGHT = 20
+const POP_RIGHT_SHIFTED = 8 + 349 + 20
+const HISTORY_W = 156
 const EASE = [0.32, 0.72, 0, 1] as const
 
 /**
@@ -17,29 +21,47 @@ const EASE = [0.32, 0.72, 0, 1] as const
  * The FAB opens a small chat popover anchored to the same corner: close
  * scales it back into the button, maximize grows it into the full chat
  * page (navigation happens when the grow animation completes, so the
- * page "catches" the transition with the same session).
+ * page "catches" the transition with the same session). The popover can
+ * also slide open an inline history sidebar to switch conversations.
+ *
+ * `autoOpen` (from the chat page's minimize) mounts with the popover
+ * already open on the given session — the receiving end of the page's
+ * shrink-into-the-corner transition.
  *
  * When the config panel opens/closes, the FAB doesn't slide — it scales
  * away, repositions while invisible, and scales back in once the panel
- * has settled.
+ * has settled. The popover, being a panel itself, glides instead.
  */
-export function ChatFab({ workflowId, workflowName, panelOpen }: {
+export function ChatFab({ workflowId, workflowName, panelOpen, autoOpen }: {
   workflowId?: string
   workflowName?: string
   panelOpen: boolean
+  autoOpen?: { session: string | null } | null
 }) {
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!autoOpen)
   const [maximizing, setMaximizing] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
+  const [sessionId, setSessionId] = useState<string | null>(autoOpen?.session ?? null)
   const [input, setInput] = useState('')
-  const [dims, setDims] = useState({ w: 390, h: 560 })
+  const [dims, setDims] = useState(() => ({ w: 390, h: Math.min(560, window.innerHeight - 56) }))
   const endRef = useRef<HTMLDivElement>(null)
 
   const { messages, isStreaming, send, stop } = useAgentChat({
     workflowId,
     sessionId,
-    onSessionCreated: (s) => setSessionId(s.id),
+    onSessionCreated: (s) => {
+      setSessionId(s.id)
+      setSessions((prev) => [
+        { id: s.id, title: 'New chat', created_at: s.created_at, updated_at: s.updated_at },
+        ...prev,
+      ])
+    },
+    // Refresh for the server-side auto-title
+    onTurnComplete: () => {
+      if (workflowId) listChatSessions(workflowId).then(setSessions).catch(() => {})
+    },
   })
 
   // ── FAB ↔ config panel choreography: scale out, move while ────
@@ -60,6 +82,12 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
     return () => { clearTimeout(move); clearTimeout(show) }
   }, [parked, panelOpen])
 
+  // Session list backs the history sidebar — load whenever the popover opens
+  useEffect(() => {
+    if (!open || !workflowId) return
+    listChatSessions(workflowId).then(setSessions).catch(() => {})
+  }, [open, workflowId])
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -67,6 +95,7 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
   const openPopover = () => {
     setDims({ w: 390, h: Math.min(560, window.innerHeight - 56) })
     setMaximizing(false)
+    setHistoryOpen(false)
     setOpen(true)
     // Resume the most recent conversation, Intercom-style
     if (!sessionId && workflowId) {
@@ -83,7 +112,14 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
     void send(text)
   }
 
+  const selectSession = (id: string | null) => {
+    stop()
+    setSessionId(id)
+  }
+
   const fabVisible = !open && !parked
+  const popRight = panelOpen ? POP_RIGHT_SHIFTED : POP_RIGHT
+  const popWidth = dims.w + (historyOpen ? HISTORY_W : 0)
 
   return (
     <>
@@ -118,11 +154,11 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
           <motion.div
             className="fixed z-50 flex flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-canvas)]"
             style={{ transformOrigin: 'bottom right', boxShadow: '0 24px 64px rgba(0,0,0,0.35)' }}
-            initial={{ opacity: 0, scale: 0.15, bottom: 20, right: 20, width: dims.w, height: dims.h, borderRadius: 20 }}
+            initial={{ opacity: 0, scale: 0.15, bottom: 20, right: popRight, width: popWidth, height: dims.h, borderRadius: 20 }}
             animate={maximizing
               ? { opacity: 1, scale: 1, bottom: 0, right: 0, width: window.innerWidth, height: window.innerHeight, borderRadius: 0 }
-              : { opacity: 1, scale: 1, bottom: 20, right: 20, width: dims.w, height: dims.h, borderRadius: 20 }}
-            exit={{ opacity: 0, scale: 0.15, bottom: 20, right: 20 }}
+              : { opacity: 1, scale: 1, bottom: 20, right: popRight, width: popWidth, height: dims.h, borderRadius: 20 }}
+            exit={{ opacity: 0, scale: 0.15, bottom: 20, right: popRight }}
             transition={{ duration: maximizing ? 0.34 : 0.26, ease: EASE }}
             onAnimationComplete={() => {
               if (maximizing && workflowId) {
@@ -130,7 +166,7 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
               }
             }}
           >
-            {/* Header — maximize + close */}
+            {/* Header — history, maximize, close */}
             <div className="flex h-11 flex-shrink-0 items-center justify-between border-b border-[var(--color-border)] pl-3.5 pr-2">
               <div className="flex min-w-0 items-center gap-2">
                 <FloweIcon size={14} className="flex-shrink-0 text-[var(--color-accent)]" />
@@ -139,6 +175,18 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
                 </span>
               </div>
               <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => setHistoryOpen((v) => !v)}
+                  title="Chat history"
+                  className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] ${
+                    historyOpen ? 'text-[var(--color-text)] bg-[var(--color-hover)]' : 'text-[var(--color-muted)]'
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+                    <path d="M6 3.6V6l1.7 1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
                 <button
                   onClick={() => setMaximizing(true)}
                   title="Open full chat"
@@ -160,37 +208,82 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex flex-col gap-3.5 px-4 py-4">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2.5 px-6 pt-[18%] text-center">
-                    <FloweIcon size={26} className="text-[var(--color-accent)]" />
-                    <p className="text-[13px] font-medium text-[var(--color-text)]">
-                      {workflowName ? `Chat with ${workflowName}` : 'Chat with workflow'}
-                    </p>
-                    <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
-                      Ask anything — nodes run only when your request needs them.
-                    </p>
-                  </div>
-                ) : (
-                  messages.map((m) => <AgentBubble key={m.id} message={m} />)
+            <div className="flex min-h-0 flex-1">
+              {/* History sidebar — slides in; popover widens to match so the
+                  chat column keeps its width */}
+              <AnimatePresence initial={false}>
+                {historyOpen && (
+                  <motion.div
+                    className="flex-shrink-0 overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-surface)]"
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: HISTORY_W, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.26, ease: EASE }}
+                  >
+                    <div className="flex h-full flex-col" style={{ width: HISTORY_W }}>
+                      <button
+                        onClick={() => selectSession(null)}
+                        className="mx-1.5 mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                          <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                        </svg>
+                        New chat
+                      </button>
+                      <div className="mt-1 flex-1 overflow-y-auto px-1.5 pb-2">
+                        {sessions.length === 0 && (
+                          <p className="px-2 pt-1 text-[11px] text-[var(--color-subtle)]">No chats yet</p>
+                        )}
+                        {sessions.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => selectSession(s.id)}
+                            className={`w-full truncate rounded-lg px-2 py-1.5 text-left text-[12px] text-[var(--color-text)] ${
+                              s.id === sessionId ? 'bg-[var(--color-hover2)]' : 'hover:bg-[var(--color-hover)]'
+                            }`}
+                          >
+                            {s.title || 'New chat'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
-                <div ref={endRef} />
-              </div>
-            </div>
+              </AnimatePresence>
 
-            {/* Composer */}
-            <div className="flex-shrink-0 px-3 pb-3 pt-1">
-              <Composer
-                value={input}
-                onChange={setInput}
-                onSend={handleSend}
-                onStop={stop}
-                isStreaming={isStreaming}
-                compact
-                autoFocus
-              />
+              {/* Chat column */}
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex-1 overflow-y-auto">
+                  <div className="flex flex-col gap-3.5 px-4 py-4">
+                    {messages.length === 0 ? (
+                      <div className="flex flex-col items-center gap-2.5 px-6 pt-[18%] text-center">
+                        <FloweIcon size={26} className="text-[var(--color-accent)]" />
+                        <p className="text-[13px] font-medium text-[var(--color-text)]">
+                          {workflowName ? `Chat with ${workflowName}` : 'Chat with workflow'}
+                        </p>
+                        <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+                          Ask anything — nodes run only when your request needs them.
+                        </p>
+                      </div>
+                    ) : (
+                      messages.map((m) => <AgentBubble key={m.id} message={m} />)
+                    )}
+                    <div ref={endRef} />
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0 px-3 pb-3 pt-1">
+                  <Composer
+                    value={input}
+                    onChange={setInput}
+                    onSend={handleSend}
+                    onStop={stop}
+                    isStreaming={isStreaming}
+                    compact
+                    autoFocus
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

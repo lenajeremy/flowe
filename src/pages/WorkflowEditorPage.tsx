@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ReactFlowProvider } from '@xyflow/react'
 import { NodePalette, type LeftTab } from '@/components/panels/NodePalette'
@@ -97,6 +97,13 @@ function ResizeHandle({
 export function WorkflowEditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  // The chat page's minimize navigates here with router state — mount with
+  // the chat popover already open on the same session (read once).
+  const [chatAutoOpen] = useState<{ session: string | null } | null>(() => {
+    const st = location.state as { openChat?: boolean; chatSession?: string | null } | null
+    return st?.openChat ? { session: st.chatSession ?? null } : null
+  })
 
   const {
     isApiKeyModalOpen, setApiKeyModalOpen,
@@ -541,7 +548,7 @@ export function WorkflowEditorPage() {
               </AnimatePresence>
 
               {/* Chat with workflow — FAB + popover */}
-              <ChatFab workflowId={id} workflowName={workflowName} panelOpen={isConfigPanelOpen} />
+              <ChatFab workflowId={id} workflowName={workflowName} panelOpen={isConfigPanelOpen} autoOpen={chatAutoOpen} />
 
               {/* Input picker — floating overlay, Figma frame 170 */}
               <InputPanel />
