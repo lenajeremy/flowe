@@ -383,6 +383,19 @@ export function WorkflowEditorPage() {
             </div>
           )}
 
+          {/* Chat with workflow */}
+          <button
+            onClick={() => navigate(`/workflow/${id}/chat`)}
+            className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
+            title="Chat with this workflow — runs nodes on demand, never modifies the canvas"
+          >
+            <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+              <path d="M1.5 6.5a5 5 0 015-5h0a5 5 0 015 5h0a5 5 0 01-5 5H2.5a1 1 0 01-1-1V6.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+              <path d="M4.3 5.5h4.4M4.3 7.7h2.9" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+            </svg>
+            Chat
+          </button>
+
           {/* Save */}
           <button
             onClick={handleSave}

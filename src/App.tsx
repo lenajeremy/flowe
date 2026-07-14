@@ -5,6 +5,7 @@ import { LandingPage } from '@/pages/LandingPage'
 import { HomePage } from '@/pages/HomePage'
 import { BuildPage } from '@/pages/BuildPage'
 import { WorkflowEditorPage } from '@/pages/WorkflowEditorPage'
+import { WorkflowChatPage } from '@/pages/WorkflowChatPage'
 import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
 import { RunDetailPage } from '@/pages/RunDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -43,6 +44,7 @@ function App() {
         <Route path="/workflows" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/build" element={<ProtectedRoute><BuildPage /></ProtectedRoute>} />
         <Route path="/workflow/:id" element={<ProtectedRoute><WorkflowEditorPage /></ProtectedRoute>} />
+        <Route path="/workflow/:id/chat" element={<ProtectedRoute><WorkflowChatPage /></ProtectedRoute>} />
         <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
         <Route path="/run/:runId" element={<RunDetailPage />} />
       </Routes>
