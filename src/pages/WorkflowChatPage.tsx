@@ -1,56 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { getWorkflow } from '@/lib/workflowApi'
-import {
-  createChatSession, listChatSessions, getChatSession, deleteChatSession, streamAgentTurn,
-  type ChatSessionSummary, type StoredAgentMessage,
-} from '@/lib/agentChat'
+import { listChatSessions, deleteChatSession, type ChatSessionSummary } from '@/lib/agentChat'
+import { useAgentChat } from '@/components/agent/useAgentChat'
+import { AgentBubble, Composer } from '@/components/agent/AgentMessages'
 import { NODE_ACCENT_HEX, NODE_LABELS } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { UserMenu } from '@/components/ui/UserMenu'
 import { FloweIcon } from '@/components/FloweIcon'
 import type { NodeType, WorkflowASTNode } from '@/types/workflow'
 
-// ── Types ───────────────────────────────────────────────────────
-
-interface ToolChip {
-  id: string
-  node: string
-  nodeId: string
-  op?: string
-  status: 'running' | 'ok' | 'error'
-  error?: string
-}
-
-interface AgentMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  toolCalls: ToolChip[]
-  loading?: boolean
-}
-
 // Node types the backend never exposes as tools (mirrors agentSkipNode)
 const NON_TOOL_TYPES = new Set<NodeType>(['branch', 'loop', 'textOutput', 'webhookTrigger', 'scheduledTrigger'])
-
-const MODEL_STORAGE_KEY = 'flowe:chat-model'
-
-function fromStored(msgs: StoredAgentMessage[]): AgentMessage[] {
-  return msgs.map((m) => ({
-    id: crypto.randomUUID(),
-    role: m.role,
-    content: m.content,
-    toolCalls: (m.toolCalls ?? []).map((t) => ({
-      id: crypto.randomUUID(),
-      node: t.node,
-      nodeId: t.nodeId,
-      op: t.op,
-      status: t.status,
-    })),
-  }))
-}
 
 // ── Page ────────────────────────────────────────────────────────
 
@@ -63,16 +24,25 @@ export function WorkflowChatPage() {
   const [workflowName, setWorkflowName] = useState('')
   const [toolNodes, setToolNodes] = useState<WorkflowASTNode[]>([])
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
-  const [messages, setMessages] = useState<AgentMessage[]>([])
   const [input, setInput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const abortRef = useRef<AbortController | null>(null)
-  // Session whose transcript is already on screen — set before the lazy
-  // session creation in send() updates the URL, so the load effect doesn't
-  // clobber the in-flight optimistic messages with the (empty) stored ones.
-  const loadedRef = useRef<string | null>(null)
+
+  const { messages, isStreaming, send, stop } = useAgentChat({
+    workflowId,
+    sessionId,
+    onSessionCreated: (created) => {
+      setSessions((s) => [
+        { id: created.id, title: 'New chat', created_at: created.created_at, updated_at: created.updated_at },
+        ...s,
+      ])
+      setSearchParams({ session: created.id }, { replace: true })
+    },
+    // Title is set server-side from the first message
+    onTurnComplete: () => {
+      if (workflowId) listChatSessions(workflowId).then(setSessions).catch(() => {})
+    },
+    onLoadError: () => setSearchParams({}, { replace: true }),
+  })
 
   // ── Workflow + session list ──────────────────────────────────
   useEffect(() => {
@@ -86,106 +56,21 @@ export function WorkflowChatPage() {
     listChatSessions(workflowId).then(setSessions).catch(() => {})
   }, [workflowId, navigate])
 
-  // ── Load the active session's transcript ─────────────────────
-  useEffect(() => {
-    if (!sessionId) {
-      setMessages([])
-      loadedRef.current = null
-      return
-    }
-    if (loadedRef.current === sessionId) return
-    loadedRef.current = sessionId
-    getChatSession(sessionId)
-      .then((s) => setMessages(fromStored(s.messages ?? [])))
-      .catch(() => setSearchParams({}, { replace: true }))
-  }, [sessionId, setSearchParams])
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [sessionId])
-
-  // Stop any in-flight stream when leaving the page
-  useEffect(() => () => abortRef.current?.abort(), [])
-
   const selectSession = useCallback((id: string | null) => {
-    abortRef.current?.abort()
-    setIsStreaming(false)
+    stop()
     setSearchParams(id ? { session: id } : {}, { replace: true })
-  }, [setSearchParams])
+  }, [stop, setSearchParams])
 
-  // ── Send a turn ──────────────────────────────────────────────
-  const send = useCallback(async () => {
-    const text = input.trim()
-    if (!text || isStreaming || !workflowId) return
+  const handleSend = () => {
+    if (!input.trim() || isStreaming) return
+    const text = input
     setInput('')
-    setIsStreaming(true)
-
-    const assistantId = crypto.randomUUID()
-    setMessages((m) => [
-      ...m,
-      { id: crypto.randomUUID(), role: 'user', content: text, toolCalls: [] },
-      { id: assistantId, role: 'assistant', content: '', toolCalls: [], loading: true },
-    ])
-
-    const patch = (fn: (msg: AgentMessage) => AgentMessage) =>
-      setMessages((m) => m.map((msg) => (msg.id === assistantId ? fn(msg) : msg)))
-
-    try {
-      // Sessions are created lazily on the first message, not on page load
-      let sid = sessionId
-      if (!sid) {
-        const created = await createChatSession(workflowId)
-        sid = created.id
-        setSessions((s) => [
-          { id: created.id, title: 'New chat', created_at: created.created_at, updated_at: created.updated_at },
-          ...s,
-        ])
-        loadedRef.current = sid
-        setSearchParams({ session: sid }, { replace: true })
-      }
-
-      const controller = new AbortController()
-      abortRef.current = controller
-      const model = localStorage.getItem(MODEL_STORAGE_KEY) ?? undefined
-
-      await streamAgentTurn(sid, text, model, {
-        onText: (delta) => patch((msg) => ({ ...msg, content: msg.content + delta })),
-        onToolStart: (chip) => patch((msg) => ({
-          ...msg,
-          toolCalls: [...msg.toolCalls, { id: crypto.randomUUID(), node: chip.node, nodeId: chip.nodeId, op: chip.op, status: 'running' }],
-        })),
-        onToolResult: (chip) => patch((msg) => {
-          // The same node can run more than once per turn — resolve the
-          // most recent still-running chip for that node
-          const calls = [...msg.toolCalls]
-          for (let i = calls.length - 1; i >= 0; i--) {
-            if (calls[i].nodeId === chip.nodeId && calls[i].status === 'running') {
-              calls[i] = { ...calls[i], status: chip.status, error: chip.error }
-              break
-            }
-          }
-          return { ...msg, toolCalls: calls }
-        }),
-        onError: (message) => patch((msg) => ({ ...msg, content: msg.content ? `${msg.content}\n\n${message}` : message })),
-      }, controller.signal)
-
-      // Title is set server-side from the first message
-      listChatSessions(workflowId).then(setSessions).catch(() => {})
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        const detail = err instanceof Error ? err.message : 'Something went wrong'
-        patch((msg) => ({ ...msg, content: msg.content || detail }))
-      }
-    } finally {
-      abortRef.current = null
-      setIsStreaming(false)
-      patch((msg) => ({ ...msg, loading: false }))
-    }
-  }, [input, isStreaming, workflowId, sessionId, setSearchParams])
+    void send(text)
+  }
 
   const removeSession = useCallback(async (id: string) => {
     try {
@@ -293,46 +178,16 @@ export function WorkflowChatPage() {
 
         {/* ── Floating pill input ─────────────────────────── */}
         <div className="px-6 pb-3 pt-1">
-          <div
-            className="mx-auto flex max-w-[760px] items-end gap-2 rounded-[26px] border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-4 pr-2 transition-colors focus-within:border-[var(--color-border2)]"
-            style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.18)' }}
-          >
-            <textarea
-              ref={inputRef}
+          <div className="mx-auto max-w-[760px]">
+            <Composer
+              key={sessionId ?? 'new'}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  void send()
-                }
-              }}
-              rows={Math.min(5, Math.max(1, input.split('\n').length))}
-              placeholder="Ask anything"
-              className="max-h-36 flex-1 resize-none bg-transparent py-1.5 text-[13.5px] leading-relaxed text-[var(--color-text)] outline-none placeholder:text-[var(--color-subtle)]"
+              onChange={setInput}
+              onSend={handleSend}
+              onStop={stop}
+              isStreaming={isStreaming}
+              autoFocus
             />
-            {isStreaming ? (
-              <button
-                onClick={() => abortRef.current?.abort()}
-                title="Stop"
-                className="pressable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)]"
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                  <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" />
-                </svg>
-              </button>
-            ) : (
-              <button
-                onClick={() => void send()}
-                disabled={!input.trim()}
-                title="Send"
-                className="pressable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)] disabled:opacity-30"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 10V2M2.5 5.5L6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            )}
           </div>
           <p className="mt-2 text-center text-[10.5px] text-[var(--color-subtle)]">
             Chat runs this workflow's nodes on demand — the workflow itself is never modified.
@@ -373,80 +228,6 @@ function EmptyState({ workflowName, toolNodes }: {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-// ── Message bubble ──────────────────────────────────────────────
-
-function AgentBubble({ message }: { message: AgentMessage }) {
-  // User — soft pill, right-aligned, no border
-  if (message.role === 'user') {
-    return (
-      <div className="flex justify-end">
-        <div className="max-w-[75%] whitespace-pre-wrap break-words rounded-3xl bg-[var(--color-surface2)] px-4 py-2.5 text-[13.5px] leading-relaxed text-[var(--color-text)]">
-          {message.content}
-        </div>
-      </div>
-    )
-  }
-
-  // Assistant — bordered surface card (visually distinct from the user's
-  // borderless filled pill), tool activity as quiet rows above
-  return (
-    <div className="flex min-w-0 flex-col items-start gap-2">
-      {message.toolCalls.map((t) => <ToolActivityRow key={t.id} chip={t} />)}
-
-      {(message.content || message.loading) && (
-        <div className="min-w-0 max-w-full rounded-2xl rounded-tl-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
-          {message.loading && !message.content ? (
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-1">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:300ms]" />
-              </div>
-              <span className="text-[11px] text-[var(--color-muted)]">
-                {message.toolCalls.some((t) => t.status === 'running') ? 'Running…' : 'Thinking…'}
-              </span>
-            </div>
-          ) : (
-            <div className="chat-markdown min-w-0 text-[13.5px] leading-relaxed text-[var(--color-text)]">
-              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ToolActivityRow({ chip }: { chip: ToolChip }) {
-  return (
-    <div className="flex items-center gap-2 text-[12px] text-[var(--color-muted)]">
-      {chip.status === 'running' ? (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 animate-spin text-[var(--color-accent)]">
-          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25" />
-          <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ) : chip.status === 'ok' ? (
-        <svg width="12" height="12" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-ok)]">
-          <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-fail)]">
-          <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      )}
-      <span className="truncate">
-        {(() => {
-          // Lead with what the call actually did; the node label is context
-          const what = chip.op || chip.node
-          return chip.status === 'running' ? `${what}…` : chip.status === 'ok' ? what : `${what} failed`
-        })()}
-      </span>
-      {chip.op && <span className="flex-shrink-0 text-[var(--color-subtle)]">· {chip.node}</span>}
-      {chip.error && <span className="truncate text-[var(--color-subtle)]">— {chip.error}</span>}
     </div>
   )
 }

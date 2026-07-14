@@ -11,6 +11,7 @@ import { ExecutionPanel } from '@/components/ExecutionPanel'
 import { ApiKeyModal } from '@/components/ApiKeyModal'
 import { WebhookRunModal } from '@/components/WebhookRunModal'
 import { FloweIcon } from '@/components/FloweIcon'
+import { ChatFab } from '@/components/agent/ChatFab'
 import { useRunStreamBridge } from '@/lib/runController'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
@@ -539,30 +540,8 @@ export function WorkflowEditorPage() {
               )}
               </AnimatePresence>
 
-              {/* Chat with workflow — FAB; slides left of the config panel when it's open */}
-              <motion.button
-                onClick={() => navigate(`/workflow/${id}/chat`)}
-                title="Chat with this workflow — runs nodes on demand, never modifies the canvas"
-                className="absolute bottom-4 z-10 flex h-12 w-12 items-center justify-center rounded-full"
-                style={{
-                  background: 'var(--color-accent)',
-                  color: '#0a0a0d',
-                  boxShadow: '0 8px 24px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 2px 8px rgba(0,0,0,0.25)',
-                }}
-                initial={{ opacity: 0, scale: 0.8, right: 16 }}
-                animate={{ opacity: 1, scale: 1, right: isConfigPanelOpen ? 8 + 349 + 16 : 16 }}
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path
-                    d="M2.5 10a7.5 7.5 0 117.5 7.5H4a1.5 1.5 0 01-1.5-1.5v-6z"
-                    stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"
-                  />
-                  <path d="M6.8 8.6h6.4M6.8 11.6h4.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </motion.button>
+              {/* Chat with workflow — FAB + popover */}
+              <ChatFab workflowId={id} workflowName={workflowName} panelOpen={isConfigPanelOpen} />
 
               {/* Input picker — floating overlay, Figma frame 170 */}
               <InputPanel />
