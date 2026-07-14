@@ -94,19 +94,24 @@ function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeD
 // in the TemplateField for workflow-generated files (e.g. LLM output).
 const FILE_PICK_MAX = 1 << 20 // 1MB — content is stored in the workflow JSON
 
-function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, mimeField }: {
+function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, mimeField, pathField, contentLabel = 'Content' }: {
   data: FlowNodeData
   nodeId: string
   updateNodeData: UpdateFn
   contentField: string
-  nameField: string
+  /** hard-set to the picked file's name (Slack/Drive uploads) */
+  nameField?: string
   mimeField?: string
+  /** set to the picked file's name only when currently empty (repo commits keep their path field) */
+  pathField?: string
+  contentLabel?: string
 }) {
   const [manual, setManual] = useState(false)
+  const [pickedName, setPickedName] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const name = typeof data[nameField] === 'string' ? (data[nameField] as string) : ''
+  const name = nameField && typeof data[nameField] === 'string' ? (data[nameField] as string) : pickedName
   const content = typeof data[contentField] === 'string' ? (data[contentField] as string) : ''
-  const hasFile = !manual && name !== '' && content !== ''
+  const hasFile = !manual && content !== '' && name !== ''
 
   function handleFile(file: File | undefined) {
     if (!file) return
@@ -118,21 +123,33 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
     const reader = new FileReader()
     reader.onload = (ev) => {
       const text = typeof ev.target?.result === 'string' ? ev.target.result : ''
-      const partial: Record<string, unknown> = { [contentField]: text, [nameField]: file.name }
+      const partial: Record<string, unknown> = { [contentField]: text }
+      if (nameField) partial[nameField] = file.name
       if (mimeField) partial[mimeField] = file.type || 'text/plain'
+      if (pathField && !(typeof data[pathField] === 'string' && data[pathField])) partial[pathField] = file.name
+      setPickedName(file.name)
       updateNodeData(nodeId, partial as Partial<FlowNodeData>)
     }
     reader.onerror = () => setError('Could not read that file')
     reader.readAsText(file)
   }
 
+  function clear() {
+    const partial: Record<string, unknown> = { [contentField]: '' }
+    if (nameField) partial[nameField] = ''
+    setPickedName('')
+    updateNodeData(nodeId, partial as Partial<FlowNodeData>)
+  }
+
   return (
     <div className="mb-3 flex flex-col gap-1.5">
-      <span className="micro text-[var(--color-subtle)]">File</span>
+      <span className="micro text-[var(--color-subtle)]">{contentLabel}</span>
       {manual ? (
         <>
-          <TextField label="File name" field={nameField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
-          <AreaField label="Content" field={contentField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          {nameField && (
+            <TextField label="File name" field={nameField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
+          )}
+          <AreaField label={contentLabel} field={contentField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
         </>
       ) : hasFile ? (
         <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface2)] px-3 py-2.5">
@@ -145,7 +162,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
           </div>
           <button
             type="button"
-            onClick={() => updateNodeData(nodeId, { [contentField]: '', [nameField]: '' } as Partial<FlowNodeData>)}
+            onClick={clear}
             className="flex-shrink-0 text-[11px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-fail)]"
           >
             Remove
@@ -760,7 +777,8 @@ export function GithubConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           <TextField label="File path" field="githubPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="docs/report.md" />
         )}
         {op === 'create_or_update_file' && (<>
-          <AreaField label="Content" field="githubContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <FilePickField data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            contentField="githubContent" pathField="githubPath" contentLabel="File content" />
           <TextField label="Commit message" field="githubCommitMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Update report" />
           <TextField label="Branch (optional)" field="githubBranch" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
         </>)}
@@ -845,7 +863,8 @@ export function GitlabConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           <TextField label="File path" field="gitlabPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="docs/report.md" />
         )}
         {op === 'commit_file' && (<>
-          <AreaField label="Content" field="gitlabContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <FilePickField data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            contentField="gitlabContent" pathField="gitlabPath" contentLabel="File content" />
           <TextField label="Commit message" field="gitlabCommitMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Update report" />
         </>)}
         {['list_issues', 'list_merge_requests', 'list_branches', 'list_commits', 'list_pipelines'].includes(op) && (
