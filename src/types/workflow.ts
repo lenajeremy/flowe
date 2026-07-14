@@ -182,6 +182,17 @@ export type FlowNodeData = {
   stripeCustomerEmail?: string
   stripePriceId?: string
   stripeQuantity?: number
+  stripeCustomerId?: string
+  stripeCustomerName?: string
+  stripeSubscriptionId?: string
+  stripeProductId?: string
+  stripeProductName?: string
+  stripeAmount?: number
+  stripeCurrency?: string
+  stripeInterval?: string
+  stripeInvoiceId?: string
+  stripePaymentIntentId?: string
+  stripeRefundReason?: string
 
   // shopify
   shopifyOrderId?: string
@@ -190,6 +201,18 @@ export type FlowNodeData = {
   shopifyTitle?: string
   shopifyDescription?: string
   shopifyPrice?: string
+  shopifyProductId?: string
+  shopifyCustomerId?: string
+  shopifyCustomerEmail?: string
+  shopifyCustomerName?: string
+  shopifyQuery?: string
+  shopifyQuantity?: number
+  shopifyInventoryItemId?: string
+  shopifyLocationId?: string
+  shopifyDelta?: number
+  shopifyDiscountCode?: string
+  shopifyDiscountType?: string
+  shopifyDiscountValue?: string
 
   // googlecalendar
   gcalCalendarId?: string

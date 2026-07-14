@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { list_orders: 'List Orders', get_order: 'Get Order', list_products: 'List Products', create_product: 'Create Product', list_customers: 'List Customers' }
+const OP_LABELS: Record<string, string> = { list_orders: 'List Orders', get_order: 'Get Order', cancel_order: 'Cancel Order', close_order: 'Close Order', list_products: 'List Products', get_product: 'Get Product', create_product: 'Create Product', update_product: 'Update Product', delete_product: 'Delete Product', list_customers: 'List Customers', get_customer: 'Get Customer', search_customers: 'Search Customers', create_customer: 'Create Customer', create_draft_order: 'Create Draft Order', list_draft_orders: 'List Draft Orders', list_locations: 'List Locations', adjust_inventory: 'Adjust Inventory', create_discount_code: 'Discount Code' }
 
 export function ShopifyNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'list_orders'

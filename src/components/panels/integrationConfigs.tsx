@@ -830,34 +830,84 @@ export function GmailConfig({ data, nodeId, updateNodeData }: ProviderConfigProp
 }
 
 export function StripeConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_customers'
   return (
       <IntegrationSection
         provider="stripe" label="Stripe" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
         defaultOp="list_customers"
         ops={[
           { value: 'list_customers', label: 'List Customers' },
+          { value: 'create_customer', label: 'Create Customer' },
+          { value: 'get_customer', label: 'Get Customer' },
           { value: 'list_payments', label: 'List Payments' },
+          { value: 'get_payment_intent', label: 'Get Payment' },
           { value: 'list_invoices', label: 'List Invoices' },
-          { value: 'get_balance', label: 'Get Balance' },
+          { value: 'get_invoice', label: 'Get Invoice' },
+          { value: 'list_subscriptions', label: 'List Subscriptions' },
+          { value: 'get_subscription', label: 'Get Subscription' },
+          { value: 'cancel_subscription', label: 'Cancel Subscription' },
+          { value: 'list_products', label: 'List Products' },
+          { value: 'create_product', label: 'Create Product' },
+          { value: 'create_price', label: 'Create Price' },
           { value: 'create_payment_link', label: 'Create Payment Link' },
+          { value: 'create_refund', label: 'Create Refund' },
+          { value: 'list_refunds', label: 'List Refunds' },
+          { value: 'get_balance', label: 'Get Balance' },
+          { value: 'list_events', label: 'Account Events' },
         ]}
         tokenPlaceholder="sk_..."
       >
-        {data.integrationOp === 'list_customers' && (
+        {op === 'list_customers' && (
           <TextField label="Filter by email (optional)" field="stripeCustomerEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
         )}
-        {(data.integrationOp === 'list_customers' || data.integrationOp === 'list_payments' || data.integrationOp === 'list_invoices') && (
-          <NumField label="Limit" field="stripeLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        {op === 'create_customer' && (<>
+          <TextField label="Email" field="stripeCustomerEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
+          <TextField label="Name (optional)" field="stripeCustomerName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane Doe" />
+        </>)}
+        {op === 'get_customer' && (
+          <TextField label="Customer ID" field="stripeCustomerId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="cus_..." />
         )}
-        {data.integrationOp === 'create_payment_link' && (<>
+        {op === 'list_subscriptions' && (
+          <TextField label="Customer ID (optional)" field="stripeCustomerId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="cus_..." />
+        )}
+        {(op === 'get_subscription' || op === 'cancel_subscription') && (
+          <TextField label="Subscription ID" field="stripeSubscriptionId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="sub_..." />
+        )}
+        {op === 'create_product' && (
+          <TextField label="Product name" field="stripeProductName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Pro Plan" />
+        )}
+        {op === 'create_price' && (<>
+          <TextField label="Product ID" field="stripeProductId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="prod_..." />
+          <NumField label="Amount (cents)" field="stripeAmount" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1000} />
+          <TextField label="Currency" field="stripeCurrency" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="usd" />
+          <SelectField label="Billing" field="stripeInterval" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="one-time"
+            options={[{ value: 'one-time', label: 'One-time' }, { value: 'month', label: 'Monthly' }, { value: 'year', label: 'Yearly' }]} />
+        </>)}
+        {op === 'get_invoice' && (
+          <TextField label="Invoice ID" field="stripeInvoiceId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="in_..." />
+        )}
+        {op === 'get_payment_intent' && (
+          <TextField label="Payment Intent ID" field="stripePaymentIntentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="pi_..." />
+        )}
+        {op === 'create_refund' && (<>
+          <TextField label="Payment Intent ID" field="stripePaymentIntentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="pi_..." />
+          <NumField label="Amount in cents (0 = full refund)" field="stripeAmount" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={0} />
+          <SelectField label="Reason" field="stripeRefundReason" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="requested_by_customer"
+            options={[{ value: 'requested_by_customer', label: 'Requested by customer' }, { value: 'duplicate', label: 'Duplicate' }, { value: 'fraudulent', label: 'Fraudulent' }]} />
+        </>)}
+        {op === 'create_payment_link' && (<>
           <ResourceField label="Price" provider="stripe" kind="price" field="stripePriceId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="price_..." />
           <NumField label="Quantity" field="stripeQuantity" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
         </>)}
+        {['list_customers', 'list_payments', 'list_invoices', 'list_subscriptions', 'list_products', 'list_refunds', 'list_events'].includes(op) && (
+          <NumField label="Limit" field="stripeLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        )}
       </IntegrationSection>
   )
 }
 
 export function ShopifyConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_orders'
   return (
       <IntegrationSection
         provider="shopify" label="Shopify" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
@@ -865,29 +915,71 @@ export function ShopifyConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
         ops={[
           { value: 'list_orders', label: 'List Orders' },
           { value: 'get_order', label: 'Get Order' },
+          { value: 'cancel_order', label: 'Cancel Order' },
+          { value: 'close_order', label: 'Close Order' },
           { value: 'list_products', label: 'List Products' },
+          { value: 'get_product', label: 'Get Product' },
           { value: 'create_product', label: 'Create Product' },
+          { value: 'update_product', label: 'Update Product' },
+          { value: 'delete_product', label: 'Delete Product' },
           { value: 'list_customers', label: 'List Customers' },
+          { value: 'get_customer', label: 'Get Customer' },
+          { value: 'search_customers', label: 'Search Customers' },
+          { value: 'create_customer', label: 'Create Customer' },
+          { value: 'create_draft_order', label: 'Create Draft Order' },
+          { value: 'list_draft_orders', label: 'List Draft Orders' },
+          { value: 'list_locations', label: 'List Locations' },
+          { value: 'adjust_inventory', label: 'Adjust Inventory' },
+          { value: 'create_discount_code', label: 'Create Discount Code' },
         ]}
         tokenPlaceholder="shpat_..."
         hideManual
       >
-        {data.integrationOp === 'list_orders' && (<>
+        {op === 'list_orders' && (
           <SelectField label="Status" field="shopifyStatus" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="any"
             options={[{ value: 'any', label: 'Any' }, { value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }]} />
-          <NumField label="Limit" field="shopifyLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
-        </>)}
-        {(data.integrationOp === 'list_products' || data.integrationOp === 'list_customers') && (
-          <NumField label="Limit" field="shopifyLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         )}
-        {data.integrationOp === 'get_order' && (
+        {(op === 'get_order' || op === 'cancel_order' || op === 'close_order') && (
           <TextField label="Order ID" field="shopifyOrderId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
         )}
-        {data.integrationOp === 'create_product' && (<>
-          <TextField label="Title" field="shopifyTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-          <AreaField label="Description" field="shopifyDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-          <TextField label="Price" field="shopifyPrice" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="19.99" />
+        {(op === 'get_product' || op === 'update_product' || op === 'delete_product') && (
+          <TextField label="Product ID" field="shopifyProductId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        )}
+        {(op === 'create_product' || op === 'update_product') && (<>
+          <TextField label={op === 'update_product' ? 'Title (optional)' : 'Title'} field="shopifyTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label={op === 'update_product' ? 'Description (optional)' : 'Description'} field="shopifyDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label={op === 'update_product' ? 'Price (optional)' : 'Price'} field="shopifyPrice" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="19.99" />
         </>)}
+        {op === 'get_customer' && (
+          <TextField label="Customer ID" field="shopifyCustomerId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        )}
+        {op === 'search_customers' && (
+          <TextField label="Search query" field="shopifyQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
+        )}
+        {op === 'create_customer' && (<>
+          <TextField label="Email" field="shopifyCustomerEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
+          <TextField label="Name" field="shopifyCustomerName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane Doe" />
+        </>)}
+        {op === 'create_draft_order' && (<>
+          <TextField label="Line item title" field="shopifyTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Custom order" />
+          <TextField label="Price" field="shopifyPrice" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="49.00" />
+          <NumField label="Quantity" field="shopifyQuantity" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
+          <TextField label="Customer email (optional)" field="shopifyCustomerEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@example.com" />
+        </>)}
+        {op === 'adjust_inventory' && (<>
+          <TextField label="Inventory item ID" field="shopifyInventoryItemId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="from product variant" />
+          <TextField label="Location ID" field="shopifyLocationId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="from List Locations" />
+          <NumField label="Adjustment (±)" field="shopifyDelta" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
+        </>)}
+        {op === 'create_discount_code' && (<>
+          <TextField label="Code" field="shopifyDiscountCode" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="SUMMER20" />
+          <SelectField label="Type" field="shopifyDiscountType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="percentage"
+            options={[{ value: 'percentage', label: 'Percentage off' }, { value: 'fixed_amount', label: 'Fixed amount off' }]} />
+          <TextField label="Value" field="shopifyDiscountValue" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="20" />
+        </>)}
+        {['list_orders', 'list_products', 'list_customers', 'search_customers', 'list_draft_orders'].includes(op) && (
+          <NumField label="Limit" field="shopifyLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
+        )}
       </IntegrationSection>
   )
 }
