@@ -19,6 +19,7 @@ interface ToolChip {
   id: string
   node: string
   nodeId: string
+  op?: string
   status: 'running' | 'ok' | 'error'
   error?: string
 }
@@ -45,6 +46,7 @@ function fromStored(msgs: StoredAgentMessage[]): AgentMessage[] {
       id: crypto.randomUUID(),
       node: t.node,
       nodeId: t.nodeId,
+      op: t.op,
       status: t.status,
     })),
   }))
@@ -154,7 +156,7 @@ export function WorkflowChatPage() {
         onText: (delta) => patch((msg) => ({ ...msg, content: msg.content + delta })),
         onToolStart: (chip) => patch((msg) => ({
           ...msg,
-          toolCalls: [...msg.toolCalls, { id: crypto.randomUUID(), node: chip.node, nodeId: chip.nodeId, status: 'running' }],
+          toolCalls: [...msg.toolCalls, { id: crypto.randomUUID(), node: chip.node, nodeId: chip.nodeId, op: chip.op, status: 'running' }],
         })),
         onToolResult: (chip) => patch((msg) => {
           // The same node can run more than once per turn — resolve the
@@ -389,27 +391,32 @@ function AgentBubble({ message }: { message: AgentMessage }) {
     )
   }
 
-  // Assistant — plain text on the canvas, tool activity as quiet rows above
+  // Assistant — bordered surface card (visually distinct from the user's
+  // borderless filled pill), tool activity as quiet rows above
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-w-0 flex-col items-start gap-2">
       {message.toolCalls.map((t) => <ToolActivityRow key={t.id} chip={t} />)}
 
-      {message.loading && !message.content ? (
-        <div className="flex items-center gap-1.5 py-1">
-          <div className="flex gap-1">
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:0ms]" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:300ms]" />
-          </div>
-          <span className="text-[11px] text-[var(--color-muted)]">
-            {message.toolCalls.some((t) => t.status === 'running') ? 'Running…' : 'Thinking…'}
-          </span>
+      {(message.content || message.loading) && (
+        <div className="min-w-0 max-w-full rounded-2xl rounded-tl-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+          {message.loading && !message.content ? (
+            <div className="flex items-center gap-1.5">
+              <div className="flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:300ms]" />
+              </div>
+              <span className="text-[11px] text-[var(--color-muted)]">
+                {message.toolCalls.some((t) => t.status === 'running') ? 'Running…' : 'Thinking…'}
+              </span>
+            </div>
+          ) : (
+            <div className="chat-markdown min-w-0 text-[13.5px] leading-relaxed text-[var(--color-text)]">
+              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
+            </div>
+          )}
         </div>
-      ) : message.content ? (
-        <div className="chat-markdown min-w-0 text-[13.5px] leading-relaxed text-[var(--color-text)]">
-          <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
-        </div>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -432,8 +439,13 @@ function ToolActivityRow({ chip }: { chip: ToolChip }) {
         </svg>
       )}
       <span className="truncate">
-        {chip.status === 'running' ? `Running ${chip.node}…` : chip.status === 'ok' ? `Ran ${chip.node}` : `${chip.node} failed`}
+        {(() => {
+          // Lead with what the call actually did; the node label is context
+          const what = chip.op || chip.node
+          return chip.status === 'running' ? `${what}…` : chip.status === 'ok' ? what : `${what} failed`
+        })()}
       </span>
+      {chip.op && <span className="flex-shrink-0 text-[var(--color-subtle)]">· {chip.node}</span>}
       {chip.error && <span className="truncate text-[var(--color-subtle)]">— {chip.error}</span>}
     </div>
   )

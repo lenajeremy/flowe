@@ -15,6 +15,8 @@ export interface ChatSessionSummary {
 export interface AgentToolCallRecord {
   node: string
   nodeId: string
+  /** The operation the call actually ran (override-aware), e.g. "List issues" */
+  op?: string
   status: 'ok' | 'error'
 }
 
@@ -61,8 +63,8 @@ export async function deleteChatSession(id: string): Promise<void> {
 export interface AgentTurnHandlers {
   onThinking?: (delta: string) => void
   onText: (delta: string) => void
-  onToolStart: (chip: { node: string; nodeId: string }) => void
-  onToolResult: (chip: { node: string; nodeId: string; status: 'ok' | 'error'; error?: string }) => void
+  onToolStart: (chip: { node: string; nodeId: string; op?: string }) => void
+  onToolResult: (chip: { node: string; nodeId: string; op?: string; status: 'ok' | 'error'; error?: string }) => void
   onError: (message: string) => void
 }
 
