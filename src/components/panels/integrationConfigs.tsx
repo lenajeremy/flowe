@@ -63,6 +63,30 @@ function NumField({ label, field, data, nodeId, updateNodeData, fallback }: Fiel
   )
 }
 
+// Native datetime-local picker; stores ISO 8601 UTC in the node data so the
+// backend can pass it straight to provider APIs.
+function DateTimeField({ label, field, data, nodeId, updateNodeData }: FieldProps) {
+  const iso = typeof data[field] === 'string' ? (data[field] as string) : ''
+  // ISO (UTC) → "YYYY-MM-DDTHH:mm" in the user's local time for the input
+  let local = ''
+  if (iso) {
+    const d = new Date(iso)
+    if (!Number.isNaN(d.getTime())) {
+      const pad = (n: number) => String(n).padStart(2, '0')
+      local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+    }
+  }
+  return (
+    <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
+      <input id={`cfg-${nodeId}-${field}`} type="datetime-local" className={inputClass}
+        value={local}
+        onChange={(e) => updateNodeData(nodeId, {
+          [field]: e.target.value ? new Date(e.target.value).toISOString() : '',
+        })} />
+    </FormField>
+  )
+}
+
 function SelectField({ label, field, data, nodeId, updateNodeData, fallback, options }: FieldProps & { fallback: string; options: { value: string; label: string }[] }) {
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
@@ -792,6 +816,15 @@ export function GithubConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           <TextField label="Ref" field="githubRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
           <AreaField label="Inputs (optional JSON)" field="githubBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder={'{"environment":"prod"}'} />
         </>)}
+        {(op === 'list_commits' || op === 'list_workflow_runs') && (<>
+          <DateTimeField label={op === 'list_commits' ? 'Committed after (optional)' : 'Created after (optional)'}
+            field="githubSince" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label={op === 'list_commits' ? 'Committed before (optional)' : 'Created before (optional)'}
+            field="githubUntil" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+        {op === 'list_issues' && (
+          <DateTimeField label="Updated after (optional)" field="githubSince" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        )}
         {['list_issues', 'list_pull_requests', 'list_commits', 'list_branches', 'list_releases', 'list_workflow_runs', 'search_issues', 'list_repos', 'list_pr_files'].includes(op) && (
           <NumField label="Limit" field="githubLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         )}
@@ -867,6 +900,13 @@ export function GitlabConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
             contentField="gitlabContent" pathField="gitlabPath" contentLabel="File content" />
           <TextField label="Commit message" field="gitlabCommitMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Update report" />
         </>)}
+        {['list_commits', 'list_issues', 'list_merge_requests', 'list_pipelines'].includes(op) && (() => {
+          const when = op === 'list_commits' ? 'Committed' : op === 'list_pipelines' ? 'Updated' : 'Created'
+          return (<>
+            <DateTimeField label={`${when} after (optional)`} field="gitlabSince" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+            <DateTimeField label={`${when} before (optional)`} field="gitlabUntil" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          </>)
+        })()}
         {['list_issues', 'list_merge_requests', 'list_branches', 'list_commits', 'list_pipelines'].includes(op) && (
           <NumField label="Limit" field="gitlabLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={10} />
         )}

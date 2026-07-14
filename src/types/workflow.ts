@@ -146,6 +146,8 @@ export type FlowNodeData = {
   githubWorkflowId?: string
   githubQuery?: string
   githubPrNumber?: string
+  githubSince?: string         // ISO 8601 time filter (commits/issues/runs)
+  githubUntil?: string
 
   // gitlab
   gitlabProjectId?: string
@@ -163,6 +165,8 @@ export type FlowNodeData = {
   gitlabCommitMessage?: string
   gitlabStateEvent?: string
   gitlabMrIid?: string
+  gitlabSince?: string         // ISO 8601 time filter (commits/issues/MRs/pipelines)
+  gitlabUntil?: string
 
   // gmail
   gmailTo?: string
