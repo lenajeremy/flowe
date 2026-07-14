@@ -383,19 +383,6 @@ export function WorkflowEditorPage() {
             </div>
           )}
 
-          {/* Chat with workflow */}
-          <button
-            onClick={() => navigate(`/workflow/${id}/chat`)}
-            className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
-            title="Chat with this workflow — runs nodes on demand, never modifies the canvas"
-          >
-            <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
-              <path d="M1.5 6.5a5 5 0 015-5h0a5 5 0 015 5h0a5 5 0 01-5 5H2.5a1 1 0 01-1-1V6.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
-              <path d="M4.3 5.5h4.4M4.3 7.7h2.9" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-            </svg>
-            Chat
-          </button>
-
           {/* Save */}
           <button
             onClick={handleSave}
@@ -551,6 +538,31 @@ export function WorkflowEditorPage() {
                 </motion.div>
               )}
               </AnimatePresence>
+
+              {/* Chat with workflow — FAB; slides left of the config panel when it's open */}
+              <motion.button
+                onClick={() => navigate(`/workflow/${id}/chat`)}
+                title="Chat with this workflow — runs nodes on demand, never modifies the canvas"
+                className="absolute bottom-4 z-10 flex h-12 w-12 items-center justify-center rounded-full"
+                style={{
+                  background: 'var(--color-accent)',
+                  color: '#0a0a0d',
+                  boxShadow: '0 8px 24px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 2px 8px rgba(0,0,0,0.25)',
+                }}
+                initial={{ opacity: 0, scale: 0.8, right: 16 }}
+                animate={{ opacity: 1, scale: 1, right: isConfigPanelOpen ? 8 + 349 + 16 : 16 }}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M2.5 10a7.5 7.5 0 117.5 7.5H4a1.5 1.5 0 01-1.5-1.5v-6z"
+                    stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"
+                  />
+                  <path d="M6.8 8.6h6.4M6.8 11.6h4.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </motion.button>
 
               {/* Input picker — floating overlay, Figma frame 170 */}
               <InputPanel />

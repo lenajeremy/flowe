@@ -50,14 +50,6 @@ function fromStored(msgs: StoredAgentMessage[]): AgentMessage[] {
   }))
 }
 
-function timeAgo(iso: string): string {
-  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
-  if (s < 60) return 'just now'
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
-  return `${Math.floor(s / 86400)}d ago`
-}
-
 // ── Page ────────────────────────────────────────────────────────
 
 export function WorkflowChatPage() {
@@ -202,10 +194,10 @@ export function WorkflowChatPage() {
   }, [sessionId, selectSession])
 
   return (
-    <div className="flex h-screen flex-col bg-[var(--color-canvas)] text-[var(--color-text)]">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3">
-        <div className="flex items-center gap-1">
+    <div className="flex h-screen bg-[var(--color-canvas)] text-[var(--color-text)]">
+      {/* ── Sidebar — tinted, borderless, plain rows ─────────── */}
+      <aside className="flex w-[260px] flex-shrink-0 flex-col bg-[var(--color-surface)]">
+        <div className="flex h-14 items-center px-4">
           <button
             onClick={() => navigate('/workflows')}
             className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-[var(--color-hover)]"
@@ -213,148 +205,138 @@ export function WorkflowChatPage() {
           >
             <FloweIcon size={20} />
           </button>
+        </div>
+
+        <div className="px-2.5">
+          <button
+            onClick={() => selectSession(null)}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
+          >
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+              <path d="M12.9 1.9a1.4 1.4 0 012 2L7.6 11.2l-2.8.8.8-2.8 7.3-7.3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+              <path d="M13 8.5V12a1.5 1.5 0 01-1.5 1.5H3A1.5 1.5 0 011.5 12V3.5A1.5 1.5 0 013 2h3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            New chat
+          </button>
           <button
             onClick={() => navigate(`/workflow/${workflowId}`)}
-            className="pressable flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+              <rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="9" y="9" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M6 3.75h4.25v3.5M9 11.25H4.75v-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Editor
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[14px] font-semibold">{workflowName || '…'}</span>
-          <span
-            className="rounded-[15px] px-2 py-0.5 text-[10px] font-medium uppercase"
-            style={{
-              color: 'var(--color-accent)',
-              background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            chat
-          </span>
+        <div className="px-5 pb-1 pt-5 text-[11px] font-medium text-[var(--color-subtle)]">
+          Chats
         </div>
-
-        <div className="flex items-center gap-2.5" style={{ minWidth: 120, justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => selectSession(null)}
-            className="pressable flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            New chat
-          </button>
-          <UserMenu />
-        </div>
-      </header>
-
-      <div className="flex min-h-0 flex-1">
-        {/* ── Session sidebar ─────────────────────────────── */}
-        <aside className="flex w-60 flex-shrink-0 flex-col border-r border-[var(--color-border)]">
-          <div className="px-4 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-[var(--color-subtle)]">
-            Conversations
-          </div>
-          <div className="flex-1 overflow-y-auto px-2 pb-2">
-            {sessions.length === 0 && (
-              <p className="px-2 pt-2 text-[12px] text-[var(--color-muted)]">
-                No conversations yet — say hello.
-              </p>
-            )}
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`group/sess relative mt-1 rounded-lg border ${
-                  s.id === sessionId
-                    ? 'border-[var(--color-border2)] bg-[var(--color-surface)]'
-                    : 'border-transparent hover:bg-[var(--color-hover)]'
-                }`}
-              >
-                <button
-                  onClick={() => selectSession(s.id)}
-                  className="w-full px-2.5 py-2 text-left"
-                >
-                  <div className="truncate pr-5 text-[12px] font-medium text-[var(--color-text)]">
-                    {s.title || 'New chat'}
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-[var(--color-subtle)]">{timeAgo(s.updated_at)}</div>
-                </button>
-                <button
-                  onClick={() => void removeSession(s.id)}
-                  title="Delete conversation"
-                  className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-md text-[var(--color-subtle)] opacity-0 transition-opacity hover:bg-[var(--color-hover)] hover:text-[var(--color-fail)] group-hover/sess:opacity-100"
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* ── Chat column ─────────────────────────────────── */}
-        <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto flex max-w-[720px] flex-col gap-4 px-5 py-6">
-              {messages.length === 0 ? (
-                <EmptyState workflowName={workflowName} toolNodes={toolNodes} />
-              ) : (
-                messages.map((m) => <AgentBubble key={m.id} message={m} />)
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* ── Input ───────────────────────────────────── */}
-          <div className="border-t border-[var(--color-border)] px-5 py-3.5">
-            <div className="mx-auto flex max-w-[720px] items-end gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 focus-within:border-[var(--color-border2)]">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    void send()
-                  }
-                }}
-                rows={Math.min(4, Math.max(1, input.split('\n').length))}
-                placeholder={`Message ${workflowName || 'this workflow'}…`}
-                className="max-h-32 flex-1 resize-none bg-transparent py-1 text-[13px] leading-relaxed text-[var(--color-text)] outline-none placeholder:text-[var(--color-subtle)]"
-              />
-              {isStreaming ? (
-                <button
-                  onClick={() => abortRef.current?.abort()}
-                  title="Stop"
-                  className="pressable flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--color-text)] text-[var(--color-canvas)]"
-                >
-                  <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor">
-                    <rect x="1.5" y="1.5" width="7" height="7" rx="1" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={() => void send()}
-                  disabled={!input.trim()}
-                  title="Send"
-                  className="pressable flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--color-text)] text-[var(--color-canvas)] disabled:opacity-40"
-                >
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                    <path d="M6 10V2M2.5 5.5L6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <p className="mx-auto mt-1.5 max-w-[720px] text-[10px] text-[var(--color-subtle)]">
-              Chatting runs this workflow's nodes on demand — the workflow itself is never modified.
+        <div className="flex-1 overflow-y-auto px-2.5 pb-3">
+          {sessions.length === 0 && (
+            <p className="px-2.5 pt-1 text-[12px] text-[var(--color-subtle)]">
+              No conversations yet
             </p>
+          )}
+          {sessions.map((s) => (
+            <div
+              key={s.id}
+              className={`group/sess relative rounded-lg ${
+                s.id === sessionId ? 'bg-[var(--color-hover2)]' : 'hover:bg-[var(--color-hover)]'
+              }`}
+            >
+              <button
+                onClick={() => selectSession(s.id)}
+                className="w-full truncate px-2.5 py-2 pr-7 text-left text-[13px] text-[var(--color-text)]"
+              >
+                {s.title || 'New chat'}
+              </button>
+              <button
+                onClick={() => void removeSession(s.id)}
+                title="Delete chat"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-[var(--color-subtle)] opacity-0 transition-opacity hover:text-[var(--color-fail)] group-hover/sess:opacity-100"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* ── Main column ──────────────────────────────────────── */}
+      <main className="flex min-w-0 flex-1 flex-col">
+        {/* Borderless header — workflow name + account */}
+        <header className="flex h-14 flex-shrink-0 items-center justify-between px-5">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[14px] font-semibold">{workflowName || '…'}</span>
+            <span className="text-[11px] text-[var(--color-subtle)]">chat</span>
           </div>
-        </main>
-      </div>
+          <UserMenu />
+        </header>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto flex max-w-[760px] flex-col gap-5 px-6 pb-6 pt-2">
+            {messages.length === 0 ? (
+              <EmptyState workflowName={workflowName} toolNodes={toolNodes} />
+            ) : (
+              messages.map((m) => <AgentBubble key={m.id} message={m} />)
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* ── Floating pill input ─────────────────────────── */}
+        <div className="px-6 pb-3 pt-1">
+          <div
+            className="mx-auto flex max-w-[760px] items-end gap-2 rounded-[26px] border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-4 pr-2 transition-colors focus-within:border-[var(--color-border2)]"
+            style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.18)' }}
+          >
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  void send()
+                }
+              }}
+              rows={Math.min(5, Math.max(1, input.split('\n').length))}
+              placeholder="Ask anything"
+              className="max-h-36 flex-1 resize-none bg-transparent py-1.5 text-[13.5px] leading-relaxed text-[var(--color-text)] outline-none placeholder:text-[var(--color-subtle)]"
+            />
+            {isStreaming ? (
+              <button
+                onClick={() => abortRef.current?.abort()}
+                title="Stop"
+                className="pressable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)]"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                  <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={() => void send()}
+                disabled={!input.trim()}
+                title="Send"
+                className="pressable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-text)] text-[var(--color-canvas)] disabled:opacity-30"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 10V2M2.5 5.5L6 2l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <p className="mt-2 text-center text-[10.5px] text-[var(--color-subtle)]">
+            Chat runs this workflow's nodes on demand — the workflow itself is never modified.
+          </p>
+        </div>
+      </main>
     </div>
   )
 }
@@ -366,20 +348,20 @@ function EmptyState({ workflowName, toolNodes }: {
   toolNodes: WorkflowASTNode[]
 }) {
   return (
-    <div className="flex flex-col items-center gap-4 pt-[14vh] text-center">
+    <div className="flex flex-col items-center gap-4 pt-[16vh] text-center">
       <FloweIcon size={34} className="text-[var(--color-accent)]" />
       <div>
-        <h1 className="text-[17px] font-semibold">{workflowName ? `Chat with ${workflowName}` : 'Chat with workflow'}</h1>
-        <p className="mt-1 text-[12.5px] text-[var(--color-muted)]">
+        <h1 className="text-[19px] font-semibold">{workflowName ? `Chat with ${workflowName}` : 'Chat with workflow'}</h1>
+        <p className="mt-1.5 text-[13px] text-[var(--color-muted)]">
           Ask anything — nodes run only when your request needs them.
         </p>
       </div>
       {toolNodes.length > 0 && (
-        <div className="flex max-w-[520px] flex-wrap items-center justify-center gap-1.5">
+        <div className="flex max-w-[540px] flex-wrap items-center justify-center gap-1.5">
           {toolNodes.map((n) => (
             <span
               key={n.id}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-muted)]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[11.5px] text-[var(--color-muted)]"
             >
               <span className="h-3.5 w-3.5" style={{ color: NODE_ACCENT_HEX[n.data.nodeType] }}>
                 {NODE_ICONS[n.data.nodeType]}
@@ -396,62 +378,60 @@ function EmptyState({ workflowName, toolNodes }: {
 // ── Message bubble ──────────────────────────────────────────────
 
 function AgentBubble({ message }: { message: AgentMessage }) {
+  // User — soft pill, right-aligned, no border
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] break-words rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[13px] leading-relaxed text-[var(--color-text)]">
+        <div className="max-w-[75%] whitespace-pre-wrap break-words rounded-3xl bg-[var(--color-surface2)] px-4 py-2.5 text-[13.5px] leading-relaxed text-[var(--color-text)]">
           {message.content}
         </div>
       </div>
     )
   }
 
+  // Assistant — plain text on the canvas, tool activity as quiet rows above
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      {message.toolCalls.map((t) => <ToolActivityChip key={t.id} chip={t} />)}
+    <div className="flex min-w-0 flex-col gap-2">
+      {message.toolCalls.map((t) => <ToolActivityRow key={t.id} chip={t} />)}
 
-      {(message.content || message.loading) && (
-        <div className="min-w-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[13px] leading-relaxed text-[var(--color-text)]">
-          {message.loading && !message.content ? (
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-1">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:300ms]" />
-              </div>
-              <span className="text-[11px] text-[var(--color-muted)]">
-                {message.toolCalls.some((t) => t.status === 'running') ? 'Running…' : 'Thinking…'}
-              </span>
-            </div>
-          ) : (
-            <div className="chat-markdown">
-              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
-            </div>
-          )}
+      {message.loading && !message.content ? (
+        <div className="flex items-center gap-1.5 py-1">
+          <div className="flex gap-1">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-muted)] [animation-delay:300ms]" />
+          </div>
+          <span className="text-[11px] text-[var(--color-muted)]">
+            {message.toolCalls.some((t) => t.status === 'running') ? 'Running…' : 'Thinking…'}
+          </span>
         </div>
-      )}
+      ) : message.content ? (
+        <div className="chat-markdown min-w-0 text-[13.5px] leading-relaxed text-[var(--color-text)]">
+          <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function ToolActivityChip({ chip }: { chip: ToolChip }) {
+function ToolActivityRow({ chip }: { chip: ToolChip }) {
   return (
-    <div className="flex w-fit max-w-full items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-2.5 py-1.5 text-[11.5px]">
+    <div className="flex items-center gap-2 text-[12px] text-[var(--color-muted)]">
       {chip.status === 'running' ? (
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 animate-spin text-[var(--color-accent)]">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 animate-spin text-[var(--color-accent)]">
           <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25" />
           <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       ) : chip.status === 'ok' ? (
-        <svg width="11" height="11" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-ok)]">
+        <svg width="12" height="12" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-ok)]">
           <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        <svg width="11" height="11" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-fail)]">
+        <svg width="12" height="12" viewBox="0 0 10 10" fill="none" className="flex-shrink-0 text-[var(--color-fail)]">
           <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       )}
-      <span className="truncate text-[var(--color-muted)]">
+      <span className="truncate">
         {chip.status === 'running' ? `Running ${chip.node}…` : chip.status === 'ok' ? `Ran ${chip.node}` : `${chip.node} failed`}
       </span>
       {chip.error && <span className="truncate text-[var(--color-subtle)]">— {chip.error}</span>}
