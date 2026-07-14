@@ -615,7 +615,7 @@ export function ConfigPanel() {
         {/* emailSend */}
         {nodeType === 'emailSend' && (
           <>
-            <FormField label="To" htmlFor="cfg-email-to" hint="Separate multiple addresses with commas">
+            <FormField label="To" htmlFor="cfg-email-to" hint="Separate multiple addresses with commas — each recipient gets their own copy and never sees the others">
               <TemplateField
                 id="cfg-email-to"
                 value={typeof data.emailTo === 'string' ? data.emailTo : ''}
