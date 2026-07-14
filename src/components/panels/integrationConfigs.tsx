@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { FormField, inputClass } from '@/components/ui/FormField'
 import { TemplateField } from '@/components/ui/TemplateField'
 import { Select } from '@/components/ui/Select'
@@ -83,6 +84,96 @@ function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeD
         value={typeof data[field] === 'string' ? (data[field] as string) : ''}
         onChange={(val) => updateNodeData(nodeId, { [field]: val })} />
     </FormField>
+  )
+}
+
+
+// FilePickField: file-upload ops take a real file instead of typed content.
+// Picking a file reads it as text and fills the provider's content + name
+// fields (and MIME type where given); "Use template content instead" swaps
+// in the TemplateField for workflow-generated files (e.g. LLM output).
+const FILE_PICK_MAX = 1 << 20 // 1MB — content is stored in the workflow JSON
+
+function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, mimeField }: {
+  data: FlowNodeData
+  nodeId: string
+  updateNodeData: UpdateFn
+  contentField: string
+  nameField: string
+  mimeField?: string
+}) {
+  const [manual, setManual] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const name = typeof data[nameField] === 'string' ? (data[nameField] as string) : ''
+  const content = typeof data[contentField] === 'string' ? (data[contentField] as string) : ''
+  const hasFile = !manual && name !== '' && content !== ''
+
+  function handleFile(file: File | undefined) {
+    if (!file) return
+    if (file.size > FILE_PICK_MAX) {
+      setError('File is too large — 1MB max (larger files: use template content from an upstream node)')
+      return
+    }
+    setError(null)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = typeof ev.target?.result === 'string' ? ev.target.result : ''
+      const partial: Record<string, unknown> = { [contentField]: text, [nameField]: file.name }
+      if (mimeField) partial[mimeField] = file.type || 'text/plain'
+      updateNodeData(nodeId, partial as Partial<FlowNodeData>)
+    }
+    reader.onerror = () => setError('Could not read that file')
+    reader.readAsText(file)
+  }
+
+  return (
+    <div className="mb-3 flex flex-col gap-1.5">
+      <span className="micro text-[var(--color-subtle)]">File</span>
+      {manual ? (
+        <>
+          <TextField label="File name" field={nameField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
+          <AreaField label="Content" field={contentField} data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>
+      ) : hasFile ? (
+        <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface2)] px-3 py-2.5">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 text-[var(--color-accent)]">
+            <path d="M4 2h5l3 3v9H4V2zM9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+          </svg>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[12px] font-medium text-[var(--color-text)]">{name}</p>
+            <p className="text-[10px] text-[var(--color-subtle)]">{(content.length / 1024).toFixed(1)} KB loaded</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => updateNodeData(nodeId, { [contentField]: '', [nameField]: '' } as Partial<FlowNodeData>)}
+            className="flex-shrink-0 text-[11px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-fail)]"
+          >
+            Remove
+          </button>
+        </div>
+      ) : (
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--color-border2)] px-4 py-4 text-[12px] text-[var(--color-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-text)]">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v8M4 4l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1 10v1.5A1.5 1.5 0 002.5 13h9a1.5 1.5 0 001.5-1.5V10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          Select file
+          <input
+            type="file"
+            className="sr-only"
+            onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = '' }}
+          />
+        </label>
+      )}
+      {error && <p className="text-[11px] text-[var(--color-fail)]">{error}</p>}
+      <button
+        type="button"
+        onClick={() => { setManual((v) => !v); setError(null) }}
+        className="self-start text-[10px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]"
+      >
+        {manual ? '− Select a file instead' : '+ Use template content instead'}
+      </button>
+    </div>
   )
 }
 
@@ -1204,10 +1295,10 @@ export function SlackConfig({ data, nodeId, updateNodeData }: ProviderConfigProp
         {op === 'add_reaction' && (
           <TextField label="Emoji (no colons)" field="slackEmoji" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="tada" />
         )}
-        {op === 'upload_file' && (<>
-          <TextField label="File name" field="slackFileName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
-          <AreaField label="File content" field="slackFileContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-        </>)}
+        {op === 'upload_file' && (
+          <FilePickField data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            contentField="slackFileContent" nameField="slackFileName" />
+        )}
         {op === 'create_channel' && (<>
           <TextField label="Channel name" field="slackChannelName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="launch-updates" />
           <SelectField label="Visibility" field="slackPrivate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="false"
@@ -1267,17 +1358,10 @@ export function GoogleDriveConfig({ data, nodeId, updateNodeData }: ProviderConf
         {needsFile && (
           <TextField label="File ID" field="gdriveFileId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output.id}}" />
         )}
-        {op === 'upload_file' && (<>
-          <TextField label="File name" field="gdriveName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="report.md" />
-          <SelectField label="Type" field="gdriveMimeType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="text/plain"
-            options={[
-              { value: 'text/plain', label: 'Plain text' },
-              { value: 'text/markdown', label: 'Markdown' },
-              { value: 'text/csv', label: 'CSV' },
-              { value: 'application/json', label: 'JSON' },
-            ]} />
-          <AreaField label="Content" field="gdriveContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
-        </>)}
+        {op === 'upload_file' && (
+          <FilePickField data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            contentField="gdriveContent" nameField="gdriveName" mimeField="gdriveMimeType" />
+        )}
         {(op === 'create_folder' || op === 'upload_file' || op === 'copy_file' || op === 'move_file') && (
           <ResourceField label={op === 'move_file' ? 'Destination folder' : 'Parent folder (optional)'} provider="googledrive" kind="folder" field="gdriveParentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="root" />
         )}
