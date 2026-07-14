@@ -20,4 +20,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // shadcn-generated primitives export cva variants beside components
+    // (buttonVariants, badgeVariants) — the react-refresh rule misfires.
+    files: ['src/components/ui/button.tsx', 'src/components/ui/badge.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

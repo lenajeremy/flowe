@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { getApiKeys, saveApiKeys } from '@/lib/apiKeys'
 import { listApiKeys, createApiKey, deleteApiKey, type ApiKey } from '@/lib/workflowApi'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   onClose: () => void
@@ -31,13 +34,13 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
               claude-* models
             </span>
           </div>
-          <input
+          <Input
             id="key-anthropic"
             type="password"
             value={anthropic}
             onChange={(e) => setAnthropic(e.target.value)}
             placeholder="sk-ant-…"
-            className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-3 py-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-muted)] font-[var(--font-mono)]"
+            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-[var(--font-mono)] text-xs"
           />
         </div>
 
@@ -52,13 +55,13 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
               gpt-* models
             </span>
           </div>
-          <input
+          <Input
             id="key-openai"
             type="password"
             value={openai}
             onChange={(e) => setOpenai(e.target.value)}
             placeholder="sk-…"
-            className="w-full bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-3 py-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-muted)] font-[var(--font-mono)]"
+            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-[var(--font-mono)] text-xs"
           />
         </div>
 
@@ -189,21 +192,22 @@ function ApiKeysTab() {
       <div className="flex flex-col gap-2">
         <p className="micro text-[var(--color-subtle)]">Create new key</p>
         <div className="flex gap-2">
-          <input
+          <Input
             type="text"
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void handleCreate() }}
             placeholder="Key name (e.g. my-app)"
-            className="flex-1 bg-[var(--color-surface2)] border border-[var(--color-border)] rounded px-3 py-1.5 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-muted)]"
+            className="h-auto flex-1 rounded bg-[var(--color-surface2)] px-3 py-1.5 text-xs"
           />
-          <button
+          <Button
             onClick={() => void handleCreate()}
             disabled={creating || !newKeyName.trim()}
-            className="pressable rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-xs font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            variant="secondary"
+            className="pressable rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-xs font-semibold text-[var(--color-canvas)] hover:bg-[var(--color-text)] hover:opacity-90"
           >
             {creating ? 'Creating…' : 'Create'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -274,34 +278,15 @@ export function ApiKeyModal({ onClose }: Props) {
   const [activeTab, setActiveTab] = useState<'llm' | 'api'>('llm')
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-[var(--color-scrim)] backdrop-blur-sm" />
-
-      {/* Dialog */}
-      <div className="rise-in relative mx-4 w-full max-w-md rounded-2xl border border-[var(--color-border2)] bg-[var(--color-surface)] shadow-[var(--pop-shadow)]">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="gap-0 bg-[var(--color-surface)] p-0 sm:max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
-          <div className="flex items-center gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-[var(--color-text)]">API Keys</h2>
-              <p className="text-[11px] text-[var(--color-muted)] mt-0.5">
-                Manage your LLM provider keys and programmatic API keys.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors p-1 rounded hover:bg-[var(--color-surface2)]"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
+        <DialogHeader className="border-b border-[var(--color-border)] px-5 py-4">
+          <DialogTitle className="text-sm font-semibold">API Keys</DialogTitle>
+          <DialogDescription className="mt-0.5 text-[11px]">
+            Manage your LLM provider keys and programmatic API keys.
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Tab switcher */}
         <div className="flex gap-0 border-b border-[var(--color-border)]">
@@ -335,7 +320,7 @@ export function ApiKeyModal({ onClose }: Props) {
             <ApiKeysTab />
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

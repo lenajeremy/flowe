@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { FormField, inputClass } from '@/components/ui/FormField'
 import { TemplateField } from '@/components/ui/TemplateField'
-import { Select } from '@/components/ui/Select'
+import { Select } from '@/components/ui/select'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { IntegrationConnect } from '@/components/ui/IntegrationConnect'
 import { ResourcePicker } from '@/components/ui/ResourcePicker'
 import type { FlowNodeData } from '@/types/workflow'
+import { Input } from '@/components/ui/input'
 
 // ── Integration provider config blocks ────────────────────────
 // One component per provider, rendered by ConfigPanel. Shared field helpers
@@ -56,33 +58,21 @@ function AreaField({ label, field, data, nodeId, updateNodeData, placeholder }: 
 function NumField({ label, field, data, nodeId, updateNodeData, fallback }: FieldProps & { fallback: number }) {
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
-      <input id={`cfg-${nodeId}-${field}`} type="number" className={inputClass}
+      <Input id={`cfg-${nodeId}-${field}`} type="number" className={inputClass}
         value={String(typeof data[field] === 'number' ? (data[field] as number) : fallback)}
         onChange={(e) => updateNodeData(nodeId, { [field]: Number(e.target.value) })} />
     </FormField>
   )
 }
 
-// Native datetime-local picker; stores ISO 8601 UTC in the node data so the
+// Calendar + time popover; stores ISO 8601 UTC in the node data so the
 // backend can pass it straight to provider APIs.
 function DateTimeField({ label, field, data, nodeId, updateNodeData }: FieldProps) {
-  const iso = typeof data[field] === 'string' ? (data[field] as string) : ''
-  // ISO (UTC) → "YYYY-MM-DDTHH:mm" in the user's local time for the input
-  let local = ''
-  if (iso) {
-    const d = new Date(iso)
-    if (!Number.isNaN(d.getTime())) {
-      const pad = (n: number) => String(n).padStart(2, '0')
-      local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-    }
-  }
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
-      <input id={`cfg-${nodeId}-${field}`} type="datetime-local" className={inputClass}
-        value={local}
-        onChange={(e) => updateNodeData(nodeId, {
-          [field]: e.target.value ? new Date(e.target.value).toISOString() : '',
-        })} />
+      <DateTimePicker id={`cfg-${nodeId}-${field}`}
+        value={typeof data[field] === 'string' ? (data[field] as string) : ''}
+        onChange={(iso) => updateNodeData(nodeId, { [field]: iso })} />
     </FormField>
   )
 }
@@ -250,7 +240,7 @@ function IntegrationSection({
         hasManualToken={!hideManual && typeof data.integrationToken === 'string' && data.integrationToken !== ''}
         manualField={hideManual ? null : (
           <FormField label={`${label} Token`} htmlFor={`cfg-${nodeId}-token`}>
-            <input id={`cfg-${nodeId}-token`} type="password" className={inputClass} placeholder={tokenPlaceholder}
+            <Input id={`cfg-${nodeId}-token`} type="password" className={inputClass} placeholder={tokenPlaceholder}
               value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
               onChange={(e) => updateNodeData(nodeId, { integrationToken: e.target.value })} />
           </FormField>
@@ -297,7 +287,7 @@ export function NotionConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           manualField={
             <>
               <FormField label="Notion API Token" htmlFor="cfg-notion-token">
-                <input
+                <Input
                   id="cfg-notion-token"
                   type="password"
                   value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
@@ -525,7 +515,7 @@ export function LinearConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           manualField={
             <>
               <FormField label="Linear API Key" htmlFor="cfg-linear-token">
-                <input
+                <Input
                   id="cfg-linear-token"
                   type="password"
                   value={typeof data.integrationToken === 'string' ? data.integrationToken : ''}
@@ -603,7 +593,7 @@ export function LinearConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
               />
             </FormField>
             <FormField label="Limit" htmlFor="cfg-linear-limit">
-              <input
+              <Input
                 id="cfg-linear-limit"
                 type="number"
                 value={String(typeof data.linearLimit === 'number' || typeof data.linearLimit === 'string' ? data.linearLimit : 25)}
@@ -659,7 +649,7 @@ export function LinearConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
                 placeholder="login bug" />
             </FormField>
             <FormField label="Limit" htmlFor="cfg-linear-limit-s">
-              <input id="cfg-linear-limit-s" type="number"
+              <Input id="cfg-linear-limit-s" type="number"
                 value={String(typeof data.linearLimit === 'number' ? data.linearLimit : 10)}
                 onChange={(e) => updateNodeData(nodeId, { linearLimit: Number(e.target.value) })}
                 className={inputClass} placeholder="10" />

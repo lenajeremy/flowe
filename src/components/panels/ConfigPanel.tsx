@@ -7,7 +7,7 @@ import { TemplateField } from '@/components/ui/TemplateField'
 import { JsonView } from '@/components/ui/JsonView'
 import { JsonEditor } from '@/components/ui/JsonEditor'
 import { SliderField } from '@/components/ui/SliderField'
-import { Select } from '@/components/ui/Select'
+import { Select } from '@/components/ui/select'
 import { NODE_LABELS } from '@/lib/nodeColors'
 import { NodeStatusTab, NodeLogsTab } from '@/components/panels/NodeRunTabs'
 import {
@@ -18,6 +18,8 @@ import {
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 
 type InspectorTab = 'configure' | 'status' | 'logs'
@@ -331,7 +333,7 @@ export function ConfigPanel() {
       <div className="flex flex-col p-4">
         {/* Common: Label */}
         <FormField label="Label" htmlFor="cfg-label">
-          <input
+          <Input
             id="cfg-label"
             type="text"
             value={data.label}
@@ -343,7 +345,7 @@ export function ConfigPanel() {
         {/* TextInput */}
         {nodeType === 'textInput' && (
           <FormField label="Default Value" htmlFor="cfg-default">
-            <textarea
+            <Textarea
               id="cfg-default"
               rows={4}
               value={typeof data.defaultValue === 'string' ? data.defaultValue : ''}
@@ -453,7 +455,7 @@ export function ConfigPanel() {
               onChange={(v) => updateNodeData(nodeId, { temperature: v })}
             />
             <FormField label="Max Tokens" htmlFor="cfg-tokens">
-              <input
+              <Input
                 id="cfg-tokens"
                 type="number"
                 min={64}
@@ -502,7 +504,7 @@ export function ConfigPanel() {
           <>
             <BranchInputHint upstreamNodes={upstreamNodes} />
             <FormField label="Condition" htmlFor="cfg-condition">
-              <input
+              <Input
                 id="cfg-condition"
                 type="text"
                 value={typeof data.condition === 'string' ? data.condition : ''}
@@ -523,7 +525,7 @@ export function ConfigPanel() {
         {nodeType === 'loop' && (
           <>
             <FormField label="Loop Over Field" htmlFor="cfg-loopfield">
-              <input
+              <Input
                 id="cfg-loopfield"
                 type="text"
                 value={typeof data.loopOverField === 'string' ? data.loopOverField : ''}
@@ -669,7 +671,7 @@ export function ConfigPanel() {
               </p>
             </FormField>
             <FormField label="Notification Email" htmlFor="cfg-approval-email">
-              <input
+              <Input
                 id="cfg-approval-email"
                 type="email"
                 value={typeof data.approvalEmail === 'string' ? data.approvalEmail : ''}
@@ -769,7 +771,7 @@ export function ConfigPanel() {
             {/* Time (not shown for hourly) */}
             {schedFrequency !== 'hourly' && (
               <FormField label={`Time (${userTz})`} htmlFor="cfg-sched-time">
-                <input
+                <Input
                   id="cfg-sched-time"
                   type="time"
                   value={schedTime}
@@ -795,7 +797,7 @@ export function ConfigPanel() {
             {/* Day of month (monthly only) */}
             {schedFrequency === 'monthly' && (
               <FormField label="Day of month" htmlFor="cfg-sched-dom">
-                <input
+                <Input
                   id="cfg-sched-dom"
                   type="number"
                   min={1}

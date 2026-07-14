@@ -7,6 +7,7 @@ import { setToken } from '@/lib/tokenStore'
 import { useAuthStore } from '@/store/authStore'
 import { FloweIcon } from '@/components/FloweIcon'
 import { inputClass } from '@/components/ui/FormField'
+import { Input } from '@/components/ui/input'
 
 const OTP_LENGTH = 6
 
@@ -119,7 +120,7 @@ export function LoginPage() {
 
         {step === 'email' ? (
           <form onSubmit={handleEmailSubmit} className="flex flex-col gap-3">
-            <input
+            <Input
               id="login-email"
               type="email"
               autoFocus
