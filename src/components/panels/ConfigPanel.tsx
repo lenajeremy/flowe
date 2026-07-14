@@ -615,12 +615,12 @@ export function ConfigPanel() {
         {/* emailSend */}
         {nodeType === 'emailSend' && (
           <>
-            <FormField label="To" htmlFor="cfg-email-to">
+            <FormField label="To" htmlFor="cfg-email-to" hint="Separate multiple addresses with commas">
               <TemplateField
                 id="cfg-email-to"
                 value={typeof data.emailTo === 'string' ? data.emailTo : ''}
                 onChange={(v) => updateNodeData(nodeId, { emailTo: v })}
-                placeholder="recipient@example.com"
+                placeholder="recipient@example.com, other@example.com"
               />
             </FormField>
             <FormField label="Subject" htmlFor="cfg-email-subject">

@@ -4,9 +4,11 @@ interface FormFieldProps {
   label: string
   htmlFor: string
   children: ReactNode
+  /** Small muted helper line under the field */
+  hint?: string
 }
 
-export function FormField({ label, htmlFor, children }: FormFieldProps) {
+export function FormField({ label, htmlFor, children, hint }: FormFieldProps) {
   return (
     <div className="flex flex-col gap-1 mb-3">
       <label
@@ -16,6 +18,7 @@ export function FormField({ label, htmlFor, children }: FormFieldProps) {
         {label}
       </label>
       {children}
+      {hint && <p className="text-[10px] text-[var(--color-subtle)]">{hint}</p>}
     </div>
   )
 }
