@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { list_events: 'List Events', create_event: 'Create Event', delete_event: 'Delete Event' }
+const OP_LABELS: Record<string, string> = { list_events: 'List Events', get_event: 'Get Event', create_event: 'Create Event', update_event: 'Update Event', delete_event: 'Delete Event', quick_add: 'Quick Add', respond_to_event: 'Respond to Invitation', find_free_time: 'Find Free Time', list_calendars: 'List Calendars' }
 
 export function GoogleCalendarNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'list_events'

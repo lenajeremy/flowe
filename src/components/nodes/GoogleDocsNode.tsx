@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { create_document: 'Create Document', get_document: 'Get Document', append_text: 'Append Text' }
+const OP_LABELS: Record<string, string> = { create_document: 'Create Document', create_from_template: 'Create from Template', get_document: 'Get Document', append_text: 'Append Text', insert_text_at_start: 'Insert at Start', replace_text: 'Find & Replace' }
 
 export function GoogleDocsNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'create_document'

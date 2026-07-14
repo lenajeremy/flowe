@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { read_range: 'Read Range', append_row: 'Append Row', update_range: 'Update Range', create_spreadsheet: 'Create Spreadsheet' }
+const OP_LABELS: Record<string, string> = { read_range: 'Read Range', append_row: 'Append Row', append_rows: 'Append Rows', update_range: 'Update Range', clear_range: 'Clear Range', find_replace: 'Find & Replace', list_sheets: 'List Sheet Tabs', add_sheet: 'Add Sheet Tab', delete_sheet: 'Delete Sheet Tab', delete_rows: 'Delete Rows', create_spreadsheet: 'Create Spreadsheet' }
 
 export function GoogleSheetsNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'read_range'

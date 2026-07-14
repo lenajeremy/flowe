@@ -4,7 +4,7 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
-const OP_LABELS: Record<string, string> = { list_files: 'List Files', search: 'Search', get_file: 'Get File', create_folder: 'Create Folder', delete_file: 'Delete File' }
+const OP_LABELS: Record<string, string> = { list_files: 'List Files', search: 'Search', get_file: 'Get File Info', read_file: 'Read File', upload_file: 'Upload File', create_folder: 'Create Folder', copy_file: 'Copy File', move_file: 'Move File', rename_file: 'Rename File', share_file: 'Share File', list_permissions: 'List Permissions', trash_file: 'Move to Trash', delete_file: 'Delete Permanently' }
 
 export function GoogleDriveNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.integrationOp === 'string' ? data.integrationOp : 'list_files'

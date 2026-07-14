@@ -180,6 +180,8 @@ export type FlowNodeData = {
   gcalEnd?: string
   gcalAttendees?: string       // comma-separated emails
   gcalLimit?: number
+  gcalText?: string            // quick_add natural language
+  gcalResponse?: string        // accepted | declined | tentative
 
   // outlook
   outlookTo?: string
@@ -222,17 +224,31 @@ export type FlowNodeData = {
   gdriveQuery?: string
   gdriveParentId?: string
   gdriveLimit?: number
+  gdriveContent?: string
+  gdriveMimeType?: string
+  gdriveEmail?: string
+  gdriveRole?: string
 
   // googledocs
   gdocsDocumentId?: string
   gdocsTitle?: string
   gdocsText?: string
+  gdocsFindText?: string
+  gdocsReplaceText?: string
+  gdocsTemplateId?: string
+  gdocsReplacements?: string
 
   // googlesheets
   gsheetsSpreadsheetId?: string
   gsheetsRange?: string        // A1 notation
   gsheetsValues?: string       // comma-separated cells
   gsheetsTitle?: string
+  gsheetsSheetTitle?: string   // tab name
+  gsheetsFind?: string
+  gsheetsReplace?: string
+  gsheetsRows?: string         // JSON array-of-arrays
+  gsheetsStartRow?: number
+  gsheetsEndRow?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown
