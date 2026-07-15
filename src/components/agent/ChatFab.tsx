@@ -133,7 +133,9 @@ export function ChatFab({ workflowId, workflowName, panelOpen }: {
         style={{
           right,
           background: 'var(--color-accent)',
-          color: '#0a0a0d',
+          // Ink flips with the theme: dark stroke on light-mode's deep accent,
+          // light stroke on dark-mode's pale accent (matches --primary-foreground).
+          color: 'var(--primary-foreground)',
           boxShadow: '0 8px 24px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 2px 8px rgba(0,0,0,0.25)',
           pointerEvents: fabVisible ? 'auto' : 'none',
         }}
