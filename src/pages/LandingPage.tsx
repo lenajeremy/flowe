@@ -19,13 +19,14 @@ const finePointer = () =>
   window.matchMedia('(pointer: fine)').matches
 
 // ─── Live aurora — the hero backdrop, rendered rather than drawn ──
-// Two passes on one canvas. The sky: three undulating curtains of vertical
-// light rays, a sharp green lower edge fading upward through purple into
-// pink — how a real aurora hangs, and it happens to be the brand ramp from
-// the closing CTA gradient. In front of it: aurora-lit dust. On fine
-// pointers the hand blows the dust away — motes scatter outward and along
-// the sweep, then each drifts back to its home on a soft spring. The sky
-// itself stays untouched; only the dust answers.
+// Three undulating curtains of vertical light rays: a sharp green lower
+// edge fading upward through purple into pink — how a real aurora hangs,
+// and it happens to be the brand ramp from the closing CTA gradient.
+// The sky is vapor. A coarse flow field, simulated on the CPU, bends the
+// curtains wherever the pointer sweeps; the disturbance diffuses outward
+// and dissipates, so the aurora drifts back to the flow it had before.
+// Moved, never warped — linear filtering over the blurred field keeps
+// every bend broad and continuous.
 // Raw WebGL, no dependencies. The static aurora.jpg stays underneath as
 // the instant paint and the fallback for reduced-motion / no-WebGL.
 // NB: the hash is sin-free (Hoskins) — sin-based hashes lose precision on
@@ -33,6 +34,7 @@ const finePointer = () =>
 const AURORA_FRAG = `precision highp float;
 uniform float u_t;
 uniform vec2 u_r;
+uniform sampler2D u_f;
 float hash(vec2 p){
   vec3 p3=fract(vec3(p.xyx)*0.1031);
   p3+=dot(p3,p3.yzx+33.33);
@@ -51,6 +53,12 @@ float fbm(vec2 p){
 void main(){
   vec2 uv=gl_FragCoord.xy/u_r;
   float ar=u_r.x/u_r.y;
+  // the vapor field — RG: displacement (decode mirrors the JS encode:
+  // v/SCALE*127+128, SCALE=0.15) · B: cavity, the density deficit where a
+  // body has broken through and the cloud material is simply gone
+  vec3 fld=texture2D(u_f,uv).rgb;
+  vec2 disp=(fld.rg-vec2(128.0/255.0))*(255.0/127.0)*0.15;
+  float cav=fld.b;
   vec2 sp=vec2(uv.x*ar,uv.y);
   float T=u_t*0.06;
   vec3 green=vec3(0.35,0.95,0.6);
@@ -59,14 +67,17 @@ void main(){
   vec3 col=vec3(0.0);
   for(int i=0;i<3;i++){
     float fi=float(i);
-    float x=sp.x*(1.0+fi*0.35)+fi*7.31;
+    // deeper curtains sway less — the vapor has depth
+    vec2 w=sp+vec2(disp.x*ar,disp.y)*(1.0-fi*0.25);
+    float x=w.x*(1.0+fi*0.35)+fi*7.31;
     float drift=T*(0.5+fi*0.3);
-    // shimmering vertical rays across the curtain
-    float ray=fbm(vec2(x*2.6+drift,drift*0.7+fi*13.7));
+    // shimmering rays with vertical grain — segments stream slowly upward,
+    // and give the vapor's vertical motion something visible to carry
+    float ray=fbm(vec2(x*2.6+drift,w.y*1.4-drift*0.9+fi*13.7));
     ray=pow(max(ray,0.0),3.0)*2.4;
     // the curtain's undulating lower edge
     float base=0.36+fi*0.11+0.22*(fbm(vec2(x*0.7-drift*0.8,fi*5.2))-0.5);
-    float d=sp.y-base;
+    float d=w.y-base;
     // sharp below, long glow fading upward
     float profile=smoothstep(-0.045,0.01,d)*exp(-max(d,0.0)*2.6);
     // green at the lower edge, purple through the body, pink at the top
@@ -74,37 +85,10 @@ void main(){
     c=mix(c,pink,smoothstep(0.28,0.62,d)*0.7);
     col+=c*ray*profile*(1.05-fi*0.25);
   }
+  // the hole the body tore open: dark inside, a compressed glow at the rim
+  col*=(1.0-0.85*cav)*(1.0+1.5*length(disp)*(1.0-cav));
   col*=0.25+0.75*smoothstep(0.0,0.55,uv.y);
   gl_FragColor=vec4(col,1.0);
-}`
-
-// Dust pass — one GL point per mote. Position comes from the CPU physics;
-// the vertex shader only adds a slow idle wander so dust never sits still.
-const DUST_VERT = `precision mediump float;
-attribute vec2 a_p;
-attribute vec3 a_c;
-attribute vec2 a_m;
-uniform float u_t;
-uniform float u_s;
-varying vec3 v_c;
-varying float v_tw;
-void main(){
-  vec2 p=a_p;
-  p.x+=sin(u_t*0.31+a_m.y*47.0)*0.006;
-  p.y+=cos(u_t*0.24+a_m.y*61.0)*0.005;
-  gl_Position=vec4(p*2.0-1.0,0.0,1.0);
-  gl_PointSize=max(1.0,a_m.x*u_s);
-  v_c=a_c;
-  v_tw=0.6+0.4*sin(u_t*(0.6+a_m.y)+a_m.y*40.0);
-}`
-
-const DUST_FRAG = `precision mediump float;
-varying vec3 v_c;
-varying float v_tw;
-void main(){
-  vec2 d=gl_PointCoord-0.5;
-  float a=exp(-dot(d,d)*14.0)*0.5*v_tw;
-  gl_FragColor=vec4(v_c*a,1.0);
 }`
 
 function AuroraShader() {
@@ -126,59 +110,46 @@ function AuroraShader() {
       gl.compileShader(s)
       return s
     }
-    const link = (vert: string, frag: string) => {
-      const p = gl.createProgram()!
-      gl.attachShader(p, compile(gl.VERTEX_SHADER, vert))
-      gl.attachShader(p, compile(gl.FRAGMENT_SHADER, frag))
-      gl.linkProgram(p)
-      return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null
-    }
+    const prog = gl.createProgram()!
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'))
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, AURORA_FRAG))
+    gl.linkProgram(prog)
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return
+    gl.useProgram(prog)
 
-    // ── Sky pass — one fullscreen triangle, no index buffer, no seam
-    const sky = link('attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}', AURORA_FRAG)
-    if (!sky) return
-    const skyBuf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf)
+    // One fullscreen triangle — no index buffer, no second triangle seam
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
-    const aSky = gl.getAttribLocation(sky, 'a')
-    const uT = gl.getUniformLocation(sky, 'u_t')
-    const uR = gl.getUniformLocation(sky, 'u_r')
+    const a = gl.getAttribLocation(prog, 'a')
+    gl.enableVertexAttribArray(a)
+    gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0)
+    const uT = gl.getUniformLocation(prog, 'u_t')
+    const uR = gl.getUniformLocation(prog, 'u_r')
+    gl.uniform1i(gl.getUniformLocation(prog, 'u_f'), 0)
 
-    // ── Dust pass — motes with homes; physics lives on the CPU
-    const dust = link(DUST_VERT, DUST_FRAG)
-    if (!dust) return
-    const N = 700
-    const px = new Float32Array(N), py = new Float32Array(N) // position (uv, y-up)
-    const vx = new Float32Array(N), vy = new Float32Array(N) // velocity
-    const hx = new Float32Array(N), hy = new Float32Array(N) // home
-    const posArr = new Float32Array(N * 2)
-    const meta = new Float32Array(N * 5) // r g b · size · phase
-    for (let i = 0; i < N; i++) {
-      const x = Math.random()
-      const y = Math.random()
-      hx[i] = px[i] = x
-      hy[i] = py[i] = y
-      // each mote wears the curtain colour of its altitude
-      const t = y + (Math.random() - 0.5) * 0.25
-      let r = 0.55, g = 0.4, b = 1.0 // purple
-      if (t < 0.38) { r = 0.35; g = 0.95; b = 0.6 } // green
-      else if (t > 0.72) { r = 0.95; g = 0.5; b = 1.0 } // pink
-      meta[i * 5] = r; meta[i * 5 + 1] = g; meta[i * 5 + 2] = b
-      meta[i * 5 + 3] = 1 + Math.random() * 2.4 // size
-      meta[i * 5 + 4] = Math.random() // phase
-    }
-    const posBuf = gl.createBuffer()
-    const metaBuf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, metaBuf)
-    gl.bufferData(gl.ARRAY_BUFFER, meta, gl.STATIC_DRAW)
-    const aP = gl.getAttribLocation(dust, 'a_p')
-    const aC = gl.getAttribLocation(dust, 'a_c')
-    const aM = gl.getAttribLocation(dust, 'a_m')
-    const uTd = gl.getUniformLocation(dust, 'u_t')
-    const uS = gl.getUniformLocation(dust, 'u_s')
+    // ── Vapor flow field — a coarse displacement grid stepped on the CPU.
+    // The pointer's sweep injects its own velocity into nearby cells; every
+    // step the field diffuses (vapor spreads) and dissipates (the sky
+    // drifts back to the flow it had). Uploaded as a tiny RG texture the
+    // fragment shader samples with linear filtering.
+    const FW = 48, FH = 28
+    const SCALE = 0.15 // max bend, in uv — the sky sways, it never tears
+    let fx = new Float32Array(FW * FH)
+    let fy = new Float32Array(FW * FH)
+    let fd = new Float32Array(FW * FH) // density deficit — the torn-open cavity
+    let scx = new Float32Array(FW * FH) // diffusion scratch
+    let scy = new Float32Array(FW * FH)
+    let scd = new Float32Array(FW * FH)
+    const pix = new Uint8Array(FW * FH * 4)
+    const tex = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, tex)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-    // ── Pointer — position + velocity in uv space. Dust inside the radius
-    // is blown outward and inherits the sweep; springs bring it home.
+    // ── Pointer — position + velocity in uv space (y-up). Only a moving
+    // hand stirs the vapor; a still one lets it settle.
     const ptr = { x: -9, y: -9, vx: 0, vy: 0, on: false }
     let lastMove = 0
     const onMove = (e: PointerEvent) => {
@@ -207,6 +178,67 @@ function AuroraShader() {
       host.addEventListener('pointerleave', onLeave)
     }
 
+    const stepField = (ar: number) => {
+      // The pointer is a solid body permeating the vapor: a wide plateau
+      // core (not a gaussian point) that drags cloud along its motion and
+      // shoves it radially out of the way, like a ball through smoke.
+      if (ptr.on) {
+        const cvx = Math.max(-0.04, Math.min(0.04, ptr.vx))
+        const cvy = Math.max(-0.04, Math.min(0.04, ptr.vy))
+        const speed = Math.hypot(cvx, cvy)
+        if (speed > 0.0004) {
+          const R = 0.16 // the body's reach — compact, a fist through the vapor
+          for (let cy = 0; cy < FH; cy++) {
+            const dy = (cy + 0.5) / FH - ptr.y
+            for (let cx = 0; cx < FW; cx++) {
+              const dx = ((cx + 0.5) / FW - ptr.x) * ar
+              const d = Math.hypot(dx, dy)
+              if (d > R) continue
+              // full strength across the core, soft skirt at the edge
+              const body = d < R * 0.45 ? 1 : 1 - (d - R * 0.45) / (R * 0.55)
+              const rx = d > 1e-4 ? dx / d : 0
+              const ry = d > 1e-4 ? dy / d : 0
+              const i = cy * FW + cx
+              // parting dominates drag: material moves out of the way,
+              // and the core tears open — cloud is displaced, not painted.
+              // Kept modest so the vapor parts nearby, not across the sky.
+              fx[i] += (cvx * 0.45 + rx * speed * 0.7) * body * 0.9
+              fy[i] += (cvy * 0.45 + ry * speed * 0.7) * body * 0.9
+              fd[i] = Math.min(1, fd[i] + (0.05 + speed * 4) * body)
+            }
+          }
+        }
+      }
+      // diffuse + dissipate — the tear is sharp but shortlived: the sky
+      // finds its old flow again in a beat or two
+      // (α must stay ≤0.25 to keep the explicit step stable)
+      for (let cy = 0; cy < FH; cy++) {
+        const row = cy * FW
+        const up = Math.min(FH - 1, cy + 1) * FW
+        const dn = Math.max(0, cy - 1) * FW
+        for (let cx = 0; cx < FW; cx++) {
+          const i = row + cx
+          const l = row + Math.max(0, cx - 1)
+          const r = row + Math.min(FW - 1, cx + 1)
+          scx[i] = (fx[i] + 0.15 * (fx[l] + fx[r] + fx[up + cx] + fx[dn + cx] - 4 * fx[i])) * 0.97
+          scy[i] = (fy[i] + 0.15 * (fy[l] + fy[r] + fy[up + cx] + fy[dn + cx] - 4 * fy[i])) * 0.97
+          scd[i] = (fd[i] + 0.15 * (fd[l] + fd[r] + fd[up + cx] + fd[dn + cx] - 4 * fd[i])) * 0.97
+        }
+      }
+      ;[fx, scx] = [scx, fx]
+      ;[fy, scy] = [scy, fy]
+      ;[fd, scd] = [scd, fd]
+      // encode around 128 so a resting sky is exactly zero displacement;
+      // the cavity rides in B
+      for (let i = 0; i < FW * FH; i++) {
+        pix[i * 4] = Math.max(0, Math.min(255, Math.round((fx[i] / SCALE) * 127 + 128)))
+        pix[i * 4 + 1] = Math.max(0, Math.min(255, Math.round((fy[i] / SCALE) * 127 + 128)))
+        pix[i * 4 + 2] = Math.max(0, Math.min(255, Math.round(fd[i] * 255)))
+        pix[i * 4 + 3] = 255
+      }
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FW, FH, 0, gl.RGBA, gl.UNSIGNED_BYTE, pix)
+    }
+
     const fit = () => {
       // Soft by nature — render below CSS resolution and let it upscale,
       // but high enough that the curtain rays keep their definition
@@ -228,64 +260,10 @@ function AuroraShader() {
       raf = 0
       if (!onScreen || !pageVisible) return
       fit()
-      const t = (performance.now() - start) / 1000
-      const ar = canvas.width / Math.max(1, canvas.height)
-
-      // sky
-      gl.disable(gl.BLEND)
-      gl.useProgram(sky)
-      gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf)
-      gl.enableVertexAttribArray(aSky)
-      gl.vertexAttribPointer(aSky, 2, gl.FLOAT, false, 0, 0)
-      gl.uniform1f(uT, t)
+      stepField(canvas.width / Math.max(1, canvas.height))
+      gl.uniform1f(uT, (performance.now() - start) / 1000)
       gl.uniform2f(uR, canvas.width, canvas.height)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
-
-      // dust physics — a puff outward scaled by sweep speed, spring home,
-      // air drag. Spring and drag are tuned near critical damping so the
-      // return is one smooth settle, not a wobble.
-      const R = 0.18, R2 = R * R
-      const sweep = Math.min(0.06, Math.hypot(ptr.vx, ptr.vy))
-      for (let i = 0; i < N; i++) {
-        if (ptr.on) {
-          const dx = (px[i] - ptr.x) * ar
-          const dy = py[i] - ptr.y
-          const d2 = dx * dx + dy * dy
-          if (d2 < R2) {
-            const d = Math.sqrt(d2) + 1e-4
-            const f = 1 - d / R
-            const kick = f * f * (0.0011 + sweep * 0.05)
-            vx[i] += (dx / d) * kick + ptr.vx * f * f * 0.16
-            vy[i] += (dy / d) * kick + ptr.vy * f * f * 0.16
-          }
-        }
-        vx[i] += (hx[i] - px[i]) * 0.0011
-        vy[i] += (hy[i] - py[i]) * 0.0011
-        vx[i] *= 0.93
-        vy[i] *= 0.93
-        px[i] += vx[i]
-        py[i] += vy[i]
-        posArr[i * 2] = px[i]
-        posArr[i * 2 + 1] = py[i]
-      }
-
-      // dust — additive: motes are light, they never darken the sky
-      gl.enable(gl.BLEND)
-      gl.blendFunc(gl.ONE, gl.ONE)
-      gl.useProgram(dust)
-      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf)
-      gl.bufferData(gl.ARRAY_BUFFER, posArr, gl.DYNAMIC_DRAW)
-      gl.enableVertexAttribArray(aP)
-      gl.vertexAttribPointer(aP, 2, gl.FLOAT, false, 0, 0)
-      gl.bindBuffer(gl.ARRAY_BUFFER, metaBuf)
-      gl.enableVertexAttribArray(aC)
-      gl.vertexAttribPointer(aC, 3, gl.FLOAT, false, 20, 0)
-      gl.enableVertexAttribArray(aM)
-      gl.vertexAttribPointer(aM, 2, gl.FLOAT, false, 20, 12)
-      gl.uniform1f(uTd, t)
-      gl.uniform1f(uS, canvas.height / 560) // point size tracks resolution
-      gl.drawArrays(gl.POINTS, 0, N)
-
       setLive(true) // fade in only once a real frame exists
       raf = requestAnimationFrame(frame)
     }
