@@ -54,4 +54,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   googledrive:      icon('googledrive'),
   googledocs:       icon('googledocs'),
   googlesheets:     icon('googlesheets'),
+  data:             icon('data'),
 }

@@ -26,6 +26,7 @@ export type NodeType =
   | 'googledrive'
   | 'googledocs'
   | 'googlesheets'
+  | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -99,6 +100,17 @@ export type FlowNodeData = {
   scheduleDayOfMonth?: number
   scheduleRepeat?: boolean
   scheduleNextRunAt?: string
+
+  // data (persistence) — reads/writes a DataStore selected by id
+  dataStoreId?: string
+  dataOp?: string       // get|set|increment|delete|append|query|update|count|clear
+  dataKey?: string
+  dataValue?: string
+  dataAmount?: string
+  dataRecord?: string
+  dataFilter?: string
+  dataRecordId?: string
+  dataLimit?: string
 
   // LLM structured output
   outputSchema?: string     // JSON schema string

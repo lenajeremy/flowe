@@ -50,7 +50,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
     case 'webhookTrigger':
       return { nodeType: 'webhookTrigger', label: 'Webhook Trigger' }
     case 'scheduledTrigger':
-      return { nodeType: 'scheduledTrigger', label: 'Scheduled Trigger', interval: '1h' }
+      return { nodeType: 'scheduledTrigger', label: 'Scheduled Trigger' }
     case 'notion':
       return {
         nodeType: 'notion',
@@ -94,5 +94,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googledocs', label: 'Google Docs', integrationOp: 'create_document', gdocsTitle: '', gdocsText: '' }
     case 'googlesheets':
       return { nodeType: 'googlesheets', label: 'Google Sheets', integrationOp: 'read_range', gsheetsSpreadsheetId: '', gsheetsRange: '' }
+    case 'data':
+      return { nodeType: 'data', label: 'Data Store', dataStoreId: '', dataOp: 'get', dataKey: '', dataValue: '', dataAmount: '1' }
   }
 }

@@ -364,8 +364,9 @@ async function executeNode(
     case 'googledrive':
     case 'googledocs':
     case 'googlesheets':
-      // Integration nodes use the owner's OAuth connection, which only exists
-      // server-side — they run through the backend Run button, not this
+    case 'data':
+      // Integration and Data nodes use server-side state (OAuth connections or
+      // persisted stores) — they run through the backend Run button, not this
       // in-browser preview executor.
       return JSON.stringify({ status: 'ok', note: `${data.nodeType} operations run via backend. Use the Run button.` })
   }

@@ -29,6 +29,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   googledrive:      'var(--na-googledrive)',
   googledocs:       'var(--na-googledocs)',
   googlesheets:     'var(--na-googlesheets)',
+  data:             'var(--na-data)',
 }
 
 export const NODE_ACCENT_COLORS: Record<NodeType, string> = NODE_ACCENT_HEX
@@ -59,6 +60,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   googledrive:      'M8 3 14 13H2z',
   googledocs:       'M4 2h5l3 3v9H4V2zM9 2v3h3M6 8h4M6 10.5h4',
   googlesheets:     'M3 3h10v10H3zM3 6.5h10M3 10h10M6.5 3v10M9.5 3v10',
+  data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
 export const NODE_LABELS: Record<NodeType, string> = {
@@ -86,6 +88,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   googledrive:      'Google Drive',
   googledocs:       'Google Docs',
   googlesheets:     'Google Sheets',
+  data:             'Data Store',
 }
 
 export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
@@ -113,4 +116,5 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   googledrive:      'Files & folders',
   googledocs:       'Documents',
   googlesheets:     'Spreadsheets',
+  data:             'Persist & recall data',
 }

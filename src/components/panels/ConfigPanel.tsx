@@ -74,6 +74,33 @@ const APPROVAL_TIMEOUTS: Array<{ value: string; label: string }> = [
   { value: '86400', label: '24 hours'    },
 ]
 
+const DATA_KIND_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'kv',         label: 'Key–Value'         },
+  { value: 'collection', label: 'Collection (table)' },
+  { value: 'text',       label: 'Text'              },
+]
+
+const DATA_SCOPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'run',      label: 'Run · this run only'      },
+  { value: 'workflow', label: 'Workflow · across runs'   },
+  { value: 'account',  label: 'Account · all workflows'  },
+]
+
+const DATA_OPS: Record<string, Array<{ value: string; label: string }>> = {
+  kv: [
+    { value: 'get', label: 'Get' }, { value: 'set', label: 'Set' },
+    { value: 'increment', label: 'Increment' }, { value: 'delete', label: 'Delete' },
+  ],
+  collection: [
+    { value: 'append', label: 'Append record' }, { value: 'query', label: 'Query' },
+    { value: 'update', label: 'Update record' }, { value: 'delete', label: 'Delete record' },
+    { value: 'count', label: 'Count' }, { value: 'clear', label: 'Clear all' },
+  ],
+  text: [
+    { value: 'get', label: 'Get' }, { value: 'set', label: 'Set' }, { value: 'append', label: 'Append' },
+  ],
+}
+
 const LLM_MODELS: Array<{ value: string; label: string; group: string }> = [
   { value: 'gpt-4o',                 label: 'GPT-4o',              group: 'OpenAI' },
   { value: 'gpt-4o-mini',            label: 'GPT-4o Mini',         group: 'OpenAI' },
@@ -181,6 +208,11 @@ export function ConfigPanel() {
   // ── Schedule state ───────────────────────────────────────────
   const [schedFrequency, setSchedFrequency] = useState('daily')
   const [schedIntervalSeconds, setSchedIntervalSeconds] = useState(900) // 15 min
+
+  // ── Data store state ─────────────────────────────────────────
+  const [dataStores, setDataStores] = useState<Array<{ id: string; name: string; kind: string; scope: string }>>([])
+  const [showNewStore, setShowNewStore] = useState(false)
+  const [newStore, setNewStore] = useState({ name: '', kind: 'kv', scope: 'workflow' })
   const [schedTime, setSchedTime] = useState('09:00') // stored in local time
   const [schedDayOfWeek, setSchedDayOfWeek] = useState(1)   // Monday
   const [schedDayOfMonth, setSchedDayOfMonth] = useState(1)
@@ -250,6 +282,42 @@ export function ConfigPanel() {
     }
   }
 
+  // Fetch stores available to this workflow (its own + account-scoped).
+  useEffect(() => {
+    if (selectedNode?.data.nodeType !== 'data' || !dbId) return
+    apiFetch(`${API}/api/data-stores?workflow_id=${dbId}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((s) => setDataStores(Array.isArray(s) ? s : []))
+      .catch(() => {})
+  }, [selectedNode?.data.nodeType, dbId])
+
+  async function createStore() {
+    if (!dbId || !selectedNodeId || !newStore.name.trim()) return
+    const body = {
+      name: newStore.name.trim(),
+      kind: newStore.kind,
+      scope: newStore.scope,
+      workflow_id: newStore.scope === 'account' ? '' : dbId,
+    }
+    try {
+      const r = await apiFetch(`${API}/api/data-stores`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (r.ok) {
+        const store = await r.json() as { id: string; name: string; kind: string; scope: string }
+        setDataStores((prev) => [store, ...prev])
+        updateNodeData(selectedNodeId, {
+          dataStoreId: store.id,
+          dataOp: DATA_OPS[store.kind]?.[0]?.value ?? 'get',
+        } as Parameters<typeof updateNodeData>[1])
+        setShowNewStore(false)
+        setNewStore({ name: '', kind: 'kv', scope: 'workflow' })
+      }
+    } catch { /* ignore */ }
+  }
+
   async function handleRegenerateWebhook() {
     if (!dbId) return
     try {
@@ -283,6 +351,8 @@ export function ConfigPanel() {
   const { data, id: nodeId } = selectedNode
   const nodeType = data.nodeType
   const upstreamNodes = getUpstreamNodes(nodeId, nodes, edges)
+  const selectedStore = dataStores.find((s) => s.id === data.dataStoreId)
+  const dataOp = typeof data.dataOp === 'string' ? data.dataOp : ''
 
   const hasOutput = typeof data.executionOutput === 'string' && data.executionOutput.length > 0
   const isCompleted = data.executionStatus === 'completed'
@@ -871,6 +941,101 @@ export function ConfigPanel() {
             >
               Remove schedule
             </button>
+          </div>
+        )}
+
+        {/* data (persistence) */}
+        {nodeType === 'data' && (
+          <div className="flex flex-col gap-3">
+            <FormField label="Store" htmlFor="cfg-data-store">
+              {dataStores.length > 0 ? (
+                <Select
+                  id="cfg-data-store"
+                  value={typeof data.dataStoreId === 'string' ? data.dataStoreId : ''}
+                  onChange={(v) => updateNodeData(nodeId, { dataStoreId: v })}
+                  options={dataStores.map((s) => ({ value: s.id, label: `${s.name} · ${s.kind}/${s.scope}` }))}
+                />
+              ) : (
+                <p className="text-[11px] text-[var(--color-muted)]">No stores yet — create one below.</p>
+              )}
+            </FormField>
+
+            {!showNewStore ? (
+              <button
+                onClick={() => setShowNewStore(true)}
+                className="text-[10px] text-[var(--color-accent)] hover:underline text-left"
+              >
+                + New store
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-2.5">
+                <Input
+                  placeholder="Store name"
+                  value={newStore.name}
+                  onChange={(e) => setNewStore((s) => ({ ...s, name: e.target.value }))}
+                  className={inputClass}
+                />
+                <Select id="cfg-data-newkind" value={newStore.kind} onChange={(v) => setNewStore((s) => ({ ...s, kind: v }))} options={DATA_KIND_OPTIONS} />
+                <Select id="cfg-data-newscope" value={newStore.scope} onChange={(v) => setNewStore((s) => ({ ...s, scope: v }))} options={DATA_SCOPE_OPTIONS} />
+                <div className="flex gap-2">
+                  <button onClick={() => void createStore()} className="flex-1 rounded-md bg-[var(--color-accent)] px-2 py-1.5 text-[11px] font-medium text-white">Create</button>
+                  <button onClick={() => setShowNewStore(false)} className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[11px] text-[var(--color-muted)]">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {selectedStore && (
+              <>
+                <FormField label="Operation" htmlFor="cfg-data-op">
+                  <Select
+                    id="cfg-data-op"
+                    value={dataOp || (DATA_OPS[selectedStore.kind]?.[0]?.value ?? 'get')}
+                    onChange={(v) => updateNodeData(nodeId, { dataOp: v })}
+                    options={DATA_OPS[selectedStore.kind] ?? []}
+                  />
+                </FormField>
+
+                {selectedStore.kind === 'kv' && (
+                  <FormField label="Key" htmlFor="cfg-data-key">
+                    <TemplateField id="cfg-data-key" value={typeof data.dataKey === 'string' ? data.dataKey : ''} onChange={(v) => updateNodeData(nodeId, { dataKey: v })} placeholder="e.g. counter" />
+                  </FormField>
+                )}
+                {((selectedStore.kind === 'kv' && dataOp === 'set') || (selectedStore.kind === 'text' && (dataOp === 'set' || dataOp === 'append'))) && (
+                  <FormField label="Value" htmlFor="cfg-data-value">
+                    <TemplateField id="cfg-data-value" multiline rows={3} value={typeof data.dataValue === 'string' ? data.dataValue : ''} onChange={(v) => updateNodeData(nodeId, { dataValue: v })} placeholder="Value (templates ok)" />
+                  </FormField>
+                )}
+                {selectedStore.kind === 'kv' && dataOp === 'increment' && (
+                  <FormField label="Amount" htmlFor="cfg-data-amount">
+                    <TemplateField id="cfg-data-amount" value={typeof data.dataAmount === 'string' ? data.dataAmount : '1'} onChange={(v) => updateNodeData(nodeId, { dataAmount: v })} placeholder="1" />
+                  </FormField>
+                )}
+                {selectedStore.kind === 'collection' && (dataOp === 'append' || dataOp === 'update') && (
+                  <FormField label="Record (JSON)" htmlFor="cfg-data-record">
+                    <TemplateField id="cfg-data-record" multiline rows={4} value={typeof data.dataRecord === 'string' ? data.dataRecord : ''} onChange={(v) => updateNodeData(nodeId, { dataRecord: v })} placeholder={'{"sku": "{{nodeId.output}}", "qty": 1}'} />
+                  </FormField>
+                )}
+                {selectedStore.kind === 'collection' && (dataOp === 'update' || dataOp === 'delete') && (
+                  <FormField label="Record ID" htmlFor="cfg-data-recid">
+                    <TemplateField id="cfg-data-recid" value={typeof data.dataRecordId === 'string' ? data.dataRecordId : ''} onChange={(v) => updateNodeData(nodeId, { dataRecordId: v })} placeholder="record id" />
+                  </FormField>
+                )}
+                {selectedStore.kind === 'collection' && dataOp === 'query' && (
+                  <>
+                    <FormField label="Filter (JSON)" htmlFor="cfg-data-filter" hint="Match records containing these fields. Empty = all.">
+                      <TemplateField id="cfg-data-filter" multiline rows={2} value={typeof data.dataFilter === 'string' ? data.dataFilter : ''} onChange={(v) => updateNodeData(nodeId, { dataFilter: v })} placeholder={'{"status": "open"}'} />
+                    </FormField>
+                    <FormField label="Limit" htmlFor="cfg-data-limit">
+                      <Input id="cfg-data-limit" type="number" min={1} value={typeof data.dataLimit === 'string' ? data.dataLimit : ''} onChange={(e) => updateNodeData(nodeId, { dataLimit: e.target.value })} placeholder="100" className={inputClass} />
+                    </FormField>
+                  </>
+                )}
+
+                <p className="text-[10px] text-[var(--color-muted)]">
+                  Result is available downstream as <code className="text-[var(--color-accent)]">{`{{${nodeId}.output}}`}</code>.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
