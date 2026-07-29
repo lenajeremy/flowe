@@ -19,11 +19,19 @@ const ordinal = (n: number) => {
 
 interface Schedule {
   frequency: string
+  interval_seconds?: number
   run_time: string
   day_of_week: number
   day_of_month: number
   repeat: boolean
   next_run_at?: string
+}
+
+function formatInterval(secs: number): string {
+  if (secs % 86400 === 0) return `${secs / 86400} day${secs === 86400 ? '' : 's'}`
+  if (secs % 3600 === 0)  return `${secs / 3600} hour${secs === 3600 ? '' : 's'}`
+  if (secs % 60 === 0)    return `${secs / 60} min`
+  return `${secs}s`
 }
 
 function utcToLocal(utcHHMM: string): string {
@@ -36,6 +44,7 @@ function utcToLocal(utcHHMM: string): string {
 function formatSchedule(s: Schedule) {
   const time = s.run_time ? utcToLocal(s.run_time) : '00:00'
   switch (s.frequency) {
+    case 'interval': return `Every ${formatInterval(s.interval_seconds ?? 900)}`
     case 'hourly':  return `Every hour`
     case 'daily':   return `Daily at ${time}`
     case 'weekly':  return `${WEEKDAYS[s.day_of_week] ?? 'Weekly'} at ${time}`
@@ -64,7 +73,8 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
   // After the sidebar saves, node data fields are updated directly — prefer those
   const fromData: Schedule | null = data.scheduleFrequency
     ? {
-        frequency:    data.scheduleFrequency as string,
+        frequency:        data.scheduleFrequency as string,
+        interval_seconds: data.scheduleIntervalSeconds as number | undefined,
         run_time:     (data.scheduleRunTime as string) ?? '00:00',
         day_of_week:  (data.scheduleDayOfWeek as number) ?? 0,
         day_of_month: (data.scheduleDayOfMonth as number) ?? 1,

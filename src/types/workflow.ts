@@ -89,8 +89,16 @@ export type FlowNodeData = {
   approvalTimeout?: number  // seconds, 0 = no timeout
   approvalEmail?: string    // optional email to notify when approval is needed
 
-  // scheduledTrigger
-  interval?: '5m' | '15m' | '30m' | '1h' | '6h' | '12h' | '24h'
+  // scheduledTrigger — mirror of the ScheduledTrigger row, cached on the node
+  // so the canvas card renders the cadence without a fetch. Source of truth is
+  // the /schedule endpoint; the background scheduler drives the actual runs.
+  scheduleFrequency?: 'interval' | 'hourly' | 'daily' | 'weekly' | 'monthly'
+  scheduleIntervalSeconds?: number
+  scheduleRunTime?: string
+  scheduleDayOfWeek?: number
+  scheduleDayOfMonth?: number
+  scheduleRepeat?: boolean
+  scheduleNextRunAt?: string
 
   // LLM structured output
   outputSchema?: string     // JSON schema string

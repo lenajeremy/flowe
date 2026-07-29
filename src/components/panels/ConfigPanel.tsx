@@ -39,10 +39,21 @@ const HTTP_METHODS: Array<{ value: string; label: string }> = [
 ]
 
 const FREQUENCY_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'hourly',  label: 'Every hour'  },
-  { value: 'daily',   label: 'Every day'   },
-  { value: 'weekly',  label: 'Every week'  },
-  { value: 'monthly', label: 'Every month' },
+  { value: 'interval', label: 'Every N minutes' },
+  { value: 'hourly',   label: 'Every hour'      },
+  { value: 'daily',    label: 'Every day'       },
+  { value: 'weekly',   label: 'Every week'      },
+  { value: 'monthly',  label: 'Every month'     },
+]
+
+const INTERVAL_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '300',   label: 'Every 5 minutes'  },
+  { value: '900',   label: 'Every 15 minutes' },
+  { value: '1800',  label: 'Every 30 minutes' },
+  { value: '3600',  label: 'Every hour'       },
+  { value: '21600', label: 'Every 6 hours'    },
+  { value: '43200', label: 'Every 12 hours'   },
+  { value: '86400', label: 'Every 24 hours'   },
 ]
 
 const WEEKDAY_OPTIONS: Array<{ value: string; label: string }> = [
@@ -169,6 +180,7 @@ export function ConfigPanel() {
 
   // ── Schedule state ───────────────────────────────────────────
   const [schedFrequency, setSchedFrequency] = useState('daily')
+  const [schedIntervalSeconds, setSchedIntervalSeconds] = useState(900) // 15 min
   const [schedTime, setSchedTime] = useState('09:00') // stored in local time
   const [schedDayOfWeek, setSchedDayOfWeek] = useState(1)   // Monday
   const [schedDayOfMonth, setSchedDayOfMonth] = useState(1)
@@ -188,9 +200,10 @@ export function ConfigPanel() {
     if (selectedNode?.data.nodeType !== 'scheduledTrigger' || !dbId) return
     apiFetch(`${API}/api/workflows/${dbId}/schedule`)
       .then((r) => r.ok ? r.json() : null)
-      .then((s: { frequency?: string; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
+      .then((s: { frequency?: string; interval_seconds?: number; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
         if (!s) return
         if (s.frequency)    setSchedFrequency(s.frequency)
+        if (s.interval_seconds) setSchedIntervalSeconds(s.interval_seconds)
         if (s.run_time)     setSchedTime(utcToLocal(s.run_time))
         if (s.day_of_week != null)  setSchedDayOfWeek(s.day_of_week)
         if (s.day_of_month != null) setSchedDayOfMonth(s.day_of_month)
@@ -200,16 +213,17 @@ export function ConfigPanel() {
       .catch(() => {})
   }, [selectedNode?.data.nodeType, dbId])
 
-  async function saveSchedule(overrides?: Partial<{ frequency: string; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }>) {
+  async function saveSchedule(overrides?: Partial<{ frequency: string; interval_seconds: number; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }>) {
     if (!dbId || !selectedNodeId) return
     setSchedSaving(true)
     const localTime = overrides?.run_time ?? schedTime
     const payload = {
-      frequency:    overrides?.frequency    ?? schedFrequency,
-      run_time:     localToUtc(localTime),
-      day_of_week:  overrides?.day_of_week  ?? schedDayOfWeek,
-      day_of_month: overrides?.day_of_month ?? schedDayOfMonth,
-      repeat:       overrides?.repeat       ?? schedRepeat,
+      frequency:        overrides?.frequency        ?? schedFrequency,
+      interval_seconds: overrides?.interval_seconds ?? schedIntervalSeconds,
+      run_time:         localToUtc(localTime),
+      day_of_week:      overrides?.day_of_week       ?? schedDayOfWeek,
+      day_of_month:     overrides?.day_of_month      ?? schedDayOfMonth,
+      repeat:           overrides?.repeat            ?? schedRepeat,
     }
     try {
       const r = await apiFetch(`${API}/api/workflows/${dbId}/schedule`, {
@@ -218,16 +232,17 @@ export function ConfigPanel() {
         body: JSON.stringify(payload),
       })
       if (r.ok) {
-        const s = await r.json() as { next_run_at?: string; frequency: string; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }
+        const s = await r.json() as { next_run_at?: string; frequency: string; interval_seconds: number; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }
         if (s.next_run_at) setSchedNextRun(s.next_run_at)
         // Push schedule data into node so the canvas node stays in sync
         updateNodeData(selectedNodeId, {
-          scheduleFrequency:  s.frequency,
-          scheduleRunTime:    s.run_time,
-          scheduleDayOfWeek:  s.day_of_week,
-          scheduleDayOfMonth: s.day_of_month,
-          scheduleRepeat:     s.repeat,
-          scheduleNextRunAt:  s.next_run_at,
+          scheduleFrequency:       s.frequency,
+          scheduleIntervalSeconds: s.interval_seconds,
+          scheduleRunTime:         s.run_time,
+          scheduleDayOfWeek:       s.day_of_week,
+          scheduleDayOfMonth:      s.day_of_month,
+          scheduleRepeat:          s.repeat,
+          scheduleNextRunAt:       s.next_run_at,
         } as Parameters<typeof updateNodeData>[1])
       }
     } catch { /* ignore */ } finally {
@@ -768,8 +783,20 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            {/* Time (not shown for hourly) */}
-            {schedFrequency !== 'hourly' && (
+            {/* Interval length (interval only) */}
+            {schedFrequency === 'interval' && (
+              <FormField label="Run every" htmlFor="cfg-sched-interval">
+                <Select
+                  id="cfg-sched-interval"
+                  value={String(schedIntervalSeconds)}
+                  onChange={(v) => { setSchedIntervalSeconds(Number(v)); void saveSchedule({ interval_seconds: Number(v) }) }}
+                  options={INTERVAL_OPTIONS}
+                />
+              </FormField>
+            )}
+
+            {/* Time (not shown for hourly or interval) */}
+            {schedFrequency !== 'hourly' && schedFrequency !== 'interval' && (
               <FormField label={`Time (${userTz})`} htmlFor="cfg-sched-time">
                 <Input
                   id="cfg-sched-time"
