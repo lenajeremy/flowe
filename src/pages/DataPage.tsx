@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { FloweIcon } from '@/components/FloweIcon'
 import { UserMenu } from '@/components/ui/UserMenu'
 import { NODE_ICONS } from '@/lib/nodeIcons'
+import { JsonView } from '@/components/ui/JsonView'
 import {
   listDataStores, createDataStore, deleteDataStore, clearDataStore,
   listDataEntries, putDataEntry, deleteDataEntry,
@@ -29,6 +30,86 @@ function cell(v: unknown): string {
   if (v === null || v === undefined) return ''
   if (typeof v === 'string') return v
   return JSON.stringify(v)
+}
+
+// Pretty raw form of a value — what JsonView renders and what the inline
+// editor starts from. Plain strings stay bare (no JSON quotes) for editing
+// comfort; everything else is pretty JSON.
+function prettyRaw(v: unknown): string {
+  if (typeof v === 'string') return v
+  return JSON.stringify(v, null, 2) ?? ''
+}
+
+// ── Value inspector: clean JSON render ⇄ inline editor ───────
+function ValueInspector({ value, onSave, parseAs }: {
+  value: unknown
+  onSave: (next: unknown) => Promise<void>
+  parseAs: 'any' | 'object' // collections require a JSON object
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const raw = prettyRaw(value)
+
+  async function save() {
+    let next: unknown
+    if (parseAs === 'object') {
+      try {
+        next = JSON.parse(draft)
+        if (next === null || typeof next !== 'object' || Array.isArray(next)) throw new Error()
+      } catch { toast.error('Must be a JSON object — e.g. {"qty": 2}'); return }
+    } else {
+      next = coerceValue(draft)
+    }
+    setSaving(true)
+    try {
+      await onSave(next)
+      setEditing(false)
+    } catch (e) { toast.error(String((e as Error).message)) }
+    finally { setSaving(false) }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={Math.min(14, Math.max(3, draft.split('\n').length + 1))}
+          autoFocus
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void save(); if (e.key === 'Escape') setEditing(false) }}
+          className="w-full rounded-lg border border-[var(--color-accent)] bg-[var(--color-canvas)] p-3 font-mono text-[12px] leading-relaxed outline-none"
+          spellCheck={false}
+        />
+        <div className="flex items-center gap-2">
+          <button onClick={() => void save()} disabled={saving}
+            className="pressable h-7 rounded-lg bg-[var(--color-accent)] px-2.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40">
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button onClick={() => setEditing(false)}
+            className="h-7 rounded-lg border border-[var(--color-border)] px-2.5 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-text)]">
+            Cancel
+          </button>
+          <span className="text-[10px] text-[var(--color-subtle)]">⌘↵ to save · esc to cancel</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="max-h-[320px] overflow-y-auto rounded-lg bg-[var(--color-canvas)] p-3">
+        <JsonView raw={typeof value === 'string' ? value : JSON.stringify(value, null, 2)} className="text-[12px] leading-relaxed" />
+      </div>
+      <button
+        onClick={() => { setDraft(raw); setEditing(true) }}
+        className="w-max text-[11px] font-medium text-[var(--color-accent)] transition-opacity hover:opacity-80"
+      >
+        Edit value
+      </button>
+    </div>
+  )
 }
 
 function Badge({ children }: { children: React.ReactNode }) {
@@ -57,6 +138,7 @@ function DeleteX({ onClick, title }: { onClick: () => void; title: string }) {
 function KVEditor({ store, entries, reload }: { store: DataStore; entries: KVEntry[]; reload: () => void }) {
   const [key, setKey] = useState('')
   const [value, setValue] = useState('')
+  const [openKey, setOpenKey] = useState<string | null>(null)
 
   async function set() {
     if (!key.trim()) return
@@ -69,7 +151,7 @@ function KVEditor({ store, entries, reload }: { store: DataStore; entries: KVEnt
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
-        <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="key"
+        <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="new key"
           className="h-9 w-44 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 font-mono text-[12px] outline-none transition-colors placeholder:font-sans placeholder:text-[var(--color-placeholder)] focus:border-[var(--color-accent)]" />
         <input value={value} onChange={(e) => setValue(e.target.value)} placeholder='value — 5, true, "text", {"a": 1}'
           onKeyDown={(e) => { if (e.key === 'Enter') void set() }}
@@ -87,22 +169,33 @@ function KVEditor({ store, entries, reload }: { store: DataStore; entries: KVEnt
             <span className="micro flex-1 text-[var(--color-subtle)]">Value</span>
           </div>
           {entries.map((e, i) => {
-            const edit = () => { setKey(e.key); setValue(typeof e.value === 'string' ? e.value : JSON.stringify(e.value)) }
+            const open = openKey === e.key
             return (
-              // Not a <button>: the row hosts the delete button, and buttons
-              // can't nest. Keyboard path preserved via role + tabIndex.
-              <div
-                key={e.id}
-                role="button"
-                tabIndex={0}
-                onClick={edit}
-                onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); edit() } }}
-                title="Click to edit"
-                className={`group/row flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--color-hover)] ${i > 0 ? 'border-t border-[var(--color-border)]' : ''}`}
-              >
-                <span className="w-44 truncate font-mono text-[12px] text-[var(--color-text)]">{e.key}</span>
-                <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[var(--color-muted)]">{JSON.stringify(e.value)}</span>
-                <DeleteX title={`Delete ${e.key}`} onClick={() => void deleteDataEntry(store.id, e.key).then(reload).catch((err) => toast.error(String((err as Error).message)))} />
+              <div key={e.id} className={i > 0 ? 'border-t border-[var(--color-border)]' : ''}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setOpenKey(open ? null : e.key)}
+                  onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setOpenKey(open ? null : e.key) } }}
+                  className={`group/row flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--color-hover)] ${open ? 'bg-[var(--color-hover)]' : ''}`}
+                >
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none"
+                    className={`shrink-0 text-[var(--color-subtle)] transition-transform ${open ? 'rotate-90' : ''}`}>
+                    <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="w-40 truncate font-mono text-[12px] text-[var(--color-text)]">{e.key}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[var(--color-muted)]">{JSON.stringify(e.value)}</span>
+                  <DeleteX title={`Delete ${e.key}`} onClick={() => void deleteDataEntry(store.id, e.key).then(reload).catch((err) => toast.error(String((err as Error).message)))} />
+                </div>
+                {open && (
+                  <div className="border-t border-[var(--color-border)] bg-[var(--color-surface2)]/50 px-3 py-3 pl-8">
+                    <ValueInspector
+                      value={e.value}
+                      parseAs="any"
+                      onSave={async (next) => { await putDataEntry(store.id, { key: e.key, value: next }); reload() }}
+                    />
+                  </div>
+                )}
               </div>
             )
           })}
@@ -115,6 +208,7 @@ function KVEditor({ store, entries, reload }: { store: DataStore; entries: KVEnt
 // ── Collection editor (grid with inferred columns) ───────────
 function CollectionEditor({ store, entries, reload }: { store: DataStore; entries: RecordEntry[]; reload: () => void }) {
   const [draft, setDraft] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
 
   // Columns = union of record keys in first-seen order.
   const columns = useMemo(() => {
@@ -162,17 +256,40 @@ function CollectionEditor({ store, entries, reload }: { store: DataStore; entrie
             <tbody>
               {entries.map((e) => {
                 const r = (e.record && typeof e.record === 'object' && !Array.isArray(e.record) ? e.record : {}) as Record<string, unknown>
+                const open = openId === e.id
                 return (
-                  <tr key={e.id} className="group/row border-t border-[var(--color-border)] first:border-t-0 hover:bg-[var(--color-hover)]">
-                    {columns.map((c) => (
-                      <td key={c} className="max-w-[240px] truncate px-3 py-2 font-mono text-[var(--color-text)]" title={cell(r[c])}>
-                        {r[c] === undefined ? <span className="text-[var(--color-subtle)]">—</span> : cell(r[c])}
+                  <Fragment key={e.id}>
+                    <tr
+                      onClick={() => setOpenId(open ? null : e.id)}
+                      className={`group/row cursor-pointer border-t border-[var(--color-border)] first:border-t-0 hover:bg-[var(--color-hover)] ${open ? 'bg-[var(--color-hover)]' : ''}`}
+                    >
+                      {columns.map((c, ci) => (
+                        <td key={c} className="max-w-[240px] truncate px-3 py-2 font-mono text-[var(--color-text)]" title={cell(r[c])}>
+                          {ci === 0 && (
+                            <svg width="9" height="9" viewBox="0 0 10 10" fill="none"
+                              className={`mr-1.5 inline-block text-[var(--color-subtle)] transition-transform ${open ? 'rotate-90' : ''}`}>
+                              <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                          {r[c] === undefined ? <span className="text-[var(--color-subtle)]">—</span> : cell(r[c])}
+                        </td>
+                      ))}
+                      <td className="px-1.5 py-2">
+                        <DeleteX title="Delete record" onClick={() => void deleteDataEntry(store.id, e.id).then(reload).catch((err) => toast.error(String((err as Error).message)))} />
                       </td>
-                    ))}
-                    <td className="px-1.5 py-2">
-                      <DeleteX title="Delete record" onClick={() => void deleteDataEntry(store.id, e.id).then(reload).catch((err) => toast.error(String((err as Error).message)))} />
-                    </td>
-                  </tr>
+                    </tr>
+                    {open && (
+                      <tr className="border-t border-[var(--color-border)] bg-[var(--color-surface2)]/50">
+                        <td colSpan={columns.length + 1} className="px-3 py-3 pl-8">
+                          <ValueInspector
+                            value={e.record}
+                            parseAs="object"
+                            onSave={async (next) => { await putDataEntry(store.id, { id: e.id, record: next }); reload() }}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               })}
             </tbody>
@@ -280,8 +397,20 @@ export function DataPage() {
             </button>
             <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Data</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/workflows')} className="pressable h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[13px] font-medium hover:border-[var(--color-border2)]">Workflows</button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/workflows')}
+              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+                <rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+              Workflows
+            </button>
+            <span className="h-5 w-px bg-[var(--color-border)]" />
             <UserMenu />
           </div>
         </div>

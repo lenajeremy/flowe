@@ -204,13 +204,15 @@ export function HomePage() {
             </button>
             <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Workflows</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/data')}
-              className="pressable h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[13px] font-medium hover:border-[var(--color-border2)]"
+              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
             >
+              <span className="h-3.5 w-3.5 [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
               Data
             </button>
+            <span className="h-5 w-px bg-[var(--color-border)]" />
             <UserMenu />
           </div>
         </div>
