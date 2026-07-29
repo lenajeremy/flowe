@@ -335,15 +335,17 @@ export function ChatPanel() {
 
           case 'tool_result': {
             try {
-              const t = JSON.parse(data) as { tool: string; status: 'ok' | 'error' }
+              const t = JSON.parse(data) as { tool: string; label?: string; status: 'ok' | 'error' }
               setMessages((m) =>
                 m.map((msg) => {
                   if (msg.id !== assistantId) return msg
                   const calls = [...(msg.toolCalls ?? [])]
-                  // Close the most recent still-running call for this tool.
+                  // Close the most recent still-running call for this tool. The
+                  // result may restate the label ("Waiting for your approval" →
+                  // "Created the data store"), so prefer it when present.
                   for (let i = calls.length - 1; i >= 0; i--) {
                     if (calls[i].nodeId === t.tool && calls[i].status === 'running') {
-                      calls[i] = { ...calls[i], status: t.status }
+                      calls[i] = { ...calls[i], status: t.status, node: t.label || calls[i].node }
                       break
                     }
                   }
