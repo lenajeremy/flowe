@@ -339,6 +339,20 @@ select:focus-visible { outline: none; }
 }
 .pulse-dot { animation: pulse-dot 1s var(--ease-in-out) infinite; }
 
+/* A Data node's live value just changed — tint the chip once and settle.
+   Remounted via a React key, so it replays on every write. */
+@keyframes data-live-flash {
+  from {
+    border-color: var(--na-data);
+    background: color-mix(in oklab, var(--na-data) 18%, transparent);
+  }
+  to {
+    border-color: var(--color-border);
+    background: var(--color-canvas);
+  }
+}
+.data-live { animation: data-live-flash 900ms var(--ease-out) 1; }
+
 /* Headline word entrance — each word rises out of a blur, staggered.
    First-paint only (landing hero); delay set inline per word. */
 @keyframes word-in {
@@ -505,6 +519,7 @@ select:focus-visible { outline: none; }
   .pop-in { animation: none; }
   .aurora-drift { animation: none; }
   .pulse-dot { animation: none; }
+  .data-live { animation: none; }
   .pressable:active { transform: none; }
   html.theme-switching,
   html.theme-switching * { transition: none !important; }

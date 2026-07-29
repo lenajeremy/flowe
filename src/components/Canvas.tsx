@@ -12,6 +12,7 @@ import { nodeTypes } from './nodes'
 import { GradientEdge } from './GradientEdge'
 import { CanvasControls } from './CanvasControls'
 import { useWorkflowStore } from '@/store/workflowStore'
+import { useWatchStores } from '@/lib/dataLive'
 import { useShallow } from 'zustand/react/shallow'
 import { getDefaultNodeData } from '@/lib/nodeDefaults'
 import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
@@ -77,6 +78,15 @@ export function Canvas({ theme }: CanvasProps) {
 
   const rfInstance = useReactFlow()
   const { setActiveTool } = useWorkflowStore(useShallow((s) => ({ setActiveTool: s.setActiveTool })))
+
+  // Stream live values for every Data node on the board, so their cards show
+  // what's actually stored — including writes from scheduled runs.
+  useWatchStores(
+    nodes
+      .filter((n) => n.data?.nodeType === 'data')
+      .map((n) => (typeof n.data?.dataStoreId === 'string' ? n.data.dataStoreId : ''))
+      .filter(Boolean),
+  )
 
   // ── Keyboard handler ─────────────────────────────────────
   useEffect(() => {

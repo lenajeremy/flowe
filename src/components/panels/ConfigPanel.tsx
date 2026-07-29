@@ -46,14 +46,20 @@ const FREQUENCY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'monthly',  label: 'Every month'     },
 ]
 
-const INTERVAL_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: '300',   label: 'Every 5 minutes'  },
-  { value: '900',   label: 'Every 15 minutes' },
-  { value: '1800',  label: 'Every 30 minutes' },
-  { value: '3600',  label: 'Every hour'       },
-  { value: '21600', label: 'Every 6 hours'    },
-  { value: '43200', label: 'Every 12 hours'   },
-  { value: '86400', label: 'Every 24 hours'   },
+// Quick picks; any whole number of minutes or hours is allowed via the inputs.
+const INTERVAL_PRESETS: Array<{ minutes: number; label: string }> = [
+  { minutes: 1,    label: '1m'  },
+  { minutes: 5,    label: '5m'  },
+  { minutes: 15,   label: '15m' },
+  { minutes: 30,   label: '30m' },
+  { minutes: 60,   label: '1h'  },
+  { minutes: 360,  label: '6h'  },
+  { minutes: 1440, label: '24h' },
+]
+
+const INTERVAL_UNITS: Array<{ value: string; label: string }> = [
+  { value: '60',   label: 'minutes' },
+  { value: '3600', label: 'hours'   },
 ]
 
 const WEEKDAY_OPTIONS: Array<{ value: string; label: string }> = [
@@ -208,6 +214,8 @@ export function ConfigPanel() {
   // ── Schedule state ───────────────────────────────────────────
   const [schedFrequency, setSchedFrequency] = useState('daily')
   const [schedIntervalSeconds, setSchedIntervalSeconds] = useState(900) // 15 min
+  // Which unit the interval box is showing (60 = minutes, 3600 = hours)
+  const [intervalUnit, setIntervalUnit] = useState(60)
 
   // ── Data store state ─────────────────────────────────────────
   const [dataStores, setDataStores] = useState<Array<{ id: string; name: string; kind: string; scope: string }>>([])
@@ -235,7 +243,11 @@ export function ConfigPanel() {
       .then((s: { frequency?: string; interval_seconds?: number; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
         if (!s) return
         if (s.frequency)    setSchedFrequency(s.frequency)
-        if (s.interval_seconds) setSchedIntervalSeconds(s.interval_seconds)
+        if (s.interval_seconds) {
+          setSchedIntervalSeconds(s.interval_seconds)
+          // Show whole hours as hours, everything else as minutes.
+          setIntervalUnit(s.interval_seconds % 3600 === 0 && s.interval_seconds >= 3600 ? 3600 : 60)
+        }
         if (s.run_time)     setSchedTime(utcToLocal(s.run_time))
         if (s.day_of_week != null)  setSchedDayOfWeek(s.day_of_week)
         if (s.day_of_month != null) setSchedDayOfMonth(s.day_of_month)
@@ -854,15 +866,61 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            {/* Interval length (interval only) */}
+            {/* Interval length (interval only) — any whole number, min 1 minute */}
             {schedFrequency === 'interval' && (
-              <FormField label="Run every" htmlFor="cfg-sched-interval">
-                <Select
-                  id="cfg-sched-interval"
-                  value={String(schedIntervalSeconds)}
-                  onChange={(v) => { setSchedIntervalSeconds(Number(v)); void saveSchedule({ interval_seconds: Number(v) }) }}
-                  options={INTERVAL_OPTIONS}
-                />
+              <FormField label="Run every" htmlFor="cfg-sched-interval" hint="Runs are checked once a minute, so 1 minute is the fastest cadence">
+                <div className="flex gap-2">
+                  <Input
+                    id="cfg-sched-interval"
+                    type="number"
+                    min={1}
+                    value={intervalUnit === 3600 ? schedIntervalSeconds / 3600 : schedIntervalSeconds / 60}
+                    onChange={(e) => {
+                      const n = Number(e.target.value)
+                      if (!Number.isFinite(n)) return
+                      setSchedIntervalSeconds(Math.max(1, Math.round(n)) * intervalUnit)
+                    }}
+                    onBlur={() => void saveSchedule({ interval_seconds: schedIntervalSeconds })}
+                    className={inputClass}
+                  />
+                  <Select
+                    id="cfg-sched-interval-unit"
+                    value={String(intervalUnit)}
+                    onChange={(v) => {
+                      const unit = Number(v)
+                      // Keep the displayed number, reinterpret its unit.
+                      const shown = Math.max(1, Math.round(schedIntervalSeconds / intervalUnit))
+                      setIntervalUnit(unit)
+                      const next = shown * unit
+                      setSchedIntervalSeconds(next)
+                      void saveSchedule({ interval_seconds: next })
+                    }}
+                    options={INTERVAL_UNITS}
+                  />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {INTERVAL_PRESETS.map((p) => {
+                    const secs = p.minutes * 60
+                    const active = secs === schedIntervalSeconds
+                    return (
+                      <button
+                        key={p.minutes}
+                        onClick={() => {
+                          setIntervalUnit(p.minutes % 60 === 0 && p.minutes >= 60 ? 3600 : 60)
+                          setSchedIntervalSeconds(secs)
+                          void saveSchedule({ interval_seconds: secs })
+                        }}
+                        className={`rounded-md border px-2 py-0.5 text-[10.5px] font-medium transition-colors ${
+                          active
+                            ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-text)]'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </FormField>
             )}
 
