@@ -792,7 +792,9 @@ const PROPOSAL_SCOPE_LABEL: Record<StoreProposal['scope'], string> = {
   account: 'Account — shared across all your workflows',
 }
 
-// Approval card for an AI-proposed data store. Nothing exists until Accept.
+// Approval card for an AI-proposed data store — shown only while the builder is
+// paused on it. Once resolved the card is dropped: the activity row and the
+// assistant's own message already say what happened.
 function ProposalCard({ proposal, busy, onAction }: {
   proposal: StoreProposal
   busy: boolean
@@ -804,10 +806,7 @@ function ProposalCard({ proposal, busy, onAction }: {
       <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface2)] px-3.5 py-2">
         <span className="h-3.5 w-3.5 text-[var(--na-data)] [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
         <span className="text-[11px] font-semibold tracking-wide text-[var(--color-muted)]">
-          {p.status === 'accepted' ? 'Data store created'
-            : p.status === 'rejected' ? 'Data store rejected'
-            : p.status === 'expired' ? 'Approval timed out'
-            : 'Needs your approval to continue'}
+          Needs your approval to continue
         </span>
       </div>
       <div className="flex flex-col gap-2 px-3.5 py-2.5">
@@ -828,31 +827,23 @@ function ProposalCard({ proposal, busy, onAction }: {
             ))}
           </div>
         )}
-        {p.status === 'pending' ? (
-          <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => onAction('accept')}
-              disabled={busy}
-              className="pressable h-7.5 rounded-lg bg-[var(--color-accent)] px-3 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {busy ? 'Creating…' : 'Create store'}
-            </button>
-            <button
-              onClick={() => onAction('reject')}
-              disabled={busy}
-              className="h-7.5 rounded-lg border border-[var(--color-border)] px-3 text-[11.5px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)] disabled:opacity-40"
-            >
-              Reject
-            </button>
-            <span className="text-[10.5px] text-[var(--color-subtle)]">The builder is paused until you answer</span>
-          </div>
-        ) : (
-          <p className="text-[11px] text-[var(--color-subtle)]">
-            {p.status === 'accepted' ? 'Created — the builder wired it in. Browse it on the Data page.'
-              : p.status === 'rejected' ? 'Rejected — nothing was created.'
-              : 'No answer in time — nothing was created. Ask the builder to set it up again.'}
-          </p>
-        )}
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => onAction('accept')}
+            disabled={busy}
+            className="pressable h-7.5 rounded-lg bg-[var(--color-accent)] px-3 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            {busy ? 'Creating…' : 'Create store'}
+          </button>
+          <button
+            onClick={() => onAction('reject')}
+            disabled={busy}
+            className="h-7.5 rounded-lg border border-[var(--color-border)] px-3 text-[11.5px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)] disabled:opacity-40"
+          >
+            Reject
+          </button>
+          <span className="text-[10.5px] text-[var(--color-subtle)]">The builder is paused until you answer</span>
+        </div>
       </div>
     </div>
   )
@@ -955,8 +946,8 @@ function MessageBubble({ message, onRollback, onProposalAction, proposalBusy }: 
         </div>
       )}
 
-      {/* Data-store approval card */}
-      {message.proposal && (
+      {/* Data-store approval card — only while the builder is waiting on it */}
+      {message.proposal?.status === 'pending' && (
         <ProposalCard proposal={message.proposal} busy={proposalBusy} onAction={onProposalAction} />
       )}
 
