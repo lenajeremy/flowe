@@ -46,6 +46,21 @@ export async function createDataStore(body: {
   return res.json() as Promise<DataStore>
 }
 
+/** Resolve a paused AI data-store proposal. Accepting creates the store server
+ *  side and releases the builder's turn; returns the new store on accept. */
+export async function resolveDataStoreProposal(
+  proposalId: string,
+  action: 'accept' | 'reject',
+): Promise<DataStore | null> {
+  const res = await apiFetch(`${API}/api/ai/data-store-proposals/${proposalId}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action }),
+  })
+  if (!res.ok) throw new Error(await readError(res))
+  return action === 'accept' ? (res.json() as Promise<DataStore>) : null
+}
+
 export async function deleteDataStore(id: string): Promise<void> {
   const res = await apiFetch(`${API}/api/data-stores/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(await readError(res))

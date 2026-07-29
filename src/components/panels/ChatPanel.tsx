@@ -10,20 +10,24 @@ import { FloweIcon } from '@/components/FloweIcon'
 import LiquidGlass from 'liquid-glass-react'
 import { apiFetch } from '@/lib/http'
 import { toast } from 'sonner'
-import { createDataStore } from '@/lib/dataApi'
+import { resolveDataStoreProposal } from '@/lib/dataApi'
 import { NODE_ICONS } from '@/lib/nodeIcons'
+import { ToolActivityRow } from '@/components/agent/AgentMessages'
+import type { ToolChip } from '@/components/agent/useAgentChat'
 // ── Types ───────────────────────────────────────────────────────
 
 // A data-store proposal from the AI's create_data_store tool. The store does
 // NOT exist until the user accepts — Accept creates it through the normal
 // REST endpoint, then tells the AI the real id in a follow-up message.
 interface StoreProposal {
+  proposalId?: string
   name: string
   kind: 'kv' | 'collection' | 'text'
   scope: 'run' | 'workflow' | 'account'
   schema?: Array<{ name: string; type: string }>
   reason?: string
-  status: 'pending' | 'accepted' | 'rejected'
+  // pending: the builder is paused waiting on this. expired: it timed out.
+  status: 'pending' | 'accepted' | 'rejected' | 'expired'
   storeId?: string
 }
 
@@ -35,6 +39,7 @@ interface ChatMessage {
   thinkingDuration?: number
   workflowApplied?: boolean
   proposal?: StoreProposal
+  toolCalls?: ToolChip[]
   loading?: boolean
 }
 
@@ -45,6 +50,7 @@ interface StoredMessage {
   thinkingDuration?: number
   workflowApplied?: boolean
   proposal?: StoreProposal
+  toolCalls?: ToolChip[]
 }
 
 interface ChatModelInfo {
@@ -61,8 +67,8 @@ interface ChatModelInfo {
 function toStored(msgs: ChatMessage[]): StoredMessage[] {
   return msgs
     .filter((m) => !m.loading && (m.content || m.proposal))
-    .map(({ role, content, thinking, thinkingDuration, workflowApplied, proposal }) => ({
-      role, content, thinking, thinkingDuration, workflowApplied, proposal,
+    .map(({ role, content, thinking, thinkingDuration, workflowApplied, proposal, toolCalls }) => ({
+      role, content, thinking, thinkingDuration, workflowApplied, proposal, toolCalls,
     }))
 }
 
@@ -315,6 +321,39 @@ export function ChatPanel() {
             break
           }
 
+          case 'tool_start': {
+            try {
+              const t = JSON.parse(data) as { tool: string; label: string }
+              setMessages((m) =>
+                m.map((msg) => msg.id === assistantId
+                  ? { ...msg, toolCalls: [...(msg.toolCalls ?? []), { id: crypto.randomUUID(), node: t.label, nodeId: t.tool, status: 'running' as const }] }
+                  : msg),
+              )
+            } catch { /* ignore */ }
+            break
+          }
+
+          case 'tool_result': {
+            try {
+              const t = JSON.parse(data) as { tool: string; status: 'ok' | 'error' }
+              setMessages((m) =>
+                m.map((msg) => {
+                  if (msg.id !== assistantId) return msg
+                  const calls = [...(msg.toolCalls ?? [])]
+                  // Close the most recent still-running call for this tool.
+                  for (let i = calls.length - 1; i >= 0; i--) {
+                    if (calls[i].nodeId === t.tool && calls[i].status === 'running') {
+                      calls[i] = { ...calls[i], status: t.status }
+                      break
+                    }
+                  }
+                  return { ...msg, toolCalls: calls }
+                }),
+              )
+            } catch { /* ignore */ }
+            break
+          }
+
           case 'data_store_proposal': {
             try {
               const p = JSON.parse(data) as Omit<StoreProposal, 'status'>
@@ -324,6 +363,15 @@ export function ChatPanel() {
                 )
               }
             } catch { /* ignore */ }
+            break
+          }
+
+          case 'data_store_timeout': {
+            setMessages((m) =>
+              m.map((msg) => msg.id === assistantId && msg.proposal?.status === 'pending'
+                ? { ...msg, proposal: { ...msg.proposal, status: 'expired' } }
+                : msg),
+            )
             break
           }
 
@@ -381,46 +429,45 @@ export function ChatPanel() {
 
   handleSendRef.current = handleSend
 
-  // Accept/reject a data-store proposal. Accept creates the store through the
-  // normal authed REST endpoint (the user's click IS the approval), then a
-  // follow-up chat message hands the AI the real id so it can wire the node.
+  // Accept/reject a data-store proposal. The builder is PAUSED waiting on this,
+  // so resolving it releases the same turn — accepting creates the store server
+  // side and hands the id straight back to the model, which then wires the node
+  // itself. No follow-up message needed, and these buttons must stay clickable
+  // while the stream is open (that stream is what's waiting).
+  const [resolvingProposal, setResolvingProposal] = useState(false)
+
   const handleProposalAction = useCallback(async (msgId: string, action: 'accept' | 'reject') => {
     const msg = messages.find((m) => m.id === msgId)
     const p = msg?.proposal
-    if (!p || p.status !== 'pending' || isGenerating) return
-
-    if (action === 'reject') {
-      setMessages((prev) => {
-        const next = prev.map((m) => m.id === msgId ? { ...m, proposal: { ...p, status: 'rejected' as const } } : m)
-        saveChat(next)
-        return next
-      })
-      void handleSend(`I rejected the proposed "${p.name}" data store. Don't use it — adjust the workflow, or ask me what to do instead.`)
+    if (!p || p.status !== 'pending' || resolvingProposal) return
+    if (!p.proposalId) {
+      toast.error('This proposal expired — ask the builder to set the store up again.')
       return
     }
 
-    if (p.scope !== 'account' && !dbId) {
-      toast.error('Save the workflow first — workflow-scoped stores need a saved workflow.')
-      return
-    }
+    setResolvingProposal(true)
     try {
-      const store = await createDataStore({
-        name: p.name,
-        kind: p.kind,
-        scope: p.scope,
-        workflow_id: p.scope === 'account' ? undefined : dbId ?? undefined,
-        schema: p.schema,
-      })
+      const store = await resolveDataStoreProposal(p.proposalId, action)
       setMessages((prev) => {
-        const next = prev.map((m) => m.id === msgId ? { ...m, proposal: { ...p, status: 'accepted' as const, storeId: store.id } } : m)
+        const next = prev.map((m) => m.id === msgId
+          ? {
+              ...m,
+              proposal: {
+                ...p,
+                status: (action === 'accept' ? 'accepted' : 'rejected') as StoreProposal['status'],
+                storeId: store?.id,
+              },
+            }
+          : m)
         saveChat(next)
         return next
       })
-      void handleSend(`I approved the "${p.name}" data store — it now exists with id ${store.id}. Set it as the dataStoreId on the data node (use update_workflow).`)
     } catch (e) {
       toast.error(String((e as Error).message))
+    } finally {
+      setResolvingProposal(false)
     }
-  }, [messages, isGenerating, dbId, saveChat, handleSend])
+  }, [messages, resolvingProposal, saveChat])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -463,7 +510,7 @@ export function ChatPanel() {
                 message={msg}
                 onRollback={undo}
                 onProposalAction={(action) => void handleProposalAction(msg.id, action)}
-                proposalBusy={isGenerating}
+                proposalBusy={resolvingProposal}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -757,7 +804,10 @@ function ProposalCard({ proposal, busy, onAction }: {
       <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface2)] px-3.5 py-2">
         <span className="h-3.5 w-3.5 text-[var(--na-data)] [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
         <span className="text-[11px] font-semibold tracking-wide text-[var(--color-muted)]">
-          {p.status === 'accepted' ? 'Data store created' : p.status === 'rejected' ? 'Data store rejected' : 'Wants to create a data store'}
+          {p.status === 'accepted' ? 'Data store created'
+            : p.status === 'rejected' ? 'Data store rejected'
+            : p.status === 'expired' ? 'Approval timed out'
+            : 'Needs your approval to continue'}
         </span>
       </div>
       <div className="flex flex-col gap-2 px-3.5 py-2.5">
@@ -779,13 +829,13 @@ function ProposalCard({ proposal, busy, onAction }: {
           </div>
         )}
         {p.status === 'pending' ? (
-          <div className="mt-0.5 flex items-center gap-2">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
             <button
               onClick={() => onAction('accept')}
               disabled={busy}
               className="pressable h-7.5 rounded-lg bg-[var(--color-accent)] px-3 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              Create store
+              {busy ? 'Creating…' : 'Create store'}
             </button>
             <button
               onClick={() => onAction('reject')}
@@ -794,11 +844,13 @@ function ProposalCard({ proposal, busy, onAction }: {
             >
               Reject
             </button>
-            <span className="text-[10.5px] text-[var(--color-subtle)]">or just reply to steer it differently</span>
+            <span className="text-[10.5px] text-[var(--color-subtle)]">The builder is paused until you answer</span>
           </div>
         ) : (
           <p className="text-[11px] text-[var(--color-subtle)]">
-            {p.status === 'accepted' ? 'Created — browse it on the Data page.' : 'Rejected — nothing was created.'}
+            {p.status === 'accepted' ? 'Created — the builder wired it in. Browse it on the Data page.'
+              : p.status === 'rejected' ? 'Rejected — nothing was created.'
+              : 'No answer in time — nothing was created. Ask the builder to set it up again.'}
           </p>
         )}
       </div>
@@ -870,8 +922,16 @@ function MessageBubble({ message, onRollback, onProposalAction, proposalBusy }: 
         </div>
       )}
 
-      {/* Main content */}
-      {(message.content || message.loading) && (
+      {/* Tool activity — what the builder is doing, step by step */}
+      {message.toolCalls && message.toolCalls.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {message.toolCalls.map((t) => <ToolActivityRow key={t.id} chip={t} />)}
+        </div>
+      )}
+
+      {/* Main content. While a proposal is pending the builder isn't writing —
+          it's blocked on the card below, so skip the typing placeholder. */}
+      {(message.content || (message.loading && message.proposal?.status !== 'pending')) && (
         <div className="group/msg relative min-w-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[13px] leading-relaxed text-[var(--color-text)]">
           {!message.loading && message.content && (
             <CopyButton text={message.content} className="absolute right-2 top-2 z-10" />
