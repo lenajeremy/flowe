@@ -12,6 +12,7 @@ const OP_LABELS: Record<string, string> = {
 export function DataNode({ data, selected }: NodeProps<FlowNode>) {
   const op = typeof data.dataOp === 'string' ? data.dataOp : 'get'
   const hasStore = typeof data.dataStoreId === 'string' && data.dataStoreId !== ''
+  const storeName = typeof data.dataStoreName === 'string' && data.dataStoreName !== '' ? data.dataStoreName : null
 
   return (
     <NodeBase2
@@ -29,7 +30,7 @@ export function DataNode({ data, selected }: NodeProps<FlowNode>) {
           )}
         </span>
         <span className="text-[10px] text-[var(--color-muted)]">
-          {hasStore ? 'Persisted store' : 'Pick a store in the sidebar'}
+          {storeName ?? (hasStore ? 'Persisted store' : 'Pick a store in the sidebar')}
         </span>
       </div>
       <Handle type="target" position={Position.Left} />

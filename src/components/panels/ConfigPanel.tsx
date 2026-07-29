@@ -310,6 +310,7 @@ export function ConfigPanel() {
         setDataStores((prev) => [store, ...prev])
         updateNodeData(selectedNodeId, {
           dataStoreId: store.id,
+          dataStoreName: store.name,
           dataOp: DATA_OPS[store.kind]?.[0]?.value ?? 'get',
         } as Parameters<typeof updateNodeData>[1])
         setShowNewStore(false)
@@ -952,7 +953,17 @@ export function ConfigPanel() {
                 <Select
                   id="cfg-data-store"
                   value={typeof data.dataStoreId === 'string' ? data.dataStoreId : ''}
-                  onChange={(v) => updateNodeData(nodeId, { dataStoreId: v })}
+                  onChange={(v) => {
+                    const store = dataStores.find((s) => s.id === v)
+                    const ops = store ? (DATA_OPS[store.kind] ?? []) : []
+                    // Reset the op when the new store's kind doesn't support it.
+                    const opValid = ops.some((o) => o.value === dataOp)
+                    updateNodeData(nodeId, {
+                      dataStoreId: v,
+                      dataStoreName: store?.name ?? '',
+                      ...(opValid ? {} : { dataOp: ops[0]?.value ?? 'get' }),
+                    })
+                  }}
                   options={dataStores.map((s) => ({ value: s.id, label: `${s.name} · ${s.kind}/${s.scope}` }))}
                 />
               ) : (

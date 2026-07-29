@@ -103,6 +103,7 @@ export type FlowNodeData = {
 
   // data (persistence) — reads/writes a DataStore selected by id
   dataStoreId?: string
+  dataStoreName?: string    // cached for the canvas card; id is the source of truth
   dataOp?: string       // get|set|increment|delete|append|query|update|count|clear
   dataKey?: string
   dataValue?: string
