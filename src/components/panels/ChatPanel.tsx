@@ -9,7 +9,23 @@ import { consumePendingPrompt } from '@/lib/pendingPrompt'
 import { FloweIcon } from '@/components/FloweIcon'
 import LiquidGlass from 'liquid-glass-react'
 import { apiFetch } from '@/lib/http'
+import { toast } from 'sonner'
+import { createDataStore } from '@/lib/dataApi'
+import { NODE_ICONS } from '@/lib/nodeIcons'
 // ── Types ───────────────────────────────────────────────────────
+
+// A data-store proposal from the AI's create_data_store tool. The store does
+// NOT exist until the user accepts — Accept creates it through the normal
+// REST endpoint, then tells the AI the real id in a follow-up message.
+interface StoreProposal {
+  name: string
+  kind: 'kv' | 'collection' | 'text'
+  scope: 'run' | 'workflow' | 'account'
+  schema?: Array<{ name: string; type: string }>
+  reason?: string
+  status: 'pending' | 'accepted' | 'rejected'
+  storeId?: string
+}
 
 interface ChatMessage {
   id: string
@@ -18,6 +34,7 @@ interface ChatMessage {
   thinking?: string
   thinkingDuration?: number
   workflowApplied?: boolean
+  proposal?: StoreProposal
   loading?: boolean
 }
 
@@ -27,6 +44,7 @@ interface StoredMessage {
   thinking?: string
   thinkingDuration?: number
   workflowApplied?: boolean
+  proposal?: StoreProposal
 }
 
 interface ChatModelInfo {
@@ -42,9 +60,9 @@ interface ChatModelInfo {
 
 function toStored(msgs: ChatMessage[]): StoredMessage[] {
   return msgs
-    .filter((m) => !m.loading && m.content)
-    .map(({ role, content, thinking, thinkingDuration, workflowApplied }) => ({
-      role, content, thinking, thinkingDuration, workflowApplied,
+    .filter((m) => !m.loading && (m.content || m.proposal))
+    .map(({ role, content, thinking, thinkingDuration, workflowApplied, proposal }) => ({
+      role, content, thinking, thinkingDuration, workflowApplied, proposal,
     }))
 }
 
@@ -215,6 +233,7 @@ export function ChatPanel() {
         body: JSON.stringify({
           prompt: text,
           model: chatModel,
+          workflowId: dbId ?? '',
           history: historySnapshot,
           currentNodes: nodes.map(({ id, type, position, data }) => ({
             id, type, position,
@@ -296,6 +315,18 @@ export function ChatPanel() {
             break
           }
 
+          case 'data_store_proposal': {
+            try {
+              const p = JSON.parse(data) as Omit<StoreProposal, 'status'>
+              if (p.name && p.kind && p.scope) {
+                setMessages((m) =>
+                  m.map((msg) => msg.id === assistantId ? { ...msg, proposal: { ...p, status: 'pending' } } : msg),
+                )
+              }
+            } catch { /* ignore */ }
+            break
+          }
+
           case 'error':
             setMessages((m) =>
               m.map((msg) => msg.id === assistantId ? { ...msg, content: data, loading: false } : msg),
@@ -346,9 +377,50 @@ export function ChatPanel() {
       setIsGenerating(false)
       abortRef.current = null
     }
-  }, [input, isGenerating, messages, nodes, edges, chatModel, importWorkflowVersion, applyPatch, saveChat])
+  }, [input, isGenerating, messages, nodes, edges, chatModel, dbId, importWorkflowVersion, applyPatch, saveChat])
 
   handleSendRef.current = handleSend
+
+  // Accept/reject a data-store proposal. Accept creates the store through the
+  // normal authed REST endpoint (the user's click IS the approval), then a
+  // follow-up chat message hands the AI the real id so it can wire the node.
+  const handleProposalAction = useCallback(async (msgId: string, action: 'accept' | 'reject') => {
+    const msg = messages.find((m) => m.id === msgId)
+    const p = msg?.proposal
+    if (!p || p.status !== 'pending' || isGenerating) return
+
+    if (action === 'reject') {
+      setMessages((prev) => {
+        const next = prev.map((m) => m.id === msgId ? { ...m, proposal: { ...p, status: 'rejected' as const } } : m)
+        saveChat(next)
+        return next
+      })
+      void handleSend(`I rejected the proposed "${p.name}" data store. Don't use it — adjust the workflow, or ask me what to do instead.`)
+      return
+    }
+
+    if (p.scope !== 'account' && !dbId) {
+      toast.error('Save the workflow first — workflow-scoped stores need a saved workflow.')
+      return
+    }
+    try {
+      const store = await createDataStore({
+        name: p.name,
+        kind: p.kind,
+        scope: p.scope,
+        workflow_id: p.scope === 'account' ? undefined : dbId ?? undefined,
+        schema: p.schema,
+      })
+      setMessages((prev) => {
+        const next = prev.map((m) => m.id === msgId ? { ...m, proposal: { ...p, status: 'accepted' as const, storeId: store.id } } : m)
+        saveChat(next)
+        return next
+      })
+      void handleSend(`I approved the "${p.name}" data store — it now exists with id ${store.id}. Set it as the dataStoreId on the data node (use update_workflow).`)
+    } catch (e) {
+      toast.error(String((e as Error).message))
+    }
+  }, [messages, isGenerating, dbId, saveChat, handleSend])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -386,7 +458,13 @@ export function ChatPanel() {
         ) : (
           <div className="flex flex-col p-4 gap-5">
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} onRollback={undo} />
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onRollback={undo}
+                onProposalAction={(action) => void handleProposalAction(msg.id, action)}
+                proposalBusy={isGenerating}
+              />
             ))}
             <div ref={messagesEndRef} />
             {/* Restart Chat at bottom of conversation */}
@@ -660,7 +738,80 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 // ── Message Bubble ───────────────────────────────────────────────
 
-function MessageBubble({ message, onRollback }: { message: ChatMessage; onRollback: () => void }) {
+const PROPOSAL_KIND_LABEL: Record<StoreProposal['kind'], string> = { kv: 'Key–Value', collection: 'Collection', text: 'Text' }
+const PROPOSAL_SCOPE_LABEL: Record<StoreProposal['scope'], string> = {
+  run: 'Run — scratch space for a single run',
+  workflow: 'Workflow — persists across runs',
+  account: 'Account — shared across all your workflows',
+}
+
+// Approval card for an AI-proposed data store. Nothing exists until Accept.
+function ProposalCard({ proposal, busy, onAction }: {
+  proposal: StoreProposal
+  busy: boolean
+  onAction: (action: 'accept' | 'reject') => void
+}) {
+  const p = proposal
+  return (
+    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface2)] px-3.5 py-2">
+        <span className="h-3.5 w-3.5 text-[var(--na-data)] [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
+        <span className="text-[11px] font-semibold tracking-wide text-[var(--color-muted)]">
+          {p.status === 'accepted' ? 'Data store created' : p.status === 'rejected' ? 'Data store rejected' : 'Wants to create a data store'}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 px-3.5 py-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[13px] font-semibold text-[var(--color-text)]">{p.name}</span>
+          <span className="rounded-md border border-[var(--color-chip-border)] bg-[var(--color-chip)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">{PROPOSAL_KIND_LABEL[p.kind] ?? p.kind}</span>
+          <span className="rounded-md border border-[var(--color-chip-border)] bg-[var(--color-chip)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-muted)]" title={PROPOSAL_SCOPE_LABEL[p.scope]}>
+            {p.scope[0].toUpperCase() + p.scope.slice(1)}
+          </span>
+        </div>
+        {p.reason && <p className="text-[12px] leading-relaxed text-[var(--color-muted)]">{p.reason}</p>}
+        {Array.isArray(p.schema) && p.schema.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {p.schema.map((col) => (
+              <span key={col.name} className="rounded border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-muted)]">
+                {col.name}: {col.type}
+              </span>
+            ))}
+          </div>
+        )}
+        {p.status === 'pending' ? (
+          <div className="mt-0.5 flex items-center gap-2">
+            <button
+              onClick={() => onAction('accept')}
+              disabled={busy}
+              className="pressable h-7.5 rounded-lg bg-[var(--color-accent)] px-3 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              Create store
+            </button>
+            <button
+              onClick={() => onAction('reject')}
+              disabled={busy}
+              className="h-7.5 rounded-lg border border-[var(--color-border)] px-3 text-[11.5px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)] disabled:opacity-40"
+            >
+              Reject
+            </button>
+            <span className="text-[10.5px] text-[var(--color-subtle)]">or just reply to steer it differently</span>
+          </div>
+        ) : (
+          <p className="text-[11px] text-[var(--color-subtle)]">
+            {p.status === 'accepted' ? 'Created — browse it on the Data page.' : 'Rejected — nothing was created.'}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MessageBubble({ message, onRollback, onProposalAction, proposalBusy }: {
+  message: ChatMessage
+  onRollback: () => void
+  onProposalAction: (action: 'accept' | 'reject') => void
+  proposalBusy: boolean
+}) {
   const [reasoningOpen, setReasoningOpen] = useState(false)
   const user = useAuthStore((s) => s.user)
 
@@ -742,6 +893,11 @@ function MessageBubble({ message, onRollback }: { message: ChatMessage; onRollba
             </div>
           )}
         </div>
+      )}
+
+      {/* Data-store approval card */}
+      {message.proposal && (
+        <ProposalCard proposal={message.proposal} busy={proposalBusy} onAction={onProposalAction} />
       )}
 
       {/* Output of thinking process — workflow applied */}

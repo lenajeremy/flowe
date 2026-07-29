@@ -35,7 +35,7 @@ export async function listDataStores(workflowId?: string): Promise<DataStore[]> 
 }
 
 export async function createDataStore(body: {
-  name: string; kind: StoreKind; scope: StoreScope; workflow_id?: string
+  name: string; kind: StoreKind; scope: StoreScope; workflow_id?: string; schema?: unknown
 }): Promise<DataStore> {
   const res = await apiFetch(`${API}/api/data-stores`, {
     method: 'POST',
