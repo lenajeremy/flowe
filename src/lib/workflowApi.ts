@@ -8,6 +8,7 @@ export interface SavedWorkflow {
   name: string
   nodes: WorkflowAST['nodes']
   edges: WorkflowAST['edges']
+  published: boolean
   created_at: string
   updated_at: string
 }
@@ -19,6 +20,7 @@ export interface WorkflowSummary {
   description: string
   node_count: number
   node_types: string[] | null // distinct nodeType values, for card icons
+  published: boolean
   created_at: string
   updated_at: string
 }
@@ -69,6 +71,15 @@ export async function getWorkflow(id: string): Promise<SavedWorkflow> {
 export async function deleteWorkflow(id: string): Promise<void> {
   const res = await apiFetch(`${API}/api/workflows/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`Failed to delete workflow: ${res.status}`)
+}
+
+/** Publishing gates SCHEDULED runs only — manual, webhook, and API triggers
+ *  work either way. */
+export async function setWorkflowPublished(id: string, published: boolean): Promise<void> {
+  const res = await apiFetch(`${API}/api/workflows/${id}/${published ? 'publish' : 'unpublish'}`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error(`Failed to ${published ? 'publish' : 'unpublish'} workflow`)
 }
 
 // ── Run history ──────────────────────────────────────────────

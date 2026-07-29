@@ -15,7 +15,8 @@ import { ChatFab } from '@/components/agent/ChatFab'
 import { useRunStreamBridge } from '@/lib/runController'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
-import { getWorkflow, saveWorkflow } from '@/lib/workflowApi'
+import { getWorkflow, saveWorkflow, setWorkflowPublished } from '@/lib/workflowApi'
+import { toast } from 'sonner'
 import { serializeToAST } from '@/lib/executor'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
@@ -133,16 +134,26 @@ export function WorkflowEditorPage() {
   useRunStreamBridge()
 
   // ── Published ("live") state — Figma frames 163-167 ────────
+  // Publishing gates SCHEDULED runs only; it's server state on the workflow
+  // (loaded below), not a local preference.
   const [published, setPublished] = useState(false)
-  useEffect(() => {
-    setPublished(id ? window.localStorage.getItem(`flowe-published-${id}`) === '1' : false)
-  }, [id])
+  const [publishBusy, setPublishBusy] = useState(false)
+  const [publishMenuOpen, setPublishMenuOpen] = useState(false)
 
-  function handlePublish() {
-    if (!id) return
-    window.localStorage.setItem(`flowe-published-${id}`, '1')
-    setPublished(true)
-    void handleSave()
+  async function togglePublished(next: boolean) {
+    if (!id || publishBusy) return
+    setPublishMenuOpen(false)
+    setPublishBusy(true)
+    try {
+      if (next) await handleSave()
+      await setWorkflowPublished(id, next)
+      setPublished(next)
+      toast.success(next ? 'Published — scheduled runs are live' : 'Unpublished — scheduled runs paused')
+    } catch (e) {
+      toast.error(String((e as Error).message))
+    } finally {
+      setPublishBusy(false)
+    }
   }
 
   useEffect(() => {
@@ -171,6 +182,7 @@ export function WorkflowEditorPage() {
           createdAt: wf.created_at,
         }
         loadWorkflow(ast, wf.id)
+        setPublished(wf.published)
       })
       .catch(() => navigate('/workflows'))
   }, [id, loadWorkflow, navigate])
@@ -409,13 +421,47 @@ export function WorkflowEditorPage() {
             {saveStatus === 'saving' ? 'Saving' : saveStatus === 'saved' ? 'Saved' : 'Save'}
           </button>
 
-          {/* Publish */}
-          <button
-            onClick={handlePublish}
-            className="pressable flex items-center px-3 py-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-canvas)] text-[12px] font-semibold hover:opacity-90"
-          >
-            {published ? 'Published' : 'Publish'}
-          </button>
+          {/* Publish — gates scheduled runs only */}
+          {published ? (
+            <div className="relative">
+              <button
+                onClick={() => setPublishMenuOpen((v) => !v)}
+                disabled={publishBusy}
+                title="Scheduled runs are live"
+                className="pressable flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)] disabled:opacity-50"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-ok)]" />
+                Published
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" className={`text-[var(--color-muted)] transition-transform ${publishMenuOpen ? 'rotate-180' : ''}`}>
+                  <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {publishMenuOpen && (
+                <div
+                  className="absolute right-0 top-9 z-30 w-56 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-1"
+                  style={{ boxShadow: 'var(--pop-shadow)' }}
+                >
+                  <p className="px-2.5 py-1.5 text-[11px] leading-relaxed text-[var(--color-muted)]">
+                    Schedules run only while published. Manual runs and webhooks always work.
+                  </p>
+                  <button
+                    onClick={() => void togglePublished(false)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12px] text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]"
+                  >
+                    Unpublish
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => void togglePublished(true)}
+              disabled={publishBusy}
+              className="pressable flex items-center px-3 py-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-canvas)] text-[12px] font-semibold hover:opacity-90 disabled:opacity-50"
+            >
+              {publishBusy ? 'Publishing…' : 'Publish'}
+            </button>
+          )}
 
           <UserMenu />
         </div>

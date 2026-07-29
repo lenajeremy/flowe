@@ -55,7 +55,18 @@ function WorkflowCard({ wf, index, onOpen, onDelete, deleting }: {
       whileHover={{ y: -2, boxShadow: 'var(--pop-shadow)' }}
     >
       <div className="flex flex-1 flex-col gap-1.5 p-4 pb-3">
-        <p className="truncate text-[15px] font-semibold text-[var(--color-text)]">{wf.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[15px] font-semibold text-[var(--color-text)]">{wf.name}</p>
+          {wf.published && (
+            <span
+              className="shrink-0 rounded-[15px] px-1.5 py-0.5 text-[9px] font-medium uppercase"
+              style={{ color: 'var(--color-ok)', background: 'var(--tint-ok)', letterSpacing: '0.04em' }}
+              title="Published — scheduled runs are live"
+            >
+              live
+            </span>
+          )}
+        </div>
         <p className="line-clamp-2 min-h-[36px] text-[12.5px] leading-relaxed text-[var(--color-muted)]">
           {wf.description || 'No description yet — open the flow to build it out.'}
         </p>
