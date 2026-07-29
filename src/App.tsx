@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { LandingPage } from '@/pages/LandingPage'
 import { HomePage } from '@/pages/HomePage'
+import { DataPage } from '@/pages/DataPage'
 import { BuildPage } from '@/pages/BuildPage'
 import { WorkflowEditorPage } from '@/pages/WorkflowEditorPage'
 import { WorkflowChatPage } from '@/pages/WorkflowChatPage'
@@ -42,6 +43,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/verify" element={<AuthVerifyPage />} />
         <Route path="/workflows" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/data" element={<ProtectedRoute><DataPage /></ProtectedRoute>} />
         <Route path="/build" element={<ProtectedRoute><BuildPage /></ProtectedRoute>} />
         <Route path="/workflow/:id" element={<ProtectedRoute><WorkflowEditorPage /></ProtectedRoute>} />
         <Route path="/workflow/:id/chat" element={<ProtectedRoute><WorkflowChatPage /></ProtectedRoute>} />

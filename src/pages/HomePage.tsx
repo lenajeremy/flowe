@@ -204,7 +204,15 @@ export function HomePage() {
             </button>
             <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Workflows</h1>
           </div>
-          <UserMenu />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/data')}
+              className="pressable h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[13px] font-medium hover:border-[var(--color-border2)]"
+            >
+              Data
+            </button>
+            <UserMenu />
+          </div>
         </div>
 
         {/* Toolbar: search · filters · new */}
