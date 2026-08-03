@@ -72,13 +72,38 @@ const WEEKDAY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: '6', label: 'Saturday'  },
 ]
 
+// Approvals always time out — an open-ended gate strands the run, and on a
+// schedule strands another every cycle. CUSTOM_TIMEOUT is a sentinel that
+// swaps the select for a number + unit pair.
+const CUSTOM_TIMEOUT = 'custom'
+
 const APPROVAL_TIMEOUTS: Array<{ value: string; label: string }> = [
-  { value: '0',     label: 'No timeout'  },
-  { value: '300',   label: '5 minutes'   },
-  { value: '900',   label: '15 minutes'  },
-  { value: '3600',  label: '1 hour'      },
-  { value: '86400', label: '24 hours'    },
+  { value: '300',          label: '5 minutes'  },
+  { value: '900',          label: '15 minutes' },
+  { value: '1800',         label: '30 minutes' },
+  { value: '3600',         label: '1 hour'     },
+  { value: '7200',         label: '2 hours'    },
+  { value: '28800',        label: '8 hours'    },
+  { value: '86400',        label: '24 hours'   },
+  { value: CUSTOM_TIMEOUT, label: 'Custom…'    },
 ]
+
+// Per-unit ceilings; the largest expressible wait is 3 days, which is also the
+// server's hard cap (executor.MaxApprovalTimeout).
+const TIMEOUT_UNITS: Array<{ value: string; label: string; max: number }> = [
+  { value: '1',     label: 'seconds', max: 60 },
+  { value: '60',    label: 'minutes', max: 60 },
+  { value: '3600',  label: 'hours',   max: 72 },
+  { value: '86400', label: 'days',    max: 3  },
+]
+
+/** Split a seconds value into the largest unit that divides it exactly. */
+function splitTimeout(secs: number): { amount: number; unit: number } {
+  for (const u of [86400, 3600, 60]) {
+    if (secs % u === 0 && secs / u >= 1) return { amount: secs / u, unit: u }
+  }
+  return { amount: secs, unit: 1 }
+}
 
 const DATA_KIND_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'kv',         label: 'Key–Value'         },
@@ -216,6 +241,18 @@ export function ConfigPanel() {
   const [schedIntervalSeconds, setSchedIntervalSeconds] = useState(900) // 15 min
   // Which unit the interval box is showing (60 = minutes, 3600 = hours)
   const [intervalUnit, setIntervalUnit] = useState(60)
+
+  // ── Approval timeout ─────────────────────────────────────────
+  // A stored value that matches no preset already means "custom", so the mode is
+  // mostly derived. This only records an explicit switch to Custom… plus the
+  // in-progress number/unit, keyed by node so a draft can't leak when the
+  // selection changes.
+  const [timeoutDraft, setTimeoutDraft] = useState<{
+    nodeId: string
+    custom?: boolean
+    amount?: string
+    unit?: number
+  } | null>(null)
 
   // ── Data store state ─────────────────────────────────────────
   const [dataStores, setDataStores] = useState<Array<{ id: string; name: string; kind: string; scope: string }>>([])
@@ -366,6 +403,20 @@ export function ConfigPanel() {
   const upstreamNodes = getUpstreamNodes(nodeId, nodes, edges)
   const selectedStore = dataStores.find((s) => s.id === data.dataStoreId)
   const dataOp = typeof data.dataOp === 'string' ? data.dataOp : ''
+
+  // Legacy nodes stored 0 ("no timeout"); the server now treats that as 24h, so
+  // show what will actually happen rather than an option that no longer exists.
+  const rawApproval = typeof data.approvalTimeout === 'number' ? data.approvalTimeout : 0
+  const approvalSecs = rawApproval > 0 ? rawApproval : 86400
+  // A value that isn't one of the presets can only have come from a custom entry.
+  const approvalIsPreset = APPROVAL_TIMEOUTS.some(
+    (o) => o.value !== CUSTOM_TIMEOUT && Number(o.value) === approvalSecs,
+  )
+  const draft = timeoutDraft?.nodeId === nodeId ? timeoutDraft : null
+  const showCustomTimeout = draft?.custom ?? !approvalIsPreset
+  const derivedTimeout = splitTimeout(approvalSecs)
+  const customUnit = draft?.unit ?? derivedTimeout.unit
+  const customAmount = draft?.amount ?? String(derivedTimeout.amount)
 
   const hasOutput = typeof data.executionOutput === 'string' && data.executionOutput.length > 0
   const isCompleted = data.executionStatus === 'completed'
@@ -781,13 +832,64 @@ export function ConfigPanel() {
                 When approval is needed, an email is sent with the content to review and a direct link to approve or reject.
               </p>
             </FormField>
-            <FormField label="Timeout" htmlFor="cfg-approval-timeout">
+            <FormField
+              label="Timeout"
+              htmlFor="cfg-approval-timeout"
+              hint="Approvals always time out — otherwise the run waits forever, and a scheduled one strands a new run every cycle. Longest is 3 days."
+            >
               <Select
                 id="cfg-approval-timeout"
-                value={String(typeof data.approvalTimeout === 'number' ? data.approvalTimeout : 0)}
-                onChange={(v) => updateNodeData(nodeId, { approvalTimeout: Number(v) })}
+                value={showCustomTimeout ? CUSTOM_TIMEOUT : String(approvalSecs)}
+                onChange={(v) => {
+                  if (v === CUSTOM_TIMEOUT) {
+                    setTimeoutDraft({ nodeId, custom: true })
+                    return
+                  }
+                  setTimeoutDraft({ nodeId, custom: false })
+                  updateNodeData(nodeId, { approvalTimeout: Number(v) })
+                }}
                 options={APPROVAL_TIMEOUTS}
               />
+
+              {showCustomTimeout && (() => {
+                const unitDef = TIMEOUT_UNITS.find((u) => Number(u.value) === customUnit) ?? TIMEOUT_UNITS[1]
+                // Clamp per unit — 72 hours is allowed, 72 days is not — and
+                // store the result as plain seconds.
+                const commit = (raw: string, unitSecs: number) => {
+                  const max = TIMEOUT_UNITS.find((u) => Number(u.value) === unitSecs)?.max ?? 60
+                  const n = Math.round(Number(raw))
+                  const clamped = Math.min(Math.max(1, Number.isFinite(n) && n > 0 ? n : 1), max)
+                  setTimeoutDraft({ nodeId, custom: true, amount: String(clamped), unit: unitSecs })
+                  updateNodeData(nodeId, { approvalTimeout: clamped * unitSecs })
+                }
+                return (
+                  <div className="mt-2 flex flex-col gap-1">
+                    <div className="flex gap-2">
+                      <Input
+                        id="cfg-approval-custom-amount"
+                        type="number"
+                        min={1}
+                        max={unitDef.max}
+                        value={customAmount}
+                        onChange={(e) => setTimeoutDraft({ nodeId, custom: true, amount: e.target.value, unit: customUnit })}
+                        onBlur={(e) => commit(e.target.value, customUnit)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value, customUnit) }}
+                        className={inputClass}
+                      />
+                      <Select
+                        id="cfg-approval-custom-unit"
+                        value={String(customUnit)}
+                        onChange={(v) => commit(customAmount, Number(v))}
+                        options={TIMEOUT_UNITS.map(({ value, label }) => ({ value, label }))}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[var(--color-subtle)]">
+                      Up to {unitDef.max} {unitDef.label}
+                      {unitDef.value !== '86400' && ' · longest wait is 3 days'}
+                    </p>
+                  </div>
+                )
+              })()}
             </FormField>
           </>
         )}

@@ -45,7 +45,10 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         nodeType: 'humanApproval',
         label: 'Human Approval',
         approvalMessage: 'Please review and approve or reject this step.',
-        approvalTimeout: 0,
+        // Approvals must be bounded — an open gate strands the run, and a
+        // scheduled one strands a new run every cycle. 24h suits "I'll look at
+        // it tomorrow"; the server caps any value at 3 days.
+        approvalTimeout: 86400,
       }
     case 'webhookTrigger':
       return { nodeType: 'webhookTrigger', label: 'Webhook Trigger' }
