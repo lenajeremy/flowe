@@ -468,7 +468,7 @@ const NODE_TINTS: Partial<Record<NodeType, string>> = {
   stripe:'#635bff', shopify:'#96bf48',
 }
 
-// ─── Integrations — the tools Flowe can drive, one quiet wall ──
+// ─── Integrations — the tools Fernary can drive, one quiet wall ──
 const INTEGRATIONS: NodeType[] = [
   'slack', 'gmail', 'outlook', 'notion', 'linear', 'github', 'gitlab',
   'googlecalendar', 'googledrive', 'googledocs', 'googlesheets', 'stripe', 'shopify',
@@ -716,7 +716,7 @@ function Nav({ onOpen }: { onOpen: () => void }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <button onClick={() => navigate('/')} className="flex items-center gap-2.5 text-white">
           <FloweIcon size={22} />
-          <span className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>Flowe</span>
+          <span className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>Fernary</span>
         </button>
         <button onClick={onOpen}
           className="pressable rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:opacity-90">
@@ -785,7 +785,7 @@ export function LandingPage() {
           </h1>
           <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
             <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
-              Describe what you want in plain English. Flowe builds the workflow and runs it on your schedule.
+              Describe what you want in plain English. Fernary builds the workflow and runs it on your schedule.
             </p>
             <div className="rise-in flex items-center gap-3" style={{ animationDelay:'600ms' }}>
               <button onClick={handleCreate} disabled={creating}
@@ -804,7 +804,7 @@ export function LandingPage() {
         {/* The product — one shot, full width */}
         <div className="relative mx-auto max-w-6xl px-6 pb-8">
           <div className="rise-in" style={{ animationDelay:'680ms' }}>
-            <Shot src="/product-editor.jpg" alt="The Flowe workflow editor" />
+            <Shot src="/product-editor.jpg" alt="The Fernary workflow editor" />
           </div>
         </div>
       </section>
@@ -813,7 +813,7 @@ export function LandingPage() {
       <section className="mx-auto max-w-6xl px-6 py-32">
         <ScrollStatement
           lead="A new way to automate."
-          rest="No drag-and-drop tutorials, no configuration rabbit holes. Tell Flowe what you want — it designs the workflow, wires the tools, and keeps it running."
+          rest="No drag-and-drop tutorials, no configuration rabbit holes. Tell Fernary what you want — it designs the workflow, wires the tools, and keeps it running."
         />
       </section>
 
@@ -822,7 +822,7 @@ export function LandingPage() {
         index="1.0" name="Build"
         title={<>Describe it once.<br />Watch it build.</>}
         sub="The AI builder turns a sentence into a working pipeline — triggers, models, branches and all. Refine it through conversation."
-        shot="/shot-build.jpg" alt="Building a workflow by describing it to Flowe AI"
+        shot="/shot-build.jpg" alt="Building a workflow by describing it to Fernary AI"
       />
 
       {/* ── 2.0 Run ── */}
@@ -841,7 +841,7 @@ export function LandingPage() {
         shot="/shot-approve.jpg" alt="A run paused for human approval"
       />
 
-      {/* ── Integrations — the tools Flowe drives ── */}
+      {/* ── Integrations — the tools Fernary drives ── */}
       <Integrations />
 
       {/* ── Build by chat — the AI builder ── */}
@@ -883,7 +883,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
           <div className="flex items-center gap-2.5">
             <FloweIcon size={20} />
-            <span className="text-sm font-semibold text-white">Flowe</span>
+            <span className="text-sm font-semibold text-white">Fernary</span>
           </div>
           <p className="text-[12px] text-white/25">Automation for everyone — not just engineers.</p>
         </div>

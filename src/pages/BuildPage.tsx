@@ -9,7 +9,7 @@ import { FloweIcon } from '@/components/FloweIcon'
 import { UserMenu } from '@/components/ui/UserMenu'
 import type { NodeType } from '@/types/workflow'
 
-// "Build with Flowe AI" — a focused, full-screen prompt. Submitting creates a
+// "Build with Fernary AI" — a focused, full-screen prompt. Submitting creates a
 // workflow shell (description = the prompt), stashes the prompt for the
 // editor's ChatPanel, and navigates there; the chat auto-sends it so the AI
 // starts building the moment the canvas appears.

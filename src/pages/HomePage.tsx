@@ -9,7 +9,7 @@ import { UserMenu } from '@/components/ui/UserMenu'
 import type { NodeType } from '@/types/workflow'
 
 // The workflows dashboard: searchable, filterable grid of workflow cards plus
-// a "Build with Flowe AI" tile that opens the full-screen prompt page.
+// a "Build with Fernary AI" tile that opens the full-screen prompt page.
 
 function Spinner() {
   return (
@@ -331,7 +331,7 @@ export function HomePage() {
               />
             ))}
 
-            {/* Build with Flowe AI tile */}
+            {/* Build with Fernary AI tile */}
             <motion.button
               type="button"
               onClick={() => navigate('/build')}
@@ -346,7 +346,7 @@ export function HomePage() {
                 <FloweIcon size={34} />
               </span>
               <span className="flex flex-col gap-1">
-                <span className="text-[14px] font-semibold text-[var(--color-text)]">Build with Flowe AI</span>
+                <span className="text-[14px] font-semibold text-[var(--color-text)]">Build with Fernary AI</span>
                 <span className="text-[12px] text-[var(--color-subtle)]">Send a message to create a flow</span>
               </span>
             </motion.button>

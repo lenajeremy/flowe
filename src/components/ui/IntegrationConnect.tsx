@@ -111,7 +111,7 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
                 ? 'Checking connection…'
                 : connected
                   ? `Connected${status?.workspace_name ? ' · ' + status.workspace_name : ''}`
-                  : `Flowe doesn't have access to ${label} yet`}
+                  : `Fernary doesn't have access to ${label} yet`}
             </p>
           </div>
         </div>

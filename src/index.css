@@ -8,12 +8,12 @@
 @import "shadcn/tailwind.css";
 
 /* The app themes via data-theme on <html> (see lib/theme.ts), not a .dark
-   class — shadcn tokens below derive from Flowe tokens, which re-ink
+   class — shadcn tokens below derive from Fernary tokens, which re-ink
    themselves per theme, so no dark: variant plumbing is needed. */
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /* ────────────────────────────────────────────────────────────────
-   Flowe design tokens
+   Fernary design tokens
 
    Two voices:  Geist      → content (what the user writes and reads)
                 Geist Mono → the machine (statuses, timestamps, ids, meta)
@@ -147,7 +147,7 @@
   --dock-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.07);
   --pop-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
   /* ── shadcn/ui token bridge ─────────────────────────────────
-     shadcn's semantic tokens derive from the Flowe tokens above, so
+     shadcn's semantic tokens derive from the Fernary tokens above, so
      every shadcn component matches the design system and re-inks
      automatically when data-theme flips. Never hardcode values here. */
   --background: var(--color-canvas);

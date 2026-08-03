@@ -416,7 +416,7 @@ export function DataPage() {
         </div>
 
         <p className="mb-6 max-w-[640px] text-[13px] leading-relaxed text-[var(--color-muted)]">
-          Everything your workflows remember — counters, records, running notes. Anything Flowe AI saves shows up here too.
+          Everything your workflows remember — counters, records, running notes. Anything Fernary AI saves shows up here too.
         </p>
 
         {loading ? (

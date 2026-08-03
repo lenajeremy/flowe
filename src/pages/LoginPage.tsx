@@ -108,7 +108,7 @@ export function LoginPage() {
           <FloweIcon size={40} />
           <div>
             <h1 className="text-lg font-semibold tracking-[-0.01em]">
-              {step === 'email' ? 'Sign in to Flowe' : 'Check your email'}
+              {step === 'email' ? 'Sign in to Fernary' : 'Check your email'}
             </h1>
             <p className="micro mt-1 text-[var(--color-subtle)]">
               {step === 'email'

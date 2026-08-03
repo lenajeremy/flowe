@@ -102,7 +102,7 @@ export function WebhookTriggerPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-accent)]">
             <FloweIcon size={18} />
           </div>
-          <span className="text-[15px] font-semibold">Flowe</span>
+          <span className="text-[15px] font-semibold">Fernary</span>
           <Link to="/" className="ml-auto text-[11px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]">
             Open app
           </Link>
@@ -237,7 +237,7 @@ export function WebhookTriggerPage() {
         </div>
 
         <p className="text-center text-[11px] text-[var(--color-subtle)]">
-          Powered by Flowe · <Link to="/" className="transition-colors hover:text-[var(--color-text)]">Open app</Link>
+          Powered by Fernary · <Link to="/" className="transition-colors hover:text-[var(--color-text)]">Open app</Link>
         </p>
       </motion.div>
     </div>

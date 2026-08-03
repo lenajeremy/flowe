@@ -719,7 +719,7 @@ function EmptyState({ suggestions, onSelect }: { suggestions: string[]; onSelect
           <FloweIcon size={48} />
         </div>
         <div className="text-center">
-          <h3 className="text-[15px] font-semibold text-[var(--color-text)]">Meet Flowe AI</h3>
+          <h3 className="text-[15px] font-semibold text-[var(--color-text)]">Meet Fernary AI</h3>
           <p className="text-[12px] text-[var(--color-muted)] mt-1">Send a message to create a flow</p>
         </div>
       </div>

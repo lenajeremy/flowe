@@ -3,7 +3,7 @@ import type { NodeType } from '@/types/workflow'
 import { NODE_ICON_PATHS } from '@/lib/nodeColors'
 
 /**
- * The Flowe node icon set — one stroke-glyph language generated from
+ * The Fernary node icon set — one stroke-glyph language generated from
  * NODE_ICON_PATHS. Icons inherit their color (set `color` on any wrapper,
  * typically the node accent variable), so the same glyph is pastel-neon on
  * dark and deep-ink on light with zero baked-in values. The dark theme adds

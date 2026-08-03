@@ -1318,7 +1318,7 @@ export function SlackConfig({ data, nodeId, updateNodeData }: ProviderConfigProp
           <SelectField label="Send as" field="slackSendAs" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="bot"
             options={[{ value: 'bot', label: 'Bot (app identity)' }, { value: 'user', label: 'Me (my Slack identity)' }]} />
           {op === 'send_message' && (data.slackSendAs ?? 'bot') === 'bot' && (
-            <TextField label="Bot name (optional)" field="slackBotName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Flowe Reporter" />
+            <TextField label="Bot name (optional)" field="slackBotName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Fernary Reporter" />
           )}
         </>)}
         {op === 'reply_in_thread' && (
