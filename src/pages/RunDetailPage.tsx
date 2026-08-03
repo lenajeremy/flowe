@@ -8,7 +8,12 @@ import { apiFetch } from '@/lib/http'
 
 function tryJson(str: string): string {
   try {
-    return JSON.stringify(JSON.parse(str), null, 2)
+    const v: unknown = JSON.parse(str)
+    // A JSON string scalar reads best as its own text — re-encoding it would
+    // show the quotes and turn real newlines back into "\n". Data-store values
+    // arrive JSON-encoded, so this is the common case for text.
+    if (typeof v === 'string') return v
+    return JSON.stringify(v, null, 2)
   } catch {
     return str
   }
