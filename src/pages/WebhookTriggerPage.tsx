@@ -75,7 +75,7 @@ export function WebhookTriggerPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-canvas)] px-4 font-[var(--font-sans)] text-[var(--color-text)]">
-      {/* ── Purple gradient backdrop ── */}
+      {/* ── Fern gradient backdrop ── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-48 left-1/2 h-[560px] w-[820px] -translate-x-1/2 rounded-full opacity-35"
@@ -83,11 +83,11 @@ export function WebhookTriggerPage() {
         />
         <div
           className="absolute -bottom-56 -left-40 h-[460px] w-[460px] rounded-full opacity-25"
-          style={{ background: 'radial-gradient(circle, color-mix(in srgb, #7c5ce0 30%, transparent), transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--fern-teal) 30%, transparent), transparent 70%)' }}
         />
         <div
           className="absolute -right-44 top-1/3 h-[420px] w-[420px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, color-mix(in srgb, #ff8ce8 22%, transparent), transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--fern-lime) 22%, transparent), transparent 70%)' }}
         />
       </div>
 
@@ -113,7 +113,7 @@ export function WebhookTriggerPage() {
           className="rounded-[22px] p-px"
           style={{
             background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 50%, var(--color-border)), var(--color-border) 45%, color-mix(in srgb, #ff8ce8 35%, var(--color-border)))',
+              'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 50%, var(--color-border)), var(--color-border) 45%, color-mix(in srgb, var(--fern-lime) 35%, var(--color-border)))',
           }}
         >
           <div className="flex flex-col gap-5 rounded-[21px] bg-[var(--color-elevated)] p-6" style={{ boxShadow: 'var(--panel-shadow)' }}>

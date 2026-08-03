@@ -349,6 +349,17 @@ function Reveal({ children, delay = 0, y = 28 }: {
   )
 }
 
+// ─── Section rhythm — one scale for the whole page. Every content band
+// gets the same vertical beat and the same heading scale, so the page
+// stops drifting between py-28/32/36. Tracking tightens as type grows.
+const SECTION = 'mx-auto max-w-6xl px-6 py-24 sm:py-32'
+const RULE = { borderTop: '1px solid rgba(255,255,255,0.06)' } as const
+const H2 = 'text-[2.05rem] font-bold sm:text-[2.6rem]'
+const H2_STYLE = { letterSpacing: '-0.03em', lineHeight: 1.08 } as const
+const LEAD = 'text-[16px] leading-relaxed text-white/55 sm:text-[17px]'
+const HEAD_GAP = 'mb-14 sm:mb-16'
+const EYEBROW = 'font-[var(--font-mono)] text-[12px] uppercase tracking-[0.14em] text-white/35'
+
 // ─── Scroll-lit statement — words brighten as you read down ────
 function ScrollStatement({ lead, rest }: { lead: string; rest: string }) {
   const ref = useRef<HTMLParagraphElement>(null)
@@ -400,10 +411,10 @@ function Shot({ src, alt }: { src: string; alt: string }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        border:`1px solid ${hover ? 'rgba(160,140,255,0.28)' : 'rgba(255,255,255,0.08)'}`,
+        border:`1px solid ${hover ? 'rgba(20,184,134,0.34)' : 'rgba(255,255,255,0.08)'}`,
         background:'#0a0a0d',
         boxShadow: hover
-          ? '0 40px 120px rgba(0,0,0,0.5), 0 0 80px rgba(160,140,255,0.07)'
+          ? '0 40px 120px rgba(0,0,0,0.5), 0 0 80px rgba(20,184,134,0.10)'
           : '0 40px 120px rgba(0,0,0,0.5)',
         transition:'border-color 300ms var(--ease-out), box-shadow 300ms var(--ease-out)',
       }}>
@@ -422,14 +433,14 @@ function NumberedSection({ index, name, title, sub, shot, alt }: {
   alt: string
 }) {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-28">
+    <section className={SECTION}>
       <Reveal>
-        <div className="mb-14 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
-          <h2 className="text-[2.1rem] font-bold sm:text-[2.6rem]" style={{ letterSpacing:'-0.03em', lineHeight:1.08 }}>
+        <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
+          <h2 className={H2} style={H2_STYLE}>
             {title}
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
-            <p className="text-[16px] leading-relaxed text-white/55 sm:text-[17px]">{sub}</p>
+            <p className={LEAD}>{sub}</p>
             <div className="group flex cursor-default items-center gap-2.5 font-[var(--font-mono)] text-[13px]">
               <span className="text-white/30">{index}</span>
               <span className="text-white/55 transition-colors duration-200 group-hover:text-white">{name}</span>
@@ -446,7 +457,9 @@ function NumberedSection({ index, name, title, sub, shot, alt }: {
 }
 
 // ─── Stroke glyph — shares the app's icon-path language ──
-const ACCENT = '#a08cff'
+// The house accent: Fernary's UI green, used wherever nothing more
+// specific owns the color.
+const ACCENT = '#16C08A'
 
 function Glyph({ d, size = 20 }: { d: string; size?: number }) {
   return (
@@ -505,14 +518,14 @@ function IntegrationTile({ type }: { type: NodeType }) {
 
 function Integrations() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-28" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+    <section className={SECTION} style={RULE}>
       <Reveal>
-        <div className="mb-14 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
-          <h2 className="text-[2.1rem] font-bold sm:text-[2.6rem]" style={{ letterSpacing:'-0.03em', lineHeight:1.08 }}>
+        <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
+          <h2 className={H2} style={H2_STYLE}>
             Plugs into the tools<br />you already run.
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
-            <p className="text-[16px] leading-relaxed text-white/55 sm:text-[17px]">
+            <p className={LEAD}>
               Thirteen integrations and hundreds of read-and-write actions — messaging, mail, code, docs, spreadsheets and commerce. Connect an account once, then reach for it in any workflow.
             </p>
             <div className="group flex cursor-default items-center gap-2.5 font-[var(--font-mono)] text-[13px]">
@@ -539,9 +552,12 @@ function Integrations() {
 // lights up in its node accent, completes with a check, and the cycle
 // restarts — the same live-run feel as the product. Reduced motion gets
 // the finished state (all steps checked) with no loop.
+// Tints are the brand ramp (amber → teal → green → the tool's own blue),
+// not the app's node accents: the mock is a brand surface, and the page
+// carries no violet or magenta.
 const BUILD_STEPS: Array<{ type: NodeType; name: string; detail: string; tint: string }> = [
-  { type:'scheduledTrigger', name:'Scheduled', detail:'Every weekday · 9:00 AM', tint:'#ff8ce8' },
-  { type:'linear', name:'Linear', detail:'List new issues', tint:'#5e6ad2' },
+  { type:'scheduledTrigger', name:'Scheduled', detail:'Every weekday · 9:00 AM', tint:'#F5A524' },
+  { type:'linear', name:'Linear', detail:'List new issues', tint:'#0FA3A3' },
   { type:'llm', name:'Summarize', detail:'Claude Opus', tint:'#70f17b' },
   { type:'slack', name:'Slack', detail:'Post to #standup', tint:'#36c5f0' },
 ]
@@ -605,7 +621,7 @@ function ChatMock() {
       {/* what you type */}
       <div className="mb-5 flex justify-end">
         <p className="max-w-[82%] rounded-2xl rounded-br-md px-4 py-2.5 text-[13px] leading-relaxed text-white"
-          style={{ background:'rgba(160,140,255,0.16)', border:'1px solid rgba(160,140,255,0.22)' }}>
+          style={{ background:'rgba(20,184,134,0.16)', border:'1px solid rgba(20,184,134,0.28)' }}>
           Every weekday at 9am, summarize new Linear issues and post them to #standup.
         </p>
       </div>
@@ -648,15 +664,15 @@ function ChatMock() {
 
 function ChatBand() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-28" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-      <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
+    <section className={SECTION} style={RULE}>
+      <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
         <Reveal>
           <div>
-            <span className="mb-5 block font-[var(--font-mono)] text-[12px] uppercase tracking-[0.14em] text-white/35">Build by chat</span>
-            <h2 className="text-[2.1rem] font-bold sm:text-[2.6rem]" style={{ letterSpacing:'-0.03em', lineHeight:1.08 }}>
+            <span className={`mb-5 block ${EYEBROW}`}>Build by chat</span>
+            <h2 className={H2} style={H2_STYLE}>
               Talk to it like<br />a teammate.
             </h2>
-            <p className="mt-6 max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]">
+            <p className={`mt-6 max-w-md ${LEAD}`}>
               The AI builder rides along on the canvas and sits behind a button on every screen. Ask it to add a step, wire up an integration, or reshape the whole flow — in plain language. It edits the workflow in place while you watch.
             </p>
           </div>
@@ -674,21 +690,21 @@ function ChatBand() {
 const CAPABILITIES: Array<{ icon: string; tint: string; title: string; body: string }> = [
   { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok — choose per step, switch whenever.' },
   { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Live web access', body:'AI steps search and read current pages, so answers never go stale.' },
-  { icon: GRID_PATH, tint:'#a08cff', title:'13 integrations', body:'Slack, Gmail, Notion, GitHub, Stripe, Google Workspace and more.' },
-  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#ff8ce8', title:'Triggers on your terms', body:'Run on a schedule, or fire instantly from an incoming webhook.' },
+  { icon: GRID_PATH, tint: ACCENT, title:'13 integrations', body:'Slack, Gmail, Notion, GitHub, Stripe, Google Workspace and more.' },
+  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Triggers on your terms', body:'Run on a schedule, or fire instantly from an incoming webhook.' },
   { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Human in the loop', body:'Pause for a one-tap approval before anything important ships.' },
   { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branch & loop', body:'Real control flow — fork on conditions, iterate across a list.' },
 ]
 
 function Capabilities() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-28" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+    <section className={SECTION} style={RULE}>
       <Reveal>
-        <h2 className="mb-14 max-w-2xl text-[2.1rem] font-bold sm:text-[2.6rem]" style={{ letterSpacing:'-0.03em', lineHeight:1.08 }}>
+        <h2 className={`${HEAD_GAP} max-w-2xl ${H2}`} style={H2_STYLE}>
           Everything the<br />workflow needs.
         </h2>
       </Reveal>
-      <div className="grid grid-cols-1 gap-x-12 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-x-12 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
         {CAPABILITIES.map((c, i) => (
           <Reveal key={c.title} delay={(i % 3) * 90} y={20}>
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg"
@@ -724,6 +740,99 @@ function Nav({ onOpen }: { onOpen: () => void }) {
         </button>
       </div>
     </header>
+  )
+}
+
+// ─── Footer ───────────────────────────────────────────────────
+// Socials drawn in the same 16px stroke idiom as every other glyph on the
+// page, so the row doesn't import three foreign logo styles.
+const SOCIALS: Array<{ label: string; href: string; d: string }> = [
+  { label:'Fernary on X', href:'https://x.com/fernaryai', d:'M3.2 3.2l9.6 9.6M12.8 3.2L3.2 12.8' },
+  { label:'Fernary on Instagram', href:'https://instagram.com/fernaryai',
+    d:'M5 2.6h6a2.4 2.4 0 012.4 2.4v6a2.4 2.4 0 01-2.4 2.4H5A2.4 2.4 0 012.6 11V5A2.4 2.4 0 015 2.6zM8 5.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8zM11.2 4.75h.05' },
+  { label:'Fernary on LinkedIn', href:'https://www.linkedin.com/company/fernaryai',
+    d:'M3.9 6.4v6.2M3.9 3.7v.05M7.7 12.6V6.4M7.7 9c0-1.4 1-2.6 2.3-2.6 1.4 0 2.4 1.1 2.4 2.7v3.5' },
+]
+
+function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="mb-4 font-[var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-white/30">{title}</div>
+      <ul className="flex flex-col gap-2.5">{children}</ul>
+    </div>
+  )
+}
+
+function FooterLink({ children, href, onClick }: {
+  children: React.ReactNode
+  href: string
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
+}) {
+  return (
+    <li>
+      <a href={href} onClick={onClick}
+        className="text-[13.5px] text-white/45 transition-colors duration-200 hover:text-white">
+        {children}
+      </a>
+    </li>
+  )
+}
+
+function Footer({ onGetStarted }: { onGetStarted: () => void }) {
+  const navigate = useNavigate()
+  // Real hrefs so the links are crawlable and middle-clickable; the click
+  // handler keeps the SPA from doing a full reload.
+  const go = (to: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    navigate(to)
+  }
+
+  return (
+    <footer style={RULE}>
+      <div className="mx-auto max-w-6xl px-6 pb-10 pt-16 sm:pt-20">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-[2.2fr_repeat(2,1fr)]">
+          {/* Brand */}
+          <div className="col-span-2 lg:col-span-1 lg:pr-10">
+            <div className="flex items-center gap-2.5">
+              <FloweIcon size={22} />
+              <span className="text-[15px] font-semibold text-white" style={{ letterSpacing:'-0.01em' }}>Fernary</span>
+            </div>
+            {/* The positioning here, the tagline in the bottom bar — saying
+                the same sentence twice reads like a template */}
+            <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/40">
+              Workflows that run on a schedule, pause for approval where it matters, and remember where they left off.
+            </p>
+            <p className="mt-3 font-[var(--font-mono)] text-[11px] text-white/25">Founded 2026</p>
+            <div className="mt-6 flex items-center gap-2">
+              {SOCIALS.map((s) => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-white/40 transition-colors duration-200 hover:text-white"
+                  style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.015)' }}>
+                  <Glyph d={s.d} size={16} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <FooterCol title="Product">
+            <FooterLink href="/workflows" onClick={go('/workflows')}>Open app</FooterLink>
+            <FooterLink href="/login" onClick={go('/login')}>Sign in</FooterLink>
+            <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Get started</FooterLink>
+          </FooterCol>
+
+          {/* Privacy and Terms are placeholders until the pages exist */}
+          <FooterCol title="Legal">
+            <FooterLink href="#">Privacy</FooterLink>
+            <FooterLink href="#">Terms</FooterLink>
+          </FooterCol>
+        </div>
+
+        <div className="mt-14 flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between" style={RULE}>
+          <p className="font-[var(--font-mono)] text-[11.5px] text-white/25">© 2026 Fernary · fernary.com</p>
+          <p className="text-[12.5px] text-white/25">The automation system for AI you can actually leave running.</p>
+        </div>
+      </div>
+    </footer>
   )
 }
 
@@ -810,7 +919,7 @@ export function LandingPage() {
       </section>
 
       {/* ── Statement — words light up as you scroll ── */}
-      <section className="mx-auto max-w-6xl px-6 py-32">
+      <section className="mx-auto max-w-6xl px-6 py-28 sm:py-36">
         <ScrollStatement
           lead="A new way to automate."
           rest="No drag-and-drop tutorials, no configuration rabbit holes. Tell Fernary what you want — it designs the workflow, wires the tools, and keeps it running."
@@ -851,7 +960,7 @@ export function LandingPage() {
       <Capabilities />
 
       {/* ── Close — full-stop CTA ── */}
-      <section className="px-6 py-36 text-center">
+      <section className="px-6 py-28 text-center sm:py-36">
         <Reveal y={36}>
           <h2 className="mx-auto mb-10 max-w-3xl text-[2.6rem] font-bold sm:text-[3.4rem]"
             style={{ letterSpacing:'-0.035em', lineHeight:1.05 }}>
@@ -878,16 +987,7 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-          <div className="flex items-center gap-2.5">
-            <FloweIcon size={20} />
-            <span className="text-sm font-semibold text-white">Fernary</span>
-          </div>
-          <p className="text-[12px] text-white/25">Automation for everyone — not just engineers.</p>
-        </div>
-      </footer>
+      <Footer onGetStarted={handleCreate} />
     </div>
   )
 }

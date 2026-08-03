@@ -31,6 +31,90 @@
   --font-sans: 'Geist', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
 
+  /* ── Type scale ───────────────────────────────────────────────
+     Nine steps, so nobody has to invent a font-size again. Each step
+     carries its own leading, weight and tracking, because a size is
+     never just a size — 60px at 1.5 leading is a different idea than
+     60px at 1.02.
+
+     Tracking tightens as size grows: Geist sets loose at display sizes,
+     so headlines pull in to -0.03em and the correction relaxes to 0 by
+     the time we reach body. Below body, the mono/caption steps go the
+     other way and set wide — see .micro.
+
+     Declared in Tailwind's --text-* namespace, so each step also
+     arrives as a single utility (text-h1, text-body) that applies all
+     four properties at once. */
+  --text-display: 60px;
+  --text-display--line-height: 1.02;
+  --text-display--font-weight: 700;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-h1: 46px;
+  --text-h1--line-height: 1.05;
+  --text-h1--font-weight: 700;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-h2: 34px;
+  --text-h2--line-height: 1.1;
+  --text-h2--font-weight: 600;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h3: 26px;
+  --text-h3--line-height: 1.2;
+  --text-h3--font-weight: 600;
+  --text-h3--letter-spacing: -0.01em;
+
+  /* Titles label a panel or card — heading weight at reading size */
+  --text-title: 20px;
+  --text-title--line-height: 1.3;
+  --text-title--font-weight: 600;
+  --text-title--letter-spacing: -0.005em;
+
+  /* Body-L for marketing prose, Body for the app's default paragraph */
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 1.55;
+  --text-body-lg--font-weight: 400;
+
+  --text-body: 14px;
+  --text-body--line-height: 1.55;
+  --text-body--font-weight: 400;
+
+  /* Captions carry a little extra weight so they don't dissolve at 13px */
+  --text-caption: 13px;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
+
+  /* The machine voice: ids, timestamps, statuses. Pair with font-mono. */
+  --text-meta: 12px;
+  --text-meta--line-height: 1.4;
+  --text-meta--font-weight: 500;
+  --text-meta--letter-spacing: 0.01em;
+
+  /* ── Spacing scale ────────────────────────────────────────────
+     One 4px base, no odd numbers. The steps thin out past 24px because
+     nobody needs to choose between 44px and 48px — at that size the
+     decision is "which band of rhythm", not "how many pixels". */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Section-level rhythm — the three measurements that keep long pages
+     (landing, settings, docs) from drifting page to page. */
+  --space-gutter:     24px; /* page edge → content, all viewports */
+  --space-block:      32px; /* between stacked blocks inside a section */
+  --space-section:    96px; /* between sections */
+  --space-section-lg: 128px; /* around a hero or a deliberate breath */
+
   /* Fernary brand palette */
   --fern-lime:    #74CE45;
   --fern-emerald: #14B886;
@@ -57,7 +141,7 @@
   --color-node-input:  #e5e4e5;
   --color-node-llm:    #70f17b;
   --color-node-branch: #64f4bf;
-  --color-node-loop:   #e45fff;
+  --color-node-loop:   #ff6fa8;
   --color-node-output: #e5e4e5;
 }
 
@@ -90,18 +174,27 @@
   --color-hold: #f5a623;
 
   /* Node accents — pastel-neon on dark; the light theme re-inks every one
-     of these below so icons/edges/glows hold contrast on white. */
+     of these below so icons/edges/glows hold contrast on white.
+
+     This is a categorical palette, not a brand palette: its whole job is
+     "tell these node types apart at a glance", so it deliberately spans
+     the wheel instead of leading with emerald. Two rules hold it together:
+     the integration accents (linear, stripe, slack, gitlab, gmail, …) are
+     those companies' real brand colors and are untouchable, and Fernary's
+     own accents avoid violet/magenta entirely — that hue belonged to the
+     old brand. Loop reads rose, scheduled reads gold (amber = time, same
+     logic as --color-hold), webhook reads Fern Lime. */
   --na-textInput:        #e5e4e5;
   --na-imageInput:       #e3fd7c;
   --na-llm:              #70f17b;
   --na-branch:           #64f4bf;
-  --na-loop:             #e45fff;
+  --na-loop:             #ff6fa8;
   --na-textOutput:       #e5e4e5;
   --na-httpRequest:      #51b4fb;
   --na-emailSend:        #ffb74b;
   --na-humanApproval:    #f94b4b;
-  --na-webhookTrigger:   #9889f8;
-  --na-scheduledTrigger: #ff8ce8;
+  --na-webhookTrigger:   #7ddb4f;
+  --na-scheduledTrigger: #ffd94d;
   --na-notion:           #e5e4e5;
   --na-linear:           #5e6ad2;
   --na-github:           #e5e4e5;
@@ -141,7 +234,7 @@
   --tint-fail: rgba(244, 85, 74, 0.1);
 
   /* JSON syntax highlighting */
-  --syn-key:  #a78bfa;
+  --syn-key:  #A6E85C;
   --syn-str:  #34d399;
   --syn-num:  #f59e0b;
   --syn-bool: #60a5fa;
@@ -229,13 +322,13 @@
   --na-imageInput:       #79930b;
   --na-llm:              #12943c;
   --na-branch:           #0b9370;
-  --na-loop:             #ab21cf;
+  --na-loop:             #bf185a;
   --na-textOutput:       #565664;
   --na-httpRequest:      #0d74cc;
   --na-emailSend:        #bc6e0d;
   --na-humanApproval:    #d3312f;
-  --na-webhookTrigger:   #6a55e0;
-  --na-scheduledTrigger: #cb2da4;
+  --na-webhookTrigger:   #47ae13;
+  --na-scheduledTrigger: #ae8d13;
   --na-notion:           #565664;
   --na-linear:           #4a55c4;
   --na-github:           #565664;
@@ -258,7 +351,7 @@
   --tint-hold: rgba(179, 114, 10, 0.12);
   --tint-fail: rgba(217, 58, 48, 0.1);
 
-  --syn-key:  #6d43d8;
+  --syn-key:  #5A8F1C;
   --syn-str:  #0c8354;
   --syn-num:  #b3720a;
   --syn-bool: #1d63d8;

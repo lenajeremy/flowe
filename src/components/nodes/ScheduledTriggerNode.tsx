@@ -96,13 +96,13 @@ export function ScheduledTriggerNode({ data, selected }: NodeProps<FlowNode>) {
       <div className="flex flex-col gap-1.5 min-w-[190px]">
         {sched ? (
           <>
-            <div className="text-[11px] font-medium leading-snug text-[#ff8ce8]">
+            <div className="text-[11px] font-medium leading-snug text-[var(--na-scheduledTrigger)]">
               {formatSchedule(sched)}
             </div>
             <div className="flex items-center gap-1.5">
               <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold tracking-wide ${
                 sched.repeat
-                  ? 'bg-[#ff8ce8]/15 text-[#ff8ce8]'
+                  ? 'bg-[var(--na-scheduledTrigger)]/15 text-[var(--na-scheduledTrigger)]'
                   : 'bg-[var(--color-hover2)] text-[var(--color-muted)]'
               }`}>
                 {sched.repeat ? 'Repeats' : 'Once'}

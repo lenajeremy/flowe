@@ -52,7 +52,7 @@ export function UserMenu() {
         render={
           <button
             type="button"
-            className="pressable flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-[11px] font-semibold text-white"
+            className="pressable flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[var(--fern-emerald)] to-[var(--fern-pine)] text-[11px] font-semibold text-white"
             title={user.email}
           />
         }

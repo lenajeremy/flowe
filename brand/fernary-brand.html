@@ -1,195 +1,472 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fernary — Brand</title>
+<title>Fernary — Brand System</title>
+<link rel="icon" href="../public/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist@5/index.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/index.css">
 <style>
-  :root{
-    --lime:#74CE45; --em:#14B886; --teal:#0FA3A3; --amber:#F5A524;
-    --pine:#0B5D4E; --forest:#0A1512;
-    --ink:#F2F5F3; --mut:#9fb4ac; --sub:#5f776e;
-    --bg:#07100D; --card:#0e1b17; --line:#1c3029;
-    --sans:'Geist','Inter',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-  .deck{scroll-snap-type:y mandatory;height:100vh;overflow-y:scroll}
-  section{scroll-snap-align:start;min-height:100vh;padding:8vh 9vw;display:flex;flex-direction:column;justify-content:center;position:relative;border-bottom:1px solid var(--line)}
-  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--em);margin-bottom:22px}
-  h1{font-size:clamp(44px,7vw,92px);font-weight:700;letter-spacing:-.035em;line-height:1}
-  h2{font-size:clamp(30px,4.2vw,52px);font-weight:700;letter-spacing:-.025em;line-height:1.04;margin-bottom:20px}
-  p{font-size:clamp(15px,1.35vw,19px);line-height:1.6;color:var(--mut);max-width:60ch}
-  p b, p strong{color:var(--ink);font-weight:600}
-  .lead{font-size:clamp(18px,1.8vw,24px);color:var(--ink)}
-  .grid{display:grid;gap:22px;margin-top:38px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;flex-direction:column;gap:10px}
-  .card h3{font-size:15px;font-weight:600;letter-spacing:-.01em}
-  .card small{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.03em}
-  .tile{border-radius:26%;display:grid;place-items:center;overflow:hidden}
-  .foot{position:absolute;bottom:26px;left:9vw;right:9vw;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.05em}
-  .sw{height:120px;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#04120d}
-  .sw .n{font-weight:700;font-size:15px}.sw .h{font-family:var(--mono);font-size:12px;opacity:.75}
-  .wm{display:flex;align-items:center;gap:16px;font-weight:700;letter-spacing:-.02em}
-  .row{display:flex;gap:34px;flex-wrap:wrap;align-items:center;margin-top:30px}
-  .cell{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .cap{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.04em}
-  .type-row{display:flex;align-items:baseline;gap:20px;padding:14px 0;border-bottom:1px solid var(--line)}
-  .type-row .meta{font-family:var(--mono);font-size:11px;color:var(--sub);width:130px;flex:none}
-  .dont{color:#f0857c}.do{color:var(--lime)}
-  .nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:11px;z-index:10}
-  .nav a{width:8px;height:8px;border-radius:99px;background:#2b4139;transition:.2s}
-  .nav a.on,.nav a:hover{background:var(--em);transform:scale(1.3)}
-  .aurora{position:absolute;inset:0;background:radial-gradient(120% 90% at 15% 0%, rgba(20,184,134,.20), transparent 55%),radial-gradient(90% 80% at 90% 30%, rgba(15,163,163,.16), transparent 60%);pointer-events:none}
+/* ─────────────────────────────────────────────────────────────
+   Fernary brand system deck. Self-contained: inline CSS + JS,
+   fonts from CDN. The frond is generated from the same LEAF path
+   and gradient stops that ship in src/components/FloweIcon.tsx.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  /* brand */
+  --lime:#74CE45; --em:#14B886; --teal:#0FA3A3; --amber:#F5A524;
+  --pine:#0B5D4E; --forest:#0A1512;
+
+  /* dark surfaces — layered, so cards read as objects not outlines */
+  --bg:#060B09; --bg-2:#0A1210; --card:#0D1815; --card-2:#112019;
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.12);
+  --ink:#F4F8F6; --mut:#A3B8B0; --sub:#66807６;
+  --sub:#5F7A70;
+
+  /* type — tracking tightens as size grows */
+  --sans:'Geist','Inter',system-ui,-apple-system,sans-serif;
+  --mono:'Geist Mono',ui-monospace,'SF Mono',monospace;
+
+  --t-display:clamp(46px,6.6vw,86px);
+  --t-h1:clamp(36px,4.6vw,58px);
+  --t-h2:clamp(27px,3.2vw,40px);
+  --t-h3:20px;
+  --t-body-l:clamp(16px,1.5vw,19px);
+  --t-body:15px;
+  --t-cap:13px;
+  --t-mono:11.5px;
+
+  /* spacing — 4px base */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --s8:32px; --s10:40px; --s12:48px; --s16:64px; --s20:80px;
+
+  --pad-x:clamp(28px,7vw,110px);
+  --ease:cubic-bezier(.23,1,.32,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+.deck{scroll-snap-type:y mandatory;height:100vh;overflow-y:scroll;scrollbar-width:none}
+.deck::-webkit-scrollbar{display:none}
+section{scroll-snap-align:start;min-height:100vh;padding:var(--s20) var(--pad-x) 104px;
+  display:flex;flex-direction:column;justify-content:center;position:relative;isolation:isolate}
+section+section{border-top:1px solid var(--line)}
+section.light{background:#F4F6F5;color:#0A1512}
+section.light .eyebrow{color:var(--pine)}
+section.light p{color:#40544D}
+section.light .cap{color:#7A8F87}
+section.light .card{background:#fff;border-color:rgba(10,21,18,.08);box-shadow:0 1px 2px rgba(10,21,18,.04),0 10px 30px rgba(10,21,18,.05)}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:var(--t-mono);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--em);margin-bottom:var(--s6)}
+h1{font-size:var(--t-h1);font-weight:700;letter-spacing:-.028em;line-height:1.04}
+h2{font-size:var(--t-h2);font-weight:700;letter-spacing:-.024em;line-height:1.08;margin-bottom:var(--s5);max-width:22ch}
+h3{font-size:var(--t-h3);font-weight:600;letter-spacing:-.012em;line-height:1.3}
+p{font-size:var(--t-body-l);line-height:1.62;color:var(--mut);max-width:58ch}
+p+p{margin-top:var(--s4)}
+p b,p strong{color:var(--ink);font-weight:600}
+section.light p b{color:#0A1512}
+.cap{font-family:var(--mono);font-size:var(--t-mono);letter-spacing:.05em;color:var(--sub)}
+.wm{display:flex;align-items:center;gap:.42em;font-weight:700;letter-spacing:-.02em}
+
+/* layout helpers */
+.two{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(40px,6vw,96px);align-items:center}
+.two.wide{grid-template-columns:1fr 1fr}
+.grid{display:grid;gap:var(--s4)}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.row{display:flex;flex-wrap:wrap;gap:var(--s10);align-items:center}
+.cell{display:flex;flex-direction:column;align-items:center;gap:var(--s3)}
+.card{background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line);
+  border-radius:14px;padding:var(--s5) var(--s5) var(--s6);display:flex;flex-direction:column;gap:var(--s2)}
+.card h3{font-size:15px}
+.card .cap{line-height:1.5}
+.tile{border-radius:24%;display:grid;place-items:center;overflow:hidden;flex:none}
+
+/* ambient depth — one soft mesh, never neon */
+.mesh{position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(110% 80% at 12% -5%, rgba(20,184,134,.16), transparent 58%),
+    radial-gradient(85% 70% at 92% 20%, rgba(15,163,163,.13), transparent 62%),
+    radial-gradient(70% 60% at 60% 108%, rgba(116,206,69,.08), transparent 60%)}
+
+/* footers / chrome */
+.foot{position:absolute;bottom:34px;left:var(--pad-x);right:var(--pad-x);
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--mono);font-size:var(--t-mono);letter-spacing:.06em;color:var(--sub)}
+section.light .foot{color:#8A9C94}
+.num{font-variant-numeric:tabular-nums}
+
+/* swatches */
+.sw{height:132px;border-radius:12px;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:var(--s4);gap:2px;border:1px solid rgba(255,255,255,.06)}
+.sw .n{font-weight:650;font-size:14px;letter-spacing:-.01em}
+.sw .h{font-family:var(--mono);font-size:11px;opacity:.72}
+
+/* type specimen rows */
+.spec{display:grid;grid-template-columns:150px 1fr;gap:var(--s6);align-items:baseline;
+  padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.spec:last-child{border-bottom:0}
+.spec .m{font-family:var(--mono);font-size:var(--t-mono);color:var(--sub);letter-spacing:.05em}
+
+/* do / don't */
+.judge{display:flex;flex-direction:column;gap:var(--s3);align-items:center}
+.judge .box{width:118px;height:118px;border-radius:16px;display:grid;place-items:center;position:relative;overflow:hidden}
+.judge .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+.ok .verdict{color:var(--lime)}.no .verdict{color:#F08279}
+.no .box{outline:1px solid rgba(240,130,121,.32);outline-offset:-1px}
+
+/* clear-space diagram */
+.cs{position:relative;width:230px;height:230px;display:grid;place-items:center;
+  border:1px dashed rgba(255,255,255,.18);border-radius:10px}
+.cs .inner{position:absolute;inset:52px;border:1px solid rgba(20,184,134,.5);border-radius:6px}
+
+/* motion demo */
+@keyframes unfurl{from{transform:rotate(-32deg) scale(.72);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}
+.unfurl{animation:unfurl 900ms var(--ease) both}
+@media (prefers-reduced-motion:reduce){.unfurl{animation:none}}
+
+/* nav */
+.nav{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:20;
+  display:flex;flex-direction:column;gap:10px}
+/* mid-grey so the dots stay visible on both the dark and light slides */
+.nav a{width:7px;height:7px;border-radius:99px;background:rgba(128,146,139,.5);transition:all .22s var(--ease)}
+.nav a.on{background:var(--em);transform:scale(1.45)}
+.nav a:hover{background:var(--lime)}
+.bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--lime),var(--em),var(--teal));
+  z-index:30;transition:width .18s linear}
+@media (max-width:820px){
+  .two,.two.wide{grid-template-columns:1fr;gap:var(--s10)}
+  .g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}
+  .spec{grid-template-columns:1fr;gap:var(--s2)}
+}
 </style></head>
 <body>
+<div class="bar" id="bar"></div>
 <div class="nav" id="nav"></div>
 <div class="deck" id="deck">
 
-<!-- 1 COVER -->
-<section id="s1">
-  <div class="aurora"></div>
-  <div style="position:relative">
-    <div class="wm" style="font-size:clamp(38px,6vw,76px);margin-bottom:26px"><span id="m-cover" style="width:1.05em;height:1.05em;display:inline-block"></span>Fernary</div>
-    <p class="lead" style="max-width:52ch">The automation system for AI you can actually leave running.</p>
+<!-- ═══ 01 COVER ═══ -->
+<section id="cover">
+  <div class="mesh"></div>
+  <div class="wm" style="font-size:var(--t-display);margin-bottom:var(--s8)">
+    <span id="m-cover" class="unfurl" style="width:1.02em;height:1.02em;display:inline-block"></span>Fernary
   </div>
-  <div class="foot"><span>Brand system · v1</span><span>2026</span></div>
+  <p style="font-size:clamp(19px,2vw,26px);color:var(--ink);max-width:34ch;line-height:1.4">
+    The automation system for AI you can actually leave running.</p>
+  <div class="foot"><span>Brand system</span><span>v2 · 2026</span></div>
 </section>
 
-<!-- 2 ESSENCE -->
-<section id="s2">
-  <div class="eyebrow">The idea</div>
-  <h2>A garden that tends itself.</h2>
-  <p>A <b>fernery</b> is a place where ferns are cultivated and tended. Fernary is the software equivalent — you plant a workflow once, and it grows, runs, and looks after itself while you're away.</p>
-  <p style="margin-top:18px">Everything about the brand should feel <b>calm, dependable, and quietly alive</b>. Not loud. Not robotic. Automation you can walk away from.</p>
-  <div class="foot"><span>01 · Essence</span><span>Fernary</span></div>
-</section>
-
-<!-- 3 THE MARK -->
-<section id="s3">
-  <div class="eyebrow">The mark</div>
-  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:center">
+<!-- ═══ 02 ABOUT ═══ -->
+<section id="about">
+  <div class="two">
     <div>
+      <div class="eyebrow">About</div>
+      <h2>A garden that tends itself.</h2>
+      <p>A <b>fernery</b> is a garden where ferns are cultivated and tended. Fernary is the software equivalent — plant a workflow once, and it grows, runs, and looks after itself while you're away.</p>
+      <p>We're building AI automation you can actually trust: language models are flexible, deterministic execution is dependable, and pairing the two is what lets a workflow run on a schedule, pause for a human where it matters, remember what happened last time, and not drift.</p>
+      <p class="cap" style="margin-top:var(--s8)">Founded 2026 · fernary.com</p>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>Calm</h3><span class="cap">Nothing shouts. The product is quiet because it's dependable.</span></div>
+      <div class="card"><h3>Dependable</h3><span class="cap">Same result every run. Guarantees, not vibes.</span></div>
+      <div class="card"><h3>Quietly alive</h3><span class="cap">Something is always growing, even when you're not watching.</span></div>
+      <div class="card"><h3>Unattended</h3><span class="cap">Built to be left alone — not to be supervised.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span class="num">01</span><span>Essence</span></div>
+</section>
+
+<!-- ═══ 03 THE MARK ═══ -->
+<section id="mark">
+  <div class="two">
+    <div>
+      <div class="eyebrow">The mark</div>
       <h2>Four leaflets, one frond.</h2>
-      <p>A fern frond in four-fold rotational symmetry — a fern tending itself.</p>
-      <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:28px">
-        <div class="card"><h3>Four leaflets</h3><small>many workflows, one place</small></div>
-        <div class="card"><h3>Four-fold symmetry</h3><small>reads the same every way up — trust</small></div>
-        <div class="card"><h3>13° pinwheel lean</h3><small>unfurling — work happening</small></div>
-        <div class="card"><h3>Negative-space core</h3><small>a small spark of intelligence</small></div>
+      <p>A fern frond in four-fold rotational symmetry — a fern tending itself. It reads at once as a leaf cluster, a flower, and a hub of radiating activity.</p>
+      <div class="grid g2" style="margin-top:var(--s8)">
+        <div class="card"><h3>Four leaflets</h3><span class="cap">Many workflows, coordinated from one place.</span></div>
+        <div class="card"><h3>Four-fold symmetry</h3><span class="cap">Reads the same every way up — stability, trust.</span></div>
+        <div class="card"><h3>13° lean</h3><span class="cap">Unfurling. Motion. Work happening.</span></div>
+        <div class="card"><h3>Negative-space core</h3><span class="cap">A small spark — a quiet nod to intelligence.</span></div>
       </div>
     </div>
-    <div class="cell"><div style="width:min(38vw,360px);aspect-ratio:1" id="m-big"></div></div>
+    <div class="cell">
+      <div style="width:min(34vw,330px);aspect-ratio:1" id="m-big"></div>
+      <span class="cap">100 × 100 grid · leaflet ×4 at 90° · translate(0 −4) · rotate 13°</span>
+    </div>
   </div>
-  <div class="foot"><span>02 · The mark</span><span>Fernary</span></div>
+  <div class="foot"><span class="num">02</span><span>The mark</span></div>
 </section>
 
-<!-- 4 VARIANTS -->
-<section id="s4">
+<!-- ═══ 04 VARIANTS (light slide — proves it works on white) ═══ -->
+<section id="variants" class="light">
   <div class="eyebrow">Adaptable</div>
-  <h2>One mark, every surface.</h2>
-  <div class="row" id="variants"></div>
-  <div class="foot"><span>03 · Logo variants</span><span>Fernary</span></div>
+  <h2 style="max-width:26ch">One mark, every surface.</h2>
+  <p style="margin-bottom:var(--s12)">Pick by background, not by preference. Below 16px, use the monochrome mark — four gradients inside a favicon average into grey.</p>
+  <div class="row" id="variants-row" style="align-items:flex-end"></div>
+  <div class="foot"><span class="num">03</span><span>Variants</span></div>
 </section>
 
-<!-- 5 LOCKUPS + CLEARSPACE -->
-<section id="s5">
-  <div class="eyebrow">Lockups</div>
-  <h2>Mark &amp; wordmark.</h2>
-  <div class="row" id="lockups" style="gap:56px"></div>
-  <div style="margin-top:40px;display:flex;gap:40px;flex-wrap:wrap">
-    <p><span class="do">Do</span> — keep one leaflet of clear space, set the wordmark in Geist 700, lead with the full-colour mark.</p>
-    <p><span class="dont">Don't</span> — recolour or reorder leaflets, add shadows, stretch the wordmark, or place the colour mark on a busy photo.</p>
+<!-- ═══ 05 LOCKUPS + CLEAR SPACE ═══ -->
+<section id="lockups">
+  <div class="eyebrow">Lockups &amp; clear space</div>
+  <h2>Mark and wordmark.</h2>
+  <div class="two wide" style="margin-top:var(--s10)">
+    <div class="row" id="lockups-row" style="gap:var(--s16)"></div>
+    <div class="row" style="gap:var(--s10)">
+      <div class="cell">
+        <div class="cs"><div class="inner"></div><div style="width:118px;height:118px" id="m-cs"></div></div>
+        <span class="cap">clear space = one leaflet height</span>
+      </div>
+      <div class="cell" style="align-items:flex-start;gap:var(--s4)">
+        <div><div class="cap" style="margin-bottom:6px">MINIMUM SIZE</div><div style="display:flex;align-items:flex-end;gap:var(--s4)">
+          <span style="width:44px;height:44px" id="m-44"></span>
+          <span style="width:16px;height:16px" id="m-16"></span></div></div>
+        <span class="cap">16 px screen · 6 mm print</span>
+      </div>
+    </div>
   </div>
-  <div class="foot"><span>04 · Lockups</span><span>Fernary</span></div>
+  <div class="foot"><span class="num">04</span><span>Lockups</span></div>
 </section>
 
-<!-- 6 COLOUR -->
-<section id="s6">
+<!-- ═══ 06 MISUSE ═══ -->
+<section id="misuse">
+  <div class="eyebrow">Misuse</div>
+  <h2>The symmetry, the four hues, and the flatness are the identity.</h2>
+  <div class="row" id="misuse-row" style="gap:var(--s8);margin-top:var(--s10)"></div>
+  <div class="foot"><span class="num">05</span><span>Misuse</span></div>
+</section>
+
+<!-- ═══ 07 COLOUR ═══ -->
+<section id="colour">
   <div class="eyebrow">Colour</div>
   <h2>Four frond hues, led by emerald.</h2>
-  <p>The logo uses all four. The product leads with <b>emerald</b> and stays otherwise achromatic, so the workflow canvas owns the colour. Amber is reserved for warmth — never errors.</p>
-  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:34px" id="swatches"></div>
-  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:16px" id="swatches2"></div>
-  <div class="foot"><span>05 · Colour</span><span>Fernary</span></div>
+  <p>The logo uses all four together. The product leads with <b>emerald</b> and stays otherwise achromatic, so the workflow canvas owns the colour. Amber is a fill and accent colour for warmth — never for errors, and never for small text on white.</p>
+  <div class="grid g4" style="margin-top:var(--s10)" id="sw-1"></div>
+  <div class="grid g4" style="margin-top:var(--s3)" id="sw-2"></div>
+  <div class="foot"><span class="num">06</span><span>Colour</span></div>
 </section>
 
-<!-- 7 TYPE -->
-<section id="s7">
-  <div class="eyebrow">Typography</div>
-  <h2>One family, two voices.</h2>
-  <p><b>Geist</b> carries everything people read and write. <b>Geist Mono</b> is the machine's voice — statuses, timestamps, ids, node metadata. That contrast is the signal that "this is the system talking."</p>
-  <div style="margin-top:30px;max-width:900px">
-    <div class="type-row"><span class="meta">Display · 700</span><span style="font-size:46px;font-weight:700;letter-spacing:-.03em">Leave it running</span></div>
-    <div class="type-row"><span class="meta">H2 · 600</span><span style="font-size:30px;font-weight:600;letter-spacing:-.02em">Runs on your schedule</span></div>
-    <div class="type-row"><span class="meta">Body · 400</span><span style="font-size:18px">Describe what you want in plain English — Fernary builds it.</span></div>
-    <div class="type-row"><span class="meta">Mono · 500</span><span style="font-family:var(--mono);font-size:15px;color:var(--em)">run_id=34167b22 · status=completed · 428ms</span></div>
+<!-- ═══ 08 TYPOGRAPHY ═══ -->
+<section id="type">
+  <div class="two wide">
+    <div>
+      <div class="eyebrow">Typography</div>
+      <h2>One family, two voices.</h2>
+      <p><b>Geist</b> carries everything people read and write. <b>Geist Mono</b> is the machine's voice — ids, timestamps, statuses, metadata. That contrast is the signal that the system is talking, not a person.</p>
+      <p>Tracking tightens as type grows: −0.03em at display, 0 at body. Sentence case everywhere except the wordmark. Never all-caps headlines.</p>
+    </div>
+    <div>
+      <div class="spec"><span class="m">Display · 700 · −.03em</span><span style="font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.02">Leave it running</span></div>
+      <div class="spec"><span class="m">H2 · 700 · −.024em</span><span style="font-size:29px;font-weight:700;letter-spacing:-.024em">Runs on your schedule</span></div>
+      <div class="spec"><span class="m">H3 · 600 · −.012em</span><span style="font-size:20px;font-weight:600;letter-spacing:-.012em">Pauses for approval</span></div>
+      <div class="spec"><span class="m">Body · 400 · 1.62</span><span style="font-size:16px;color:var(--mut)">Describe what you want in plain English — Fernary builds the workflow and keeps it running.</span></div>
+      <div class="spec"><span class="m">Mono · 500</span><span style="font-family:var(--mono);font-size:14px;color:var(--em)">run_id=34167b22 · completed · 428ms</span></div>
+    </div>
   </div>
-  <div class="foot"><span>06 · Typography</span><span>Fernary</span></div>
+  <div class="foot"><span class="num">07</span><span>Typography</span></div>
 </section>
 
-<!-- 8 VOICE -->
-<section id="s8">
-  <div class="aurora"></div>
-  <div style="position:relative">
-    <div class="eyebrow">Voice</div>
-    <h2 style="max-width:20ch">Say what happens.<br>Not how clever it is.</h2>
-    <p style="margin-top:12px"><span class="do">✓</span> &nbsp;Runs on your schedule. Pauses for approval where it matters. Keeps going — every time.</p>
-    <p style="margin-top:10px"><span class="dont">✗</span> &nbsp;Revolutionary AI-powered hyperautomation.</p>
-    <div class="wm" style="font-size:34px;margin-top:60px"><span id="m-end" style="width:1.1em;height:1.1em;display:inline-block"></span>Fernary</div>
+<!-- ═══ 09 SPACING ═══ -->
+<section id="spacing">
+  <div class="eyebrow">Spacing &amp; layout</div>
+  <h2>A 4-pixel base, held everywhere.</h2>
+  <p>One rhythm across product and marketing. Containers cap at <span style="font-family:var(--mono);font-size:.86em">max-w-6xl</span> with a 24px gutter; sections breathe on the larger steps.</p>
+  <div class="row" id="scale-row" style="gap:var(--s4);align-items:flex-end;margin-top:var(--s12)"></div>
+  <div class="foot"><span class="num">08</span><span>Spacing</span></div>
+</section>
+
+<!-- ═══ 10 MOTION ═══ -->
+<section id="motion">
+  <div class="two">
+    <div>
+      <div class="eyebrow">Motion</div>
+      <h2>One idea: unfurling.</h2>
+      <p>Things ease open and settle. They never bounce, never snap, never spin fast. Easing <span style="font-family:var(--mono);font-size:.86em">cubic-bezier(.23, 1, .32, 1)</span>, durations 120–240ms.</p>
+      <p>The mark may rotate slowly as it appears — a frond opening. Anything faster reads as a loading spinner, which it is not. <b>Reduced motion is always respected.</b></p>
+      <button id="replay" style="margin-top:var(--s8);font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+        color:var(--em);background:rgba(20,184,134,.1);border:1px solid rgba(20,184,134,.28);
+        border-radius:99px;padding:10px 18px;cursor:pointer">REPLAY ↻</button>
+    </div>
+    <div class="cell"><div style="width:min(26vw,240px);aspect-ratio:1" id="m-motion"></div><span class="cap">unfurl · 900ms · ease-out</span></div>
   </div>
-  <div class="foot"><span>07 · Voice</span><span>fernary.com · @fernaryai</span></div>
+  <div class="foot"><span class="num">09</span><span>Motion</span></div>
+</section>
+
+<!-- ═══ 11 IN USE ═══ -->
+<section id="inuse">
+  <div class="eyebrow">In use</div>
+  <h2>Where the mark shows up.</h2>
+  <div class="row" id="inuse-row" style="gap:var(--s8);margin-top:var(--s10)"></div>
+  <div class="foot"><span class="num">10</span><span>Applications</span></div>
+</section>
+
+<!-- ═══ 12 FOOTER + SOCIAL ═══ -->
+<section id="social">
+  <div class="eyebrow">Footer &amp; social</div>
+  <h2>How we sign off.</h2>
+  <p>One handle everywhere: <b>@fernaryai</b>. Avatars use the app tile or a reversed mark on solid Forest — never the transparent favicon on an unknown background.</p>
+  <div style="margin-top:var(--s12);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)">
+    <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:var(--s8);padding:var(--s10) var(--s10) var(--s8)">
+      <div>
+        <div class="wm" style="font-size:19px;margin-bottom:var(--s3)"><span style="width:22px;height:22px" id="m-foot"></span>Fernary</div>
+        <span class="cap" style="line-height:1.6">Workflows that run on a schedule, pause for approval where it matters, and remember where they left off.</span>
+        <div style="display:flex;gap:8px;margin-top:var(--s5)" id="social-row"></div>
+      </div>
+      <div><div class="cap" style="margin-bottom:10px">PRODUCT</div><div class="cap" style="color:var(--mut);line-height:2">Open app<br>Sign in<br>Get started</div></div>
+      <div><div class="cap" style="margin-bottom:10px">COMPANY</div><div class="cap" style="color:var(--mut);line-height:2">About</div></div>
+      <div><div class="cap" style="margin-bottom:10px">LEGAL</div><div class="cap" style="color:var(--mut);line-height:2">Privacy<br>Terms</div></div>
+    </div>
+    <div style="border-top:1px solid var(--line);padding:var(--s4) var(--s10);display:flex;justify-content:space-between">
+      <span class="cap">© 2026 Fernary · fernary.com</span>
+      <span class="cap">The automation system for AI you can actually leave running.</span>
+    </div>
+  </div>
+  <div class="foot"><span class="num">11</span><span>Footer &amp; social</span></div>
+</section>
+
+<!-- ═══ 13 VOICE / CLOSE ═══ -->
+<section id="voice">
+  <div class="mesh"></div>
+  <div class="eyebrow">Voice</div>
+  <h2 style="font-size:var(--t-h1);max-width:19ch">Say what happens.<br>Not how clever it is.</h2>
+  <div class="grid g2" style="max-width:840px;margin-top:var(--s8)">
+    <div class="card" style="border-color:rgba(116,206,69,.22)">
+      <span class="cap ok" style="color:var(--lime)">✓ &nbsp;WE SAY</span>
+      <p style="font-size:16px;color:var(--ink);max-width:none">Runs on your schedule. Pauses for approval where it matters. Keeps going — every time.</p>
+    </div>
+    <div class="card" style="border-color:rgba(240,130,121,.2)">
+      <span class="cap" style="color:#F08279">✗ &nbsp;WE NEVER SAY</span>
+      <p style="font-size:16px;max-width:none">Revolutionary AI-powered hyperautomation that supercharges your stack.</p>
+    </div>
+  </div>
+  <div class="wm" style="font-size:30px;margin-top:var(--s20)"><span style="width:1.1em;height:1.1em" id="m-end"></span>Fernary</div>
+  <div class="foot"><span class="num">12</span><span>fernary.com · @fernaryai</span></div>
 </section>
 
 </div>
 
 <script>
+/* The frond — LEAF path and gradient stops are copied verbatim from
+   src/components/FloweIcon.tsx so the deck can never drift from the app. */
 const LEAF='M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z';
 const STOPS=[['#9AE06A','#68C63E'],['#22CE8E','#0FA36F'],['#15B8B2','#0A8E96'],['#FFC94E','#F5A524']];
-let seed=0;
-function frond(opt={}){
-  const {mono,size='100%'}=opt; const uid='f'+(seed++);
-  let defs=''; if(!mono){defs='<defs>'+STOPS.map((s,i)=>`<linearGradient id="${uid}-${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset="1" stop-color="${s[1]}"/></linearGradient>`).join('')+'</defs>';}
-  let g=''; for(let i=0;i<4;i++) g+=`<g transform="rotate(${i*90} 50 50)"><g transform="rotate(13 50 50)"><path d="${LEAF}" transform="translate(0 -4)" fill="${mono||`url(#${uid}-${i})`}"/></g></g>`;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100">${defs}${g}</svg>`;
+let uidN=0;
+
+function frond(o={}){
+  const {mono,size='100%',spin=13,gap=4,order=[0,1,2,3],rot=0}=o;
+  const uid='fr'+(uidN++);
+  const defs=mono?'':'<defs>'+STOPS.map((s,i)=>
+    `<linearGradient id="${uid}-${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset="1" stop-color="${s[1]}"/></linearGradient>`).join('')+'</defs>';
+  let g='';
+  for(let i=0;i<4;i++){
+    const fill=mono||`url(#${uid}-${order[i]})`;
+    g+=`<g transform="rotate(${i*90+rot} 50 50)"><g transform="rotate(${spin} 50 50)"><path d="${LEAF}" transform="translate(0 -${gap})" fill="${fill}"/></g></g>`;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="Fernary">${defs}${g}</svg>`;
 }
-const set=(id,html)=>{const el=document.getElementById(id);if(el)el.innerHTML=html;};
-set('m-cover',frond());set('m-big',frond());set('m-end',frond());
+const put=(id,h)=>{const e=document.getElementById(id); if(e) e.innerHTML=h;};
+['m-cover','m-big','m-cs','m-end','m-foot','m-motion'].forEach(id=>put(id,frond()));
+put('m-44',frond());put('m-16',frond());
 
-// variants
-const tile=(inner,bg,sz)=>`<div class="tile" style="width:${sz}px;height:${sz}px;background:${bg}">${inner}</div>`;
-set('variants',[
-  `<div class="cell">${tile(frond({size:'78%'}),'#fff',108)}<div class="cap">full colour</div></div>`,
-  `<div class="cell"><div style="width:108px;height:108px;border-radius:26%;overflow:hidden;background:linear-gradient(135deg,#103F35,#0A1512);display:grid;place-items:center">${frond({size:'70%'})}</div><div class="cap">app tile</div></div>`,
-  `<div class="cell">${tile(frond({mono:'#0B5D4E',size:'74%'}),'#fff',108)}<div class="cap">monochrome</div></div>`,
-  `<div class="cell">${tile(frond({mono:'#ffffff',size:'74%'}),'#14B886',108)}<div class="cap">reversed</div></div>`,
-  `<div class="cell">${tile(frond({size:'82%'}),'transparent',64)}<div class="cap">favicon · 64</div></div>`,
-  `<div class="cell">${tile(frond({size:'82%'}),'transparent',28)}<div class="cap">16</div></div>`,
+/* variants (light slide) */
+const box=(inner,bg,sz,extra='')=>`<div class="tile" style="width:${sz}px;height:${sz}px;background:${bg};${extra}">${inner}</div>`;
+put('variants-row',[
+  ['full colour',      box(frond({size:'76%'}),'#fff',112,'box-shadow:0 1px 2px rgba(10,21,18,.06),0 10px 30px rgba(10,21,18,.08)')],
+  ['app tile',         `<div class="tile" style="width:112px;height:112px;background:linear-gradient(135deg,#103F35,#0A1512)">${frond({size:'68%'})}</div>`],
+  ['monochrome',       box(frond({mono:'#0B5D4E',size:'72%'}),'#fff',112,'box-shadow:0 1px 2px rgba(10,21,18,.06),0 10px 30px rgba(10,21,18,.08)')],
+  ['reversed',         box(frond({mono:'#fff',size:'72%'}),'#14B886',112)],
+  ['favicon · 32',     box(frond({size:'88%'}),'transparent',44)],
+  ['16',               box(frond({size:'92%'}),'transparent',22)],
+].map(([c,h])=>`<div class="cell">${h}<span class="cap">${c}</span></div>`).join(''));
+
+/* lockups */
+put('lockups-row',[
+  `<div class="cell"><div class="wm" style="font-size:38px"><span style="width:44px;height:44px">${frond()}</span>Fernary</div><span class="cap">horizontal · default</span></div>`,
+  `<div class="cell"><div style="display:flex;flex-direction:column;align-items:center;gap:10px"><span style="width:62px;height:62px">${frond()}</span><span style="font-weight:700;font-size:23px;letter-spacing:-.02em">Fernary</span></div><span class="cap">stacked</span></div>`,
+  `<div class="cell"><span style="width:56px;height:56px;display:inline-block">${frond()}</span><span class="cap">mark only</span></div>`,
 ].join(''));
 
-// lockups
-set('lockups',[
-  `<div class="cell"><div class="wm" style="font-size:40px;color:#fff"><span style="width:46px;height:46px">${frond()}</span>Fernary</div><div class="cap">horizontal</div></div>`,
-  `<div class="cell"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff"><span style="width:66px;height:66px">${frond()}</span><span style="font-weight:700;font-size:24px;letter-spacing:-.01em">Fernary</span></div><div class="cap">stacked</div></div>`,
-  `<div class="cell" style="background:#fff;padding:22px 30px;border-radius:16px"><div class="wm" style="font-size:36px;color:#0B1A15"><span style="width:42px;height:42px">${frond()}</span>Fernary</div></div>`,
-].join(''));
+/* misuse — show the wrong thing, visually */
+const wrongPhoto='linear-gradient(115deg,#2F6B4F,#8FA83C 40%,#C9A03B 70%,#3B6E78)';
+put('misuse-row',[
+  ['ok','correct',      `<div class="box" style="background:#fff">${frond({size:'74%'})}</div>`],
+  ['no','recoloured',   `<div class="box" style="background:#fff">${frond({size:'74%',order:[3,3,3,3]})}</div>`],
+  ['no','rotated',      `<div class="box" style="background:#fff">${frond({size:'74%',rot:34})}</div>`],
+  ['no','shadowed',     `<div class="box" style="background:#fff"><span style="width:74%;filter:drop-shadow(0 6px 5px rgba(0,0,0,.5))">${frond({size:'100%'})}</span></div>`],
+  ['no','on photo',     `<div class="box" style="background:${wrongPhoto}">${frond({size:'74%'})}</div>`],
+  ['no','in a badge',   `<div class="box" style="background:#fff"><span style="width:82%;height:82%;border-radius:50%;border:5px solid #0B5D4E;display:grid;place-items:center">${frond({size:'62%'})}</span></div>`],
+  ['no','stretched',    `<div class="box" style="background:#fff"><span style="width:96%;height:56%;display:block">${frond({size:'100%'}).replace('viewBox="0 0 100 100"','viewBox="0 0 100 100" preserveAspectRatio="none"')}</span></div>`],
+].map(([k,label,h])=>`<div class="judge ${k}">${h}<span class="verdict">${k==='ok'?'✓':'✗'} ${label}</span></div>`).join(''));
 
-// swatches
-const swatch=(n,h,ink='#04120d')=>`<div class="sw" style="background:${h};color:${ink}"><span class="n">${n}</span><span class="h">${h}</span></div>`;
-set('swatches',[swatch('Fern Lime','#74CE45'),swatch('Fern Emerald','#14B886'),swatch('Fern Teal','#0FA3A3','#03201f'),swatch('Fern Amber','#F5A524')].join(''));
-set('swatches2',[swatch('Pine','#0B5D4E','#dff5ee'),swatch('Forest','#0A1512','#cfe8df'),swatch('Accent (dark)','#16C08A'),swatch('Canvas','#0A0A0D','#dfe6e3')].join(''));
+/* colour */
+const sw=(n,h,ink)=>`<div class="sw" style="background:${h};color:${ink}"><span class="n">${n}</span><span class="h">${h}</span></div>`;
+put('sw-1',[sw('Fern Lime','#74CE45','#08210b'),sw('Fern Emerald','#14B886','#03231a'),
+            sw('Fern Teal','#0FA3A3','#02201f'),sw('Fern Amber','#F5A524','#2a1a02')].join(''));
+put('sw-2',[sw('Pine','#0B5D4E','#dff5ee'),sw('Forest','#0A1512','#cfe8df'),
+            sw('Accent · dark','#16C08A','#03231a'),sw('Accent · light','#0E9E6E','#eafaf3')].join(''));
 
-// nav dots
-const secs=[...document.querySelectorAll('section')];
-const nav=document.getElementById('nav');
-secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;nav.appendChild(a);});
-const dots=[...nav.children];
+/* spacing scale */
+put('scale-row',[4,8,12,16,24,32,48,64,80].map(n=>
+  `<div class="cell" style="gap:8px"><div style="width:${Math.max(n,6)}px;height:${n*1.05+18}px;background:linear-gradient(180deg,var(--em),rgba(20,184,134,.25));border-radius:3px"></div><span class="cap">${n}</span></div>`).join(''));
+
+/* in use */
+put('inuse-row',[
+  ['browser tab', `<div style="width:190px;border-radius:10px 10px 6px 6px;overflow:hidden;border:1px solid var(--line-2)">
+      <div style="background:#1b241f;padding:7px 9px;display:flex;gap:7px;align-items:center">
+        <span style="width:13px;height:13px;display:inline-block">${frond()}</span>
+        <span style="font-size:10.5px;color:#c9d8d1">Fernary</span></div>
+      <div style="height:56px;background:#0b1310"></div></div>`],
+  ['avatar',      `<div style="width:86px;height:86px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#103F35,#0A1512);display:grid;place-items:center">${frond({size:'62%'})}</div>`],
+  ['app icon',    `<div class="tile" style="width:86px;height:86px;background:linear-gradient(135deg,#103F35,#0A1512)">${frond({size:'66%'})}</div>`],
+  ['email sign-off', `<div style="width:210px;padding:16px;border-radius:12px;background:#fff">
+      <div class="wm" style="font-size:15px;color:#0A1512"><span style="width:18px;height:18px">${frond()}</span>Fernary</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#7A8F87;margin-top:8px">fernary.com</div></div>`],
+  ['on emerald',  `<div class="tile" style="width:86px;height:86px;background:#14B886">${frond({mono:'#fff',size:'64%'})}</div>`],
+].map(([c,h])=>`<div class="cell">${h}<span class="cap">${c}</span></div>`).join(''));
+
+/* social icons — accessible, real links */
+const socials=[
+  ['X','https://x.com/fernaryai','M2.6 2.6h3.3l3.6 5 4-5h2.6l-5.2 6.4 5.6 7.4h-3.3l-3.8-5.3-4.3 5.3H2.5l5.5-6.8L2.6 2.6z'],
+  ['Instagram','https://instagram.com/fernaryai','M6 2.6h6A3.4 3.4 0 0 1 15.4 6v6a3.4 3.4 0 0 1-3.4 3.4H6A3.4 3.4 0 0 1 2.6 12V6A3.4 3.4 0 0 1 6 2.6zM9 6.6A2.4 2.4 0 1 0 9 11.4 2.4 2.4 0 0 0 9 6.6zM12.6 5.1v.01'],
+  ['LinkedIn','https://www.linkedin.com/company/fernaryai','M4 7v8M4 4.2v.01M8 15V7M8 10.6c0-2 4-2 4 0V15'],
+];
+put('social-row',socials.map(([n,u,d])=>
+  `<a href="${u}" target="_blank" rel="noopener noreferrer" aria-label="Fernary on ${n}" title="@fernaryai on ${n}"
+      style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--mut);text-decoration:none">
+     <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">${n==='X'?`<path d="${d}" fill="currentColor" stroke="none"/>`:`<path d="${d}"/>`}</svg>
+   </a>`).join(''));
+
+/* motion replay */
+document.getElementById('replay')?.addEventListener('click',()=>{
+  const el=document.getElementById('m-motion');
+  el.classList.remove('unfurl'); void el.offsetWidth; el.classList.add('unfurl');
+});
+
+/* nav dots + progress + keyboard */
 const deck=document.getElementById('deck');
-function mark(){const i=Math.round(deck.scrollTop/window.innerHeight);dots.forEach((d,k)=>d.classList.toggle('on',k===i));}
-deck.addEventListener('scroll',mark);mark();
-addEventListener('keydown',e=>{const i=Math.round(deck.scrollTop/window.innerHeight);
-  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();secs[Math.min(i+1,secs.length-1)].scrollIntoView();}
-  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(i-1,0)].scrollIntoView();}});
+const secs=[...document.querySelectorAll('section')];
+const nav=document.getElementById('nav'), bar=document.getElementById('bar');
+secs.forEach(s=>{const a=document.createElement('a');a.href='#'+s.id;a.setAttribute('aria-label',s.id);nav.appendChild(a)});
+const dots=[...nav.children];
+function sync(){
+  const i=Math.round(deck.scrollTop/window.innerHeight);
+  dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+  bar.style.width=((deck.scrollTop/(deck.scrollHeight-window.innerHeight))*100)+'%';
+  // let the frond unfurl each time the motion slide is reached
+  if(secs[i]&&secs[i].id==='motion'){const el=document.getElementById('m-motion');
+    el.classList.remove('unfurl'); void el.offsetWidth; el.classList.add('unfurl');}
+}
+deck.addEventListener('scroll',sync,{passive:true}); sync();
+addEventListener('keydown',e=>{
+  const i=Math.round(deck.scrollTop/window.innerHeight);
+  if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();secs[Math.min(i+1,secs.length-1)].scrollIntoView()}
+  if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();secs[Math.max(i-1,0)].scrollIntoView()}
+  if(e.key==='Home'){e.preventDefault();secs[0].scrollIntoView()}
+  if(e.key==='End'){e.preventDefault();secs[secs.length-1].scrollIntoView()}
+});
 </script>
 </body></html>

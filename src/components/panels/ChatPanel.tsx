@@ -542,7 +542,10 @@ export function ChatPanel() {
           {/* Layer 1 — gradient fill */}
           <div
             className="absolute inset-0 rounded-[20px]"
-            style={{ background: 'linear-gradient(135deg, #3900F415 0%, #F34CFF15 50%, #0AA41215 100%)' }}
+            style={{
+              background:
+                'linear-gradient(135deg, color-mix(in srgb, var(--fern-teal) 8%, transparent) 0%, color-mix(in srgb, var(--fern-lime) 8%, transparent) 50%, color-mix(in srgb, var(--color-accent) 8%, transparent) 100%)',
+            }}
           />
 
           {/* Layer 2 — LiquidGlass over the gradient */}
@@ -869,7 +872,7 @@ function MessageBubble({ message, onRollback, onProposalAction, proposalBusy }: 
         <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] break-words">
           {message.content}
         </div>
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-semibold mt-0.5 select-none overflow-hidden">
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-[var(--fern-emerald)] to-[var(--fern-pine)] flex items-center justify-center text-white text-[10px] font-semibold mt-0.5 select-none overflow-hidden">
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
           ) : (

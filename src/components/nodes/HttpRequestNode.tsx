@@ -4,12 +4,15 @@ import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
 
+// Method inks are tokens, never literals, so the badge re-inks per theme.
+// PATCH takes the system teal (--na-data) — the one theme-tuned ink left that
+// stays legible on both themes and distinct from GET/POST/PUT/DELETE.
 const METHOD_STYLES: Record<string, { bg: string; text: string }> = {
-  GET:    { bg: 'bg-[var(--color-ok)]/15',    text: 'text-[var(--color-ok)]'   },
-  POST:   { bg: 'bg-[#51b4fb]/15',            text: 'text-[#51b4fb]'           },
-  PUT:    { bg: 'bg-[var(--color-hold)]/15',  text: 'text-[var(--color-hold)]' },
-  DELETE: { bg: 'bg-[var(--color-fail)]/15',  text: 'text-[var(--color-fail)]' },
-  PATCH:  { bg: 'bg-[#e45fff]/15',            text: 'text-[#e45fff]'           },
+  GET:    { bg: 'bg-[var(--color-ok)]/15',        text: 'text-[var(--color-ok)]'        },
+  POST:   { bg: 'bg-[var(--na-httpRequest)]/15',  text: 'text-[var(--na-httpRequest)]'  },
+  PUT:    { bg: 'bg-[var(--color-hold)]/15',      text: 'text-[var(--color-hold)]'      },
+  DELETE: { bg: 'bg-[var(--color-fail)]/15',      text: 'text-[var(--color-fail)]'      },
+  PATCH:  { bg: 'bg-[var(--na-data)]/15',         text: 'text-[var(--na-data)]'         },
 }
 
 export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
