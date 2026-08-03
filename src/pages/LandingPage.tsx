@@ -846,10 +846,9 @@ function Footer({ onGetStarted }: { onGetStarted: () => void }) {
             <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Get started</FooterLink>
           </FooterCol>
 
-          {/* Privacy and Terms are placeholders until the pages exist */}
           <FooterCol title="Legal">
-            <FooterLink href="#">Privacy</FooterLink>
-            <FooterLink href="#">Terms</FooterLink>
+            <FooterLink href="/privacy" onClick={go('/privacy')}>Privacy</FooterLink>
+            <FooterLink href="/terms" onClick={go('/terms')}>Terms</FooterLink>
           </FooterCol>
         </div>
 

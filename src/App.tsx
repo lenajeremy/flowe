@@ -9,6 +9,7 @@ import { WorkflowEditorPage } from '@/pages/WorkflowEditorPage'
 import { WorkflowChatPage } from '@/pages/WorkflowChatPage'
 import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
 import { RunDetailPage } from '@/pages/RunDetailPage'
+import { LegalPage } from '@/pages/LegalPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -49,6 +50,8 @@ function App() {
         <Route path="/workflow/:id/chat" element={<ProtectedRoute><WorkflowChatPage /></ProtectedRoute>} />
         <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
         <Route path="/run/:runId" element={<RunDetailPage />} />
+        <Route path="/terms" element={<LegalPage doc="terms" />} />
+        <Route path="/privacy" element={<LegalPage doc="privacy" />} />
       </Routes>
     </>
   )
