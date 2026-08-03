@@ -2,6 +2,7 @@
 @import "@fontsource/geist/400.css";
 @import "@fontsource/geist/500.css";
 @import "@fontsource/geist/600.css";
+@import "@fontsource/geist/700.css"; /* display / wordmark weight */
 @import "@fontsource/geist-mono/400.css";
 @import "@fontsource/geist-mono/500.css";
 @import "tw-animate-css";
@@ -18,14 +19,25 @@
    Two voices:  Geist      → content (what the user writes and reads)
                 Geist Mono → the machine (statuses, timestamps, ids, meta)
 
-   One accent:  flux #A08CFF — the color of a live run. Node types keep
+   One accent:  Fern Emerald — a fernery quietly at work. Node types keep
    their own pastel-neon accents; chrome stays achromatic so the canvas
    owns the color.
+
+   Brand palette — the four frond hues + supporting greens. The logo uses
+   all four; the UI leads with emerald and reserves amber for warmth.
    ──────────────────────────────────────────────────────────────── */
 
 @theme {
   --font-sans: 'Geist', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Fernary brand palette */
+  --fern-lime:    #74CE45;
+  --fern-emerald: #14B886;
+  --fern-teal:    #0FA3A3;
+  --fern-amber:   #F5A524;
+  --fern-pine:    #0B5D4E; /* deep ink-green for text on light brand surfaces */
+  --fern-forest:  #0A1512; /* near-black green for dark brand surfaces */
 
   --color-canvas:   #0a0a0d;
   --color-surface:  #121216;
@@ -36,7 +48,7 @@
   --color-text:     #f2f2f5;
   --color-muted:    #9c9ca8;
   --color-subtle:   #5f5f6b;
-  --color-accent:   #a08cff;
+  --color-accent:   #16C08A;
 
   --color-ok:   #3dd68c;
   --color-fail: #f4554a;
@@ -70,8 +82,8 @@
   --color-text:     #f2f2f5;
   --color-muted:    #9c9ca8;
   --color-subtle:   #5f5f6b;
-  --color-accent:   #a08cff;
-  --color-placeholder: #726a92; /* muted-accent — distinguishes hint text from typed input */
+  --color-accent:   #16C08A;
+  --color-placeholder: #5f7b70; /* muted-accent hint text */ 
 
   --color-ok:   #3dd68c;
   --color-fail: #f4554a;
@@ -188,8 +200,8 @@
   --color-text:     #191922;
   --color-muted:    #4c4c5e;
   --color-subtle:   #717182;
-  --color-accent:   #6e56e0;
-  --color-placeholder: #9a92bd; /* muted-accent hint text */
+  --color-accent:   #0E9E6E;
+  --color-placeholder: #86b6a2; /* muted-accent hint text */ 
 
   /* shadcn bridge: light theme's accent is dark → white ink on primary */
   --primary-foreground: #ffffff;

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fernary — Brand</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/index.css">
+<style>
+  :root{
+    --lime:#74CE45; --em:#14B886; --teal:#0FA3A3; --amber:#F5A524;
+    --pine:#0B5D4E; --forest:#0A1512;
+    --ink:#F2F5F3; --mut:#9fb4ac; --sub:#5f776e;
+    --bg:#07100D; --card:#0e1b17; --line:#1c3029;
+    --sans:'Geist','Inter',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .deck{scroll-snap-type:y mandatory;height:100vh;overflow-y:scroll}
+  section{scroll-snap-align:start;min-height:100vh;padding:8vh 9vw;display:flex;flex-direction:column;justify-content:center;position:relative;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--em);margin-bottom:22px}
+  h1{font-size:clamp(44px,7vw,92px);font-weight:700;letter-spacing:-.035em;line-height:1}
+  h2{font-size:clamp(30px,4.2vw,52px);font-weight:700;letter-spacing:-.025em;line-height:1.04;margin-bottom:20px}
+  p{font-size:clamp(15px,1.35vw,19px);line-height:1.6;color:var(--mut);max-width:60ch}
+  p b, p strong{color:var(--ink);font-weight:600}
+  .lead{font-size:clamp(18px,1.8vw,24px);color:var(--ink)}
+  .grid{display:grid;gap:22px;margin-top:38px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;flex-direction:column;gap:10px}
+  .card h3{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .card small{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.03em}
+  .tile{border-radius:26%;display:grid;place-items:center;overflow:hidden}
+  .foot{position:absolute;bottom:26px;left:9vw;right:9vw;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.05em}
+  .sw{height:120px;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#04120d}
+  .sw .n{font-weight:700;font-size:15px}.sw .h{font-family:var(--mono);font-size:12px;opacity:.75}
+  .wm{display:flex;align-items:center;gap:16px;font-weight:700;letter-spacing:-.02em}
+  .row{display:flex;gap:34px;flex-wrap:wrap;align-items:center;margin-top:30px}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .cap{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:.04em}
+  .type-row{display:flex;align-items:baseline;gap:20px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .type-row .meta{font-family:var(--mono);font-size:11px;color:var(--sub);width:130px;flex:none}
+  .dont{color:#f0857c}.do{color:var(--lime)}
+  .nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:11px;z-index:10}
+  .nav a{width:8px;height:8px;border-radius:99px;background:#2b4139;transition:.2s}
+  .nav a.on,.nav a:hover{background:var(--em);transform:scale(1.3)}
+  .aurora{position:absolute;inset:0;background:radial-gradient(120% 90% at 15% 0%, rgba(20,184,134,.20), transparent 55%),radial-gradient(90% 80% at 90% 30%, rgba(15,163,163,.16), transparent 60%);pointer-events:none}
+</style></head>
+<body>
+<div class="nav" id="nav"></div>
+<div class="deck" id="deck">
+
+<!-- 1 COVER -->
+<section id="s1">
+  <div class="aurora"></div>
+  <div style="position:relative">
+    <div class="wm" style="font-size:clamp(38px,6vw,76px);margin-bottom:26px"><span id="m-cover" style="width:1.05em;height:1.05em;display:inline-block"></span>Fernary</div>
+    <p class="lead" style="max-width:52ch">The automation system for AI you can actually leave running.</p>
+  </div>
+  <div class="foot"><span>Brand system · v1</span><span>2026</span></div>
+</section>
+
+<!-- 2 ESSENCE -->
+<section id="s2">
+  <div class="eyebrow">The idea</div>
+  <h2>A garden that tends itself.</h2>
+  <p>A <b>fernery</b> is a place where ferns are cultivated and tended. Fernary is the software equivalent — you plant a workflow once, and it grows, runs, and looks after itself while you're away.</p>
+  <p style="margin-top:18px">Everything about the brand should feel <b>calm, dependable, and quietly alive</b>. Not loud. Not robotic. Automation you can walk away from.</p>
+  <div class="foot"><span>01 · Essence</span><span>Fernary</span></div>
+</section>
+
+<!-- 3 THE MARK -->
+<section id="s3">
+  <div class="eyebrow">The mark</div>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:center">
+    <div>
+      <h2>Four leaflets, one frond.</h2>
+      <p>A fern frond in four-fold rotational symmetry — a fern tending itself.</p>
+      <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:28px">
+        <div class="card"><h3>Four leaflets</h3><small>many workflows, one place</small></div>
+        <div class="card"><h3>Four-fold symmetry</h3><small>reads the same every way up — trust</small></div>
+        <div class="card"><h3>13° pinwheel lean</h3><small>unfurling — work happening</small></div>
+        <div class="card"><h3>Negative-space core</h3><small>a small spark of intelligence</small></div>
+      </div>
+    </div>
+    <div class="cell"><div style="width:min(38vw,360px);aspect-ratio:1" id="m-big"></div></div>
+  </div>
+  <div class="foot"><span>02 · The mark</span><span>Fernary</span></div>
+</section>
+
+<!-- 4 VARIANTS -->
+<section id="s4">
+  <div class="eyebrow">Adaptable</div>
+  <h2>One mark, every surface.</h2>
+  <div class="row" id="variants"></div>
+  <div class="foot"><span>03 · Logo variants</span><span>Fernary</span></div>
+</section>
+
+<!-- 5 LOCKUPS + CLEARSPACE -->
+<section id="s5">
+  <div class="eyebrow">Lockups</div>
+  <h2>Mark &amp; wordmark.</h2>
+  <div class="row" id="lockups" style="gap:56px"></div>
+  <div style="margin-top:40px;display:flex;gap:40px;flex-wrap:wrap">
+    <p><span class="do">Do</span> — keep one leaflet of clear space, set the wordmark in Geist 700, lead with the full-colour mark.</p>
+    <p><span class="dont">Don't</span> — recolour or reorder leaflets, add shadows, stretch the wordmark, or place the colour mark on a busy photo.</p>
+  </div>
+  <div class="foot"><span>04 · Lockups</span><span>Fernary</span></div>
+</section>
+
+<!-- 6 COLOUR -->
+<section id="s6">
+  <div class="eyebrow">Colour</div>
+  <h2>Four frond hues, led by emerald.</h2>
+  <p>The logo uses all four. The product leads with <b>emerald</b> and stays otherwise achromatic, so the workflow canvas owns the colour. Amber is reserved for warmth — never errors.</p>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:34px" id="swatches"></div>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:16px" id="swatches2"></div>
+  <div class="foot"><span>05 · Colour</span><span>Fernary</span></div>
+</section>
+
+<!-- 7 TYPE -->
+<section id="s7">
+  <div class="eyebrow">Typography</div>
+  <h2>One family, two voices.</h2>
+  <p><b>Geist</b> carries everything people read and write. <b>Geist Mono</b> is the machine's voice — statuses, timestamps, ids, node metadata. That contrast is the signal that "this is the system talking."</p>
+  <div style="margin-top:30px;max-width:900px">
+    <div class="type-row"><span class="meta">Display · 700</span><span style="font-size:46px;font-weight:700;letter-spacing:-.03em">Leave it running</span></div>
+    <div class="type-row"><span class="meta">H2 · 600</span><span style="font-size:30px;font-weight:600;letter-spacing:-.02em">Runs on your schedule</span></div>
+    <div class="type-row"><span class="meta">Body · 400</span><span style="font-size:18px">Describe what you want in plain English — Fernary builds it.</span></div>
+    <div class="type-row"><span class="meta">Mono · 500</span><span style="font-family:var(--mono);font-size:15px;color:var(--em)">run_id=34167b22 · status=completed · 428ms</span></div>
+  </div>
+  <div class="foot"><span>06 · Typography</span><span>Fernary</span></div>
+</section>
+
+<!-- 8 VOICE -->
+<section id="s8">
+  <div class="aurora"></div>
+  <div style="position:relative">
+    <div class="eyebrow">Voice</div>
+    <h2 style="max-width:20ch">Say what happens.<br>Not how clever it is.</h2>
+    <p style="margin-top:12px"><span class="do">✓</span> &nbsp;Runs on your schedule. Pauses for approval where it matters. Keeps going — every time.</p>
+    <p style="margin-top:10px"><span class="dont">✗</span> &nbsp;Revolutionary AI-powered hyperautomation.</p>
+    <div class="wm" style="font-size:34px;margin-top:60px"><span id="m-end" style="width:1.1em;height:1.1em;display:inline-block"></span>Fernary</div>
+  </div>
+  <div class="foot"><span>07 · Voice</span><span>fernary.com · @fernaryai</span></div>
+</section>
+
+</div>
+
+<script>
+const LEAF='M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z';
+const STOPS=[['#9AE06A','#68C63E'],['#22CE8E','#0FA36F'],['#15B8B2','#0A8E96'],['#FFC94E','#F5A524']];
+let seed=0;
+function frond(opt={}){
+  const {mono,size='100%'}=opt; const uid='f'+(seed++);
+  let defs=''; if(!mono){defs='<defs>'+STOPS.map((s,i)=>`<linearGradient id="${uid}-${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset="1" stop-color="${s[1]}"/></linearGradient>`).join('')+'</defs>';}
+  let g=''; for(let i=0;i<4;i++) g+=`<g transform="rotate(${i*90} 50 50)"><g transform="rotate(13 50 50)"><path d="${LEAF}" transform="translate(0 -4)" fill="${mono||`url(#${uid}-${i})`}"/></g></g>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100">${defs}${g}</svg>`;
+}
+const set=(id,html)=>{const el=document.getElementById(id);if(el)el.innerHTML=html;};
+set('m-cover',frond());set('m-big',frond());set('m-end',frond());
+
+// variants
+const tile=(inner,bg,sz)=>`<div class="tile" style="width:${sz}px;height:${sz}px;background:${bg}">${inner}</div>`;
+set('variants',[
+  `<div class="cell">${tile(frond({size:'78%'}),'#fff',108)}<div class="cap">full colour</div></div>`,
+  `<div class="cell"><div style="width:108px;height:108px;border-radius:26%;overflow:hidden;background:linear-gradient(135deg,#103F35,#0A1512);display:grid;place-items:center">${frond({size:'70%'})}</div><div class="cap">app tile</div></div>`,
+  `<div class="cell">${tile(frond({mono:'#0B5D4E',size:'74%'}),'#fff',108)}<div class="cap">monochrome</div></div>`,
+  `<div class="cell">${tile(frond({mono:'#ffffff',size:'74%'}),'#14B886',108)}<div class="cap">reversed</div></div>`,
+  `<div class="cell">${tile(frond({size:'82%'}),'transparent',64)}<div class="cap">favicon · 64</div></div>`,
+  `<div class="cell">${tile(frond({size:'82%'}),'transparent',28)}<div class="cap">16</div></div>`,
+].join(''));
+
+// lockups
+set('lockups',[
+  `<div class="cell"><div class="wm" style="font-size:40px;color:#fff"><span style="width:46px;height:46px">${frond()}</span>Fernary</div><div class="cap">horizontal</div></div>`,
+  `<div class="cell"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff"><span style="width:66px;height:66px">${frond()}</span><span style="font-weight:700;font-size:24px;letter-spacing:-.01em">Fernary</span></div><div class="cap">stacked</div></div>`,
+  `<div class="cell" style="background:#fff;padding:22px 30px;border-radius:16px"><div class="wm" style="font-size:36px;color:#0B1A15"><span style="width:42px;height:42px">${frond()}</span>Fernary</div></div>`,
+].join(''));
+
+// swatches
+const swatch=(n,h,ink='#04120d')=>`<div class="sw" style="background:${h};color:${ink}"><span class="n">${n}</span><span class="h">${h}</span></div>`;
+set('swatches',[swatch('Fern Lime','#74CE45'),swatch('Fern Emerald','#14B886'),swatch('Fern Teal','#0FA3A3','#03201f'),swatch('Fern Amber','#F5A524')].join(''));
+set('swatches2',[swatch('Pine','#0B5D4E','#dff5ee'),swatch('Forest','#0A1512','#cfe8df'),swatch('Accent (dark)','#16C08A'),swatch('Canvas','#0A0A0D','#dfe6e3')].join(''));
+
+// nav dots
+const secs=[...document.querySelectorAll('section')];
+const nav=document.getElementById('nav');
+secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;nav.appendChild(a);});
+const dots=[...nav.children];
+const deck=document.getElementById('deck');
+function mark(){const i=Math.round(deck.scrollTop/window.innerHeight);dots.forEach((d,k)=>d.classList.toggle('on',k===i));}
+deck.addEventListener('scroll',mark);mark();
+addEventListener('keydown',e=>{const i=Math.round(deck.scrollTop/window.innerHeight);
+  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();secs[Math.min(i+1,secs.length-1)].scrollIntoView();}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(i-1,0)].scrollIntoView();}});
+</script>
+</body></html>

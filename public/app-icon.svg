@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#103F35"/><stop offset="1" stop-color="#0A1512"/></linearGradient>
+    <linearGradient id="fn-lime" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9AE06A"/><stop offset="1" stop-color="#68C63E"/></linearGradient>
+    <linearGradient id="fn-em" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22CE8E"/><stop offset="1" stop-color="#0FA36F"/></linearGradient>
+    <linearGradient id="fn-teal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#15B8B2"/><stop offset="1" stop-color="#0A8E96"/></linearGradient>
+    <linearGradient id="fn-amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC94E"/><stop offset="1" stop-color="#F5A524"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#tile)"/>
+  <g transform="translate(106 106) scale(3)">
+    <g transform="rotate(0 50 50)"><g transform="rotate(13 50 50)"><path d="M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z" fill="url(#fn-lime)" transform="translate(0 -4)"/></g></g>
+    <g transform="rotate(90 50 50)"><g transform="rotate(13 50 50)"><path d="M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z" fill="url(#fn-em)" transform="translate(0 -4)"/></g></g>
+    <g transform="rotate(180 50 50)"><g transform="rotate(13 50 50)"><path d="M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z" fill="url(#fn-teal)" transform="translate(0 -4)"/></g></g>
+    <g transform="rotate(270 50 50)"><g transform="rotate(13 50 50)"><path d="M50 50 C 37 47, 30 36, 32 24 C 33 17, 39 12, 44 16 C 47 18, 48 21, 50 24 C 52 21, 53 18, 56 16 C 61 12, 67 17, 68 24 C 70 36, 63 47, 50 50 Z" fill="url(#fn-amber)" transform="translate(0 -4)"/></g></g>
+  </g>
+</svg>

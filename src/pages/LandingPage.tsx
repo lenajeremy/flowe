@@ -61,9 +61,9 @@ void main(){
   float cav=fld.b;
   vec2 sp=vec2(uv.x*ar,uv.y);
   float T=u_t*0.06;
-  vec3 green=vec3(0.35,0.95,0.6);
-  vec3 purple=vec3(0.55,0.4,1.0);
-  vec3 pink=vec3(0.95,0.5,1.0);
+  vec3 green=vec3(0.30,0.86,0.52);
+  vec3 purple=vec3(0.06,0.66,0.64);
+  vec3 pink=vec3(0.55,0.88,0.34);
   vec3 col=vec3(0.0);
   for(int i=0;i<3;i++){
     float fi=float(i);
@@ -761,7 +761,7 @@ export function LandingPage() {
       <section className="relative overflow-hidden">
         <img src="/aurora.jpg" alt="" aria-hidden
           className="aurora-drift pointer-events-none absolute inset-x-0 top-0 h-full w-full object-cover"
-          style={{ opacity:0.75 }} />
+          style={{ opacity:0.7, filter:'hue-rotate(188deg) saturate(0.82)' }} />
         <AuroraShader />
         <div className="pointer-events-none absolute inset-0"
           style={{ background:'linear-gradient(to bottom, rgba(5,5,7,0.2), rgba(5,5,7,0.6) 60%, #050507)' }} />
@@ -858,7 +858,7 @@ export function LandingPage() {
             Describe it once.
             <br />
             <span style={{
-              background:'linear-gradient(100deg, #c7baff 0%, #f2a7ff 60%, #8ef0b0 115%)',
+              background:'linear-gradient(100deg, #8FE06A 0%, #16C08A 55%, #0FA3A3 115%)',
               WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent',
             }}>It runs forever.</span>
           </h2>
