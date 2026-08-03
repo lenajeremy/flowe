@@ -16,7 +16,6 @@ import type {
   WorkflowAST,
 } from '@/types/workflow'
 import type { WorkflowRun } from '@/lib/workflowApi'
-import { buildDemoWorkflow } from '@/lib/demoWorkflow'
 
 export type PatchOp =
   | { op: 'add_node'; node: Record<string, unknown> }
@@ -210,7 +209,6 @@ function astToSnapshot(ast: WorkflowAST, dbId?: string): TabSnapshot {
 // ── Initial state ─────────────────────────────────────────────
 
 const FIRST_TAB_ID = 'tab-1'
-const demo = buildDemoWorkflow()
 
 // ── Store ────────────────────────────────────────────────────
 
@@ -289,8 +287,9 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   },
 
   // Active tab state
-  ...demo,
-  workflowName: 'Blog Post Pipeline',
+  nodes: [],
+  edges: [],
+  workflowName: 'New Workflow',
   history: [],
   future: [],
 
