@@ -21,7 +21,7 @@ export function EmailSendNode({ data, selected }: NodeProps<FlowNode>) {
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-[var(--color-muted)] flex-shrink-0">To:</span>
           {emailTo ? (
-            <span className="text-[10px] text-[var(--color-text)] font-[var(--font-mono)] truncate">
+            <span className="text-[10px] text-[var(--color-text)] font-mono truncate">
               {emailTo}
             </span>
           ) : (
@@ -34,7 +34,7 @@ export function EmailSendNode({ data, selected }: NodeProps<FlowNode>) {
           </p>
         )}
         {output && (
-          <p className="mt-0.5 line-clamp-2 font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-ok)]">
+          <p className="mt-0.5 line-clamp-2 font-mono text-[11px] leading-relaxed text-[var(--color-ok)]">
             {output.slice(0, 80)}{output.length > 80 ? '…' : ''}
           </p>
         )}

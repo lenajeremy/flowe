@@ -53,7 +53,7 @@ export function DateTimePicker({ id, value, onChange, placeholder = 'Pick a date
               id={id}
               variant="outline"
               className={cn(
-                'h-auto w-full justify-start gap-2 rounded-[7px] border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-[var(--font-mono)] text-xs font-normal hover:bg-[var(--color-surface2)]',
+                'h-auto w-full justify-start gap-2 rounded-[7px] border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-mono text-xs font-normal hover:bg-[var(--color-surface2)]',
                 !valid && 'text-[var(--color-placeholder)]',
               )}
             />
@@ -78,7 +78,7 @@ export function DateTimePicker({ id, value, onChange, placeholder = 'Pick a date
               type="time"
               value={timeValue}
               onChange={(e) => pickTime(e.target.value)}
-              className="h-7 w-fit font-[var(--font-mono)] text-xs"
+              className="h-7 w-fit font-mono text-xs"
             />
             <span className="ml-auto text-[10px] text-[var(--color-subtle)]">local time</span>
           </div>

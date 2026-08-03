@@ -33,7 +33,7 @@ function syntaxHighlight(json: string): string {
 
 /** Pretty-prints raw as highlighted JSON when it parses; plain text otherwise. */
 export function JsonView({ raw, className = '' }: { raw: string; className?: string }) {
-  const base = `whitespace-pre-wrap break-words font-[var(--font-mono)] ${className}`
+  const base = `whitespace-pre-wrap break-words font-mono ${className}`
   const parsed = tryParseJson(raw)
   // Bare strings/numbers pretty-print to themselves — skip the highlight pass.
   if (parsed === null || typeof parsed !== 'object') {

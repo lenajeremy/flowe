@@ -102,7 +102,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-6 font-[var(--font-sans)] text-[var(--color-text)]">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-6 font-sans text-[var(--color-text)]">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <FloweIcon size={40} />
@@ -253,7 +253,7 @@ function OtpInput({ disabled, onComplete }: { disabled: boolean; onComplete: (co
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onFocus={(e) => e.target.select()}
-          className="h-12 w-10 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface2)] text-center font-[var(--font-mono)] text-lg text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)] disabled:opacity-50"
+          className="h-12 w-10 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface2)] text-center font-mono text-lg text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)] disabled:opacity-50"
         />
       ))}
     </div>

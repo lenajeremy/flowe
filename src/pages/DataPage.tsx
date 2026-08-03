@@ -387,7 +387,7 @@ export function DataPage() {
   }, [stores])
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-[var(--font-sans)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
       <div className="mx-auto max-w-[1280px] px-8 py-12">
         {/* Header */}
         <div className="mb-7 flex items-center justify-between">

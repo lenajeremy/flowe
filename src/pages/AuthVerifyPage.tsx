@@ -28,7 +28,7 @@ export function AuthVerifyPage() {
   }, [params, navigate, setUser])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-6 font-[var(--font-sans)] text-[var(--color-text)]">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-6 font-sans text-[var(--color-text)]">
       <div className="flex flex-col items-center gap-4 text-center">
         <FloweIcon size={40} />
         {error ? (

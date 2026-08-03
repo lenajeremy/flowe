@@ -41,7 +41,7 @@ function EventRow({ event }: { event: ExecutionEvent }) {
               {event.nodeType}
             </span>
           )}
-          <span className="ml-auto flex-shrink-0 font-[var(--font-mono)] text-[9px] tabular-nums text-[var(--color-subtle)]">
+          <span className="ml-auto flex-shrink-0 font-mono text-[9px] tabular-nums text-[var(--color-subtle)]">
             +{event.timestamp}ms
           </span>
           {hasOutput && (

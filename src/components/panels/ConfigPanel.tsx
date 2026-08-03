@@ -177,7 +177,7 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
           'output.includes("yes")',
           'output === "true"',
         ].map((ex) => (
-          <code key={ex} className="text-[10px] text-amber-300/80 font-[var(--font-mono)] block">
+          <code key={ex} className="text-[10px] text-amber-300/80 font-mono block">
             {ex}
           </code>
         ))}

@@ -74,7 +74,7 @@ export function WebhookTriggerPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-canvas)] px-4 font-[var(--font-sans)] text-[var(--color-text)]">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-canvas)] px-4 font-sans text-[var(--color-text)]">
       {/* ── Fern gradient backdrop ── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div

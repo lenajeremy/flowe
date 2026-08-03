@@ -538,7 +538,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
               <rect x="1" y="8.5" width="12" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
             </svg>
             {tabs.length > 1 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] font-[var(--font-mono)] text-[8px] font-bold text-[var(--fern-forest)]">
+              <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] font-mono text-[8px] font-bold text-[var(--fern-forest)]">
                 {tabs.length}
               </span>
             )}

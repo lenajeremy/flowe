@@ -86,7 +86,7 @@ export function ResourcePicker({ provider, kind, id, value, onChange, placeholde
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-auto rounded-[7px] bg-[var(--color-surface2)] px-2.5 py-1.5 font-[var(--font-mono)] text-xs"
+          className="h-auto rounded-[7px] bg-[var(--color-surface2)] px-2.5 py-1.5 font-mono text-xs"
           placeholder={placeholder}
         />
       ) : (

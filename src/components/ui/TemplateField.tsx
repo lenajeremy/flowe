@@ -330,7 +330,7 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
     commit(text.slice(0, at) + token + text.slice(at), at + token.length)
   }
 
-  const shared = 'px-2.5 py-1.5 font-[var(--font-mono)] text-xs leading-relaxed'
+  const shared = 'px-2.5 py-1.5 font-mono text-xs leading-relaxed'
 
   return (
     <div className="relative">
@@ -369,7 +369,7 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
         >
           <p className="micro mb-1 truncate text-[var(--color-subtle)]">{hoverInfo.title}</p>
           {hoverInfo.state === 'value' ? (
-            <pre className="max-h-36 overflow-hidden whitespace-pre-wrap break-words font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-text)]">
+            <pre className="max-h-36 overflow-hidden whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[var(--color-text)]">
               {hoverInfo.text.length > 400 ? hoverInfo.text.slice(0, 400) + '…' : hoverInfo.text}
             </pre>
           ) : (
@@ -403,7 +403,7 @@ export function TemplateField({ id, value, onChange, placeholder, multiline = fa
                 <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: opt.accent }} />
                 <span className="text-[11px] font-medium text-[var(--color-text)]">{opt.label}</span>
                 <span className="truncate text-[10px] text-[var(--color-subtle)]">{opt.nodeLabel}</span>
-                <code className="ml-auto max-w-[130px] flex-shrink-0 truncate font-[var(--font-mono)] text-[10px]" style={{ color: 'var(--color-accent)' }}>
+                <code className="ml-auto max-w-[130px] flex-shrink-0 truncate font-mono text-[10px]" style={{ color: 'var(--color-accent)' }}>
                   {opt.display}
                 </code>
               </button>

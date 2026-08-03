@@ -179,7 +179,7 @@ function FieldChip({ field }: { field: InputField }) {
             <BracesIcon />
           </span>
           <span className="text-[11px] font-medium text-[var(--color-text)]">{field.key}</span>
-          <span className="ml-auto max-w-[130px] truncate font-[var(--font-mono)] text-[10px] text-[var(--color-muted)]">
+          <span className="ml-auto max-w-[130px] truncate font-mono text-[10px] text-[var(--color-muted)]">
             {field.preview}
           </span>
         </>

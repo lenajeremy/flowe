@@ -29,12 +29,12 @@ export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
           </span>
         </span>
         {userPrompt && (
-          <p className="text-[11px] text-[var(--color-muted)] line-clamp-2 leading-relaxed font-[var(--font-mono)]">
+          <p className="text-[11px] text-[var(--color-muted)] line-clamp-2 leading-relaxed font-mono">
             {userPrompt.slice(0, 80)}{userPrompt.length > 80 ? '…' : ''}
           </p>
         )}
         {output && (
-          <p className="mt-0.5 line-clamp-2 font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-ok)]">
+          <p className="mt-0.5 line-clamp-2 font-mono text-[11px] leading-relaxed text-[var(--color-ok)]">
             {output.slice(0, 100)}…
           </p>
         )}

@@ -40,7 +40,7 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
             value={anthropic}
             onChange={(e) => setAnthropic(e.target.value)}
             placeholder="sk-ant-…"
-            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-[var(--font-mono)] text-xs"
+            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-mono text-xs"
           />
         </div>
 
@@ -61,7 +61,7 @@ function LlmKeysTab({ onClose }: { onClose: () => void }) {
             value={openai}
             onChange={(e) => setOpenai(e.target.value)}
             placeholder="sk-…"
-            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-[var(--font-mono)] text-xs"
+            className="h-auto rounded bg-[var(--color-surface2)] px-3 py-2 font-mono text-xs"
           />
         </div>
 
@@ -167,7 +167,7 @@ function ApiKeysTab() {
         >
           <p className="text-[11px] font-semibold text-[var(--color-ok)]">Your new API key (shown only once):</p>
           <div
-            className="flex items-center gap-2 rounded px-2.5 py-2 border font-[var(--font-mono)] text-[11px]"
+            className="flex items-center gap-2 rounded px-2.5 py-2 border font-mono text-[11px]"
             style={{ background: 'var(--color-hover)', borderColor: 'var(--color-border)' }}
           >
             <span className="flex-1 break-all text-[var(--color-text)] select-all">{newKeyResult.key}</span>
@@ -230,7 +230,7 @@ function ApiKeysTab() {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-[var(--color-text)] truncate">{k.name}</p>
-                <p className="text-[10px] text-[var(--color-muted)] font-[var(--font-mono)] mt-0.5">
+                <p className="text-[10px] text-[var(--color-muted)] font-mono mt-0.5">
                   {k.key_prefix}…
                 </p>
                 <p className="text-[10px] text-[var(--color-muted)] mt-0.5">

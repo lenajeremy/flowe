@@ -83,7 +83,7 @@ export function BuildPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--color-canvas)] font-[var(--font-sans)] text-[var(--color-text)]">
+    <div className="relative min-h-screen overflow-hidden bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
       {/* ── Backdrop: faint glyphs + two soft glows ── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         {PATTERN.map((p, i) => (

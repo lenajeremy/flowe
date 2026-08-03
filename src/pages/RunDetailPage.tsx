@@ -182,7 +182,7 @@ export function RunDetailPage() {
         <span className={`micro rounded-full px-2.5 py-1 ${statusColor(run.status)}`}>
           {run.status}
         </span>
-        <span className="font-[var(--font-mono)] text-[11px] text-[var(--color-subtle)]">
+        <span className="font-mono text-[11px] text-[var(--color-subtle)]">
           {new Date(run.created_at).toLocaleString()}
         </span>
       </div>

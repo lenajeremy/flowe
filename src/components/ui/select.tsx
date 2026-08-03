@@ -199,13 +199,13 @@ function Select({ id, value, onChange, options }: {
     <SelectRoot value={value} onValueChange={(v) => onChange((v as string) ?? '')} items={options}>
       <SelectTrigger
         id={id}
-        className="h-auto w-full rounded-[7px] border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-[var(--font-mono)] text-xs"
+        className="h-auto w-full rounded-[7px] border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-mono text-xs"
       >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {options.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value} className="font-[var(--font-mono)] text-xs">
+          <SelectItem key={opt.value} value={opt.value} className="font-mono text-xs">
             {opt.label}
           </SelectItem>
         ))}

@@ -17,7 +17,7 @@ export function BranchNode({ data, selected }: NodeProps<FlowNode>) {
     >
       <div className="flex flex-col gap-1.5">
         {condition ? (
-          <code className="block rounded-md border border-[var(--color-border)] bg-[var(--color-surface2)] px-2 py-1 font-[var(--font-mono)] text-[11px] text-[var(--color-muted)]">
+          <code className="block rounded-md border border-[var(--color-border)] bg-[var(--color-surface2)] px-2 py-1 font-mono text-[11px] text-[var(--color-muted)]">
             {condition.slice(0, 60)}{condition.length > 60 ? '…' : ''}
           </code>
         ) : (

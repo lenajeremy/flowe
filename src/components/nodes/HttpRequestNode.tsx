@@ -35,7 +35,7 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
             {method}
           </span>
           {url && (
-            <span className="text-[10px] text-[var(--color-muted)] font-[var(--font-mono)] truncate max-w-[150px]">
+            <span className="text-[10px] text-[var(--color-muted)] font-mono truncate max-w-[150px]">
               {url.replace(/^https?:\/\//, '')}
             </span>
           )}
@@ -44,7 +44,7 @@ export function HttpRequestNode({ data, selected }: NodeProps<FlowNode>) {
           )}
         </span>
         {output && (
-          <p className="mt-0.5 line-clamp-2 font-[var(--font-mono)] text-[11px] leading-relaxed text-[var(--color-ok)]">
+          <p className="mt-0.5 line-clamp-2 font-mono text-[11px] leading-relaxed text-[var(--color-ok)]">
             {output.slice(0, 80)}{output.length > 80 ? '…' : ''}
           </p>
         )}
