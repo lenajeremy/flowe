@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, isValidElement, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { requestRun, stopRun } from '@/lib/runController'
+import { IntegrationLogo } from '@/components/IntegrationLogo'
 import type { ExecutionStatus } from '@/types/workflow'
 
 interface NodeBaseProps {
@@ -28,6 +29,10 @@ const toolBtnStyle: React.CSSProperties = {
  */
 export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, executionStatus, children }: NodeBaseProps) {
   const [isHovered, setIsHovered] = useState(false)
+  // Integration nodes pass a brand logo rather than a stroke glyph, and the two
+  // want different insets. Detecting the element type keeps the decision here
+  // instead of threading a flag through all 13 integration node components.
+  const isLogo = isValidElement(icon) && icon.type === IntegrationLogo
   const isRunning = useWorkflowStore((s) => s.executionState === 'running')
   const setLogPanelOpen = useWorkflowStore((s) => s.setLogPanelOpen)
   const setConfigPanelOpen = useWorkflowStore((s) => s.setConfigPanelOpen)
@@ -124,7 +129,10 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:overflow-visible"
               style={{
                 borderRadius: 8,
-                padding: icon ? 7 : 0,
+                // Brand logos are already compact artwork with their own
+                // internal margins, so the chip's inset would double it up and
+                // leave the logo looking shrunken. Stroke glyphs still need it.
+                padding: isLogo ? 2 : icon ? 7 : 0,
                 background: 'var(--color-chip)',
                 border: '1px solid var(--color-chip-border)',
                 boxShadow: 'inset 0px 2px 8px 1px var(--inset-hi-strong)',

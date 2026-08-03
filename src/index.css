@@ -524,6 +524,18 @@ select:focus-visible { outline: none; }
    the neon self-glow only exists on dark (on white it reads as smudge). */
 .node-ico { filter: var(--node-icon-glow); }
 
+/* Brand logos that are solid near-black on transparent (GitHub) vanish on the
+   dark canvas. Invert only those — alpha is untouched, so the mark goes white
+   and the surrounding transparency stays transparent. Dark-by-default with a
+   light override, matching how every other token in this file is written. */
+.logo-invert-on-dark                       { filter: invert(1); }
+[data-theme='light'] .logo-invert-on-dark  { filter: none; }
+
+/* Unconditional variant, for surfaces that are dark whatever the app theme is
+   (the landing page). Keying those off data-theme would hide the mark for
+   anyone whose theme pref is light. */
+.logo-invert                               { filter: invert(1); }
+
 /* Sockets.
    Output (source): the one gesture that builds a workflow, so it gets the
    loudest affordance on the canvas — a big accent circle floated fully outside

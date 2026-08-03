@@ -6,6 +6,8 @@ import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { useAuthStore } from '@/store/authStore'
 import { FloweIcon } from '@/components/FloweIcon'
+import { IntegrationLogo } from '@/components/IntegrationLogo'
+import { isIntegration } from '@/lib/integrationLogos'
 import { NODE_ICON_PATHS, NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 
 // The landing stays dark by design — it's the brand surface. Colors are
@@ -500,13 +502,14 @@ function IntegrationTile({ type }: { type: NodeType }) {
         background: hover ? `color-mix(in srgb, ${tint} 7%, transparent)` : 'rgba(255,255,255,0.015)',
         transition:'border-color 260ms var(--ease-out), background 260ms var(--ease-out)',
       }}>
-      <div style={{
-        color: tint,
-        opacity: hover ? 1 : 0.85,
-        filter: hover ? `drop-shadow(0 0 6px color-mix(in srgb, ${tint} 60%, transparent))` : 'none',
-        transition:'opacity 260ms var(--ease-out), filter 260ms var(--ease-out)',
-      }}>
-        <Glyph d={NODE_ICON_PATHS[type]} size={19} />
+      {/* The real logo, not a glow-tinted glyph — no drop-shadow, since a
+          coloured halo behind someone else's mark misrepresents it. */}
+      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center"
+        style={{
+          opacity: hover ? 1 : 0.9,
+          transition:'opacity 260ms var(--ease-out)',
+        }}>
+        <IntegrationLogo type={type} size={24} onDark />
       </div>
       <div className="min-w-0">
         <div className="truncate text-[13px] font-semibold text-white">{NODE_LABELS[type]}</div>
@@ -641,13 +644,26 @@ function ChatMock() {
                 transform: inView ? 'none' : 'translateY(8px)',
                 transition: `background 400ms var(--ease-out), opacity 500ms var(--ease-out) ${180 + i * 90}ms, transform 500ms var(--ease-out) ${180 + i * 90}ms`,
               }}>
-              <div style={{
-                color: state === 'todo' ? 'rgba(255,255,255,0.3)' : s.tint,
-                filter: state === 'running' ? `drop-shadow(0 0 5px ${s.tint})` : 'none',
-                transition:'color 400ms var(--ease-out), filter 400ms var(--ease-out)',
-              }}>
-                <Glyph d={NODE_ICON_PATHS[s.type]} size={16} />
-              </div>
+              {/* Integration steps show the real logo. It carries its own
+                  colour, so state reads through opacity instead of the tint +
+                  glow the drawn glyphs get. */}
+              {isIntegration(s.type) ? (
+                <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center"
+                  style={{
+                    opacity: state === 'todo' ? 0.35 : 1,
+                    transition:'opacity 400ms var(--ease-out)',
+                  }}>
+                  <IntegrationLogo type={s.type} size={16} onDark />
+                </div>
+              ) : (
+                <div style={{
+                  color: state === 'todo' ? 'rgba(255,255,255,0.3)' : s.tint,
+                  filter: state === 'running' ? `drop-shadow(0 0 5px ${s.tint})` : 'none',
+                  transition:'color 400ms var(--ease-out), filter 400ms var(--ease-out)',
+                }}>
+                  <Glyph d={NODE_ICON_PATHS[s.type]} size={16} />
+                </div>
+              )}
               <span className="text-[12.5px] font-medium"
                 style={{ color: state === 'todo' ? 'rgba(255,255,255,0.5)' : '#fff', transition:'color 400ms var(--ease-out)' }}>
                 {s.name}

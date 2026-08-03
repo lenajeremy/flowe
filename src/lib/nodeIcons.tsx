@@ -1,13 +1,24 @@
 import type { ReactNode } from 'react'
 import type { NodeType } from '@/types/workflow'
 import { NODE_ICON_PATHS } from '@/lib/nodeColors'
+import { IntegrationLogo } from '@/components/IntegrationLogo'
 
 /**
- * The Fernary node icon set — one stroke-glyph language generated from
- * NODE_ICON_PATHS. Icons inherit their color (set `color` on any wrapper,
- * typically the node accent variable), so the same glyph is pastel-neon on
- * dark and deep-ink on light with zero baked-in values. The dark theme adds
- * a soft self-glow via the .node-ico filter; light disables it.
+ * The Fernary node icon set, in two voices:
+ *
+ *  • Fernary's own nodes (inputs, llm, branch, triggers, data…) use the
+ *    stroke-glyph language generated from NODE_ICON_PATHS. They inherit their
+ *    color (set `color` on any wrapper, typically the node accent variable),
+ *    so the same glyph is pastel-neon on dark and deep-ink on light with zero
+ *    baked-in values. The dark theme adds a soft self-glow via .node-ico.
+ *
+ *  • Third-party integrations use the real brand logo (see integrationLogos).
+ *    A drawn approximation of someone else's mark is worse than their mark:
+ *    users scan for the logo they already know. These don't take the accent
+ *    colour — a brand logo has its own.
+ *
+ * Both are exported through the same NODE_ICONS map, so every consumer (node
+ * cards, palette, chat, panels) picks up logos without touching a call site.
  */
 function icon(type: NodeType): ReactNode {
   return (
@@ -29,7 +40,10 @@ function icon(type: NodeType): ReactNode {
   )
 }
 
+const logo = (type: NodeType): ReactNode => <IntegrationLogo type={type} />
+
 export const NODE_ICONS: Record<NodeType, ReactNode> = {
+  // Fernary's own vocabulary — stroke glyphs, accent-coloured
   textInput:        icon('textInput'),
   imageInput:       icon('imageInput'),
   llm:              icon('llm'),
@@ -41,18 +55,20 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   humanApproval:    icon('humanApproval'),
   webhookTrigger:   icon('webhookTrigger'),
   scheduledTrigger: icon('scheduledTrigger'),
-  notion:           icon('notion'),
-  linear:           icon('linear'),
-  github:           icon('github'),
-  gitlab:           icon('gitlab'),
-  gmail:            icon('gmail'),
-  stripe:           icon('stripe'),
-  shopify:          icon('shopify'),
-  googlecalendar:   icon('googlecalendar'),
-  outlook:          icon('outlook'),
-  slack:            icon('slack'),
-  googledrive:      icon('googledrive'),
-  googledocs:       icon('googledocs'),
-  googlesheets:     icon('googlesheets'),
   data:             icon('data'),
+
+  // Third-party services — their own logos
+  notion:           logo('notion'),
+  linear:           logo('linear'),
+  github:           logo('github'),
+  gitlab:           logo('gitlab'),
+  gmail:            logo('gmail'),
+  stripe:           logo('stripe'),
+  shopify:          logo('shopify'),
+  googlecalendar:   logo('googlecalendar'),
+  outlook:          logo('outlook'),
+  slack:            logo('slack'),
+  googledrive:      logo('googledrive'),
+  googledocs:       logo('googledocs'),
+  googlesheets:     logo('googlesheets'),
 }

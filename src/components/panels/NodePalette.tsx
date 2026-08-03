@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import type { NodeType } from '@/types/workflow'
 import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
+import { isIntegration } from '@/lib/integrationLogos'
 import { ChatPanel } from '@/components/panels/ChatPanel'
 import { FloweIcon } from '@/components/FloweIcon'
 
@@ -43,7 +44,8 @@ function PaletteItem({ type }: { type: NodeType }) {
           width: 30,
           height: 30,
           borderRadius: 8,
-          padding: 7,
+          // Brand logos carry their own internal margins — see NodeBase2.
+          padding: isIntegration(type) ? 2 : 7,
           border: '1px solid var(--color-border2)',
           background: 'var(--color-elevated)',
           overflow: 'visible',
