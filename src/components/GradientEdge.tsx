@@ -13,9 +13,9 @@ const FALLBACK_ANGLE: Record<Position, number> = {
   [Position.Bottom]: -Math.PI / 2,
 }
 
-const ARROW_LEN = 11 // tip to base
-const ARROW_HALF = 5 // half the base width
-const SOCKET_GAP = 8 // clearance so the tip butts against the target socket
+const ARROW_LEN = 10 // tip to base
+const ARROW_HALF = 4.5 // half the base width
+const SOCKET_GAP = 5 // clearance so the tip butts against the target socket
 
 export function GradientEdge(props: EdgeProps) {
   const {
@@ -35,39 +35,55 @@ export function GradientEdge(props: EdgeProps) {
 
   const gradId = `edge-grad-${id}`
 
-  // The arrow has to sit ON the curve, so take its heading from the curve's
-  // own tangent at the end rather than from which side the handle is on — a
-  // bezier between vertically offset nodes arrives at a steep angle, and a
-  // fixed horizontal arrow visibly detaches from the line.
+  // The arrow is a chord of the curve, not a glyph parked near it: both its tip
+  // and the midpoint of its base are sampled at their own arc lengths along the
+  // path. Taking the heading from the endpoint instead and extrapolating
+  // backwards along a straight ray puts the base off a bending curve — the
+  // angle looks right while the body sits visibly beside the line.
   const arrowPoints = useMemo(() => {
-    let angle = FALLBACK_ANGLE[targetPosition] ?? 0
+    let tipX = targetX
+    let tipY = targetY
+    let baseX = targetX
+    let baseY = targetY
+    let measured = false
+
     try {
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       el.setAttribute('d', path)
       const total = el.getTotalLength()
-      if (total > 2) {
-        // Sample a short chord just before the endpoint: its direction is the
-        // tangent the eye reads as "where the line is heading".
-        const back = el.getPointAtLength(Math.max(0, total - 12))
-        const end = el.getPointAtLength(total)
-        if (end.x !== back.x || end.y !== back.y) {
-          angle = Math.atan2(end.y - back.y, end.x - back.x)
+      if (total > SOCKET_GAP + 2) {
+        const tipAt = total - SOCKET_GAP
+        // Keep the full arrow length when there's room; on a very short edge
+        // shrink it rather than letting the base run off the start of the path.
+        const baseAt = Math.max(0, tipAt - Math.min(ARROW_LEN, tipAt))
+        const tip = el.getPointAtLength(tipAt)
+        const base = el.getPointAtLength(baseAt)
+        if (tip.x !== base.x || tip.y !== base.y) {
+          tipX = tip.x; tipY = tip.y
+          baseX = base.x; baseY = base.y
+          measured = true
         }
       }
     } catch {
-      /* no SVG geometry available — keep the by-side fallback */
+      /* no SVG geometry available — fall back to the by-side heading below */
     }
 
-    const dx = Math.cos(angle)
-    const dy = Math.sin(angle)
-    // Perpendicular, for the two base corners.
-    const px = -dy
-    const py = dx
+    if (!measured) {
+      const angle = FALLBACK_ANGLE[targetPosition] ?? 0
+      const dx = Math.cos(angle)
+      const dy = Math.sin(angle)
+      tipX = targetX - dx * SOCKET_GAP
+      tipY = targetY - dy * SOCKET_GAP
+      baseX = tipX - dx * ARROW_LEN
+      baseY = tipY - dy * ARROW_LEN
+    }
 
-    const tipX = targetX - dx * SOCKET_GAP
-    const tipY = targetY - dy * SOCKET_GAP
-    const baseX = tipX - dx * ARROW_LEN
-    const baseY = tipY - dy * ARROW_LEN
+    // Unit perpendicular to the tip→base chord, for the two base corners.
+    const vx = tipX - baseX
+    const vy = tipY - baseY
+    const len = Math.hypot(vx, vy) || 1
+    const px = -vy / len
+    const py = vx / len
 
     return [
       `${tipX},${tipY}`,
