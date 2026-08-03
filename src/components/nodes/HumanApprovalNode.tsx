@@ -44,27 +44,29 @@ export function HumanApprovalNode({ data, selected }: NodeProps<FlowNode>) {
       </div>
       <Handle type="target" position={Position.Left} />
 
-      {/* Approve path */}
-      <div className="micro pointer-events-none absolute text-[var(--color-ok)]" style={{ right: '-62px', top: 'calc(38% - 6px)' }}>
-        Approve
+      {/* Outcome sockets, styled exactly like the branch node's true/false:
+          a colored drag circle with a matching chip sitting clear of it. */}
+      <Handle type="source" position={Position.Right} id="approved" className="handle-true" style={{ top: '34%' }} />
+      <div
+        className="micro pointer-events-none absolute flex items-center gap-1 rounded-full px-1.5 py-0.5"
+        style={{ right: '-108px', top: 'calc(34% - 9px)', color: 'var(--color-ok)', background: 'var(--tint-ok)' }}
+      >
+        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+          <path d="M1 4.5 3 6.5 7 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        approve
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="approved"
-        style={{ top: '38%', background: 'rgba(61,214,140,0.25)', borderColor: 'var(--color-ok)' }}
-      />
 
-      {/* Reject path */}
-      <div className="micro pointer-events-none absolute text-[var(--color-fail)]" style={{ right: '-52px', top: 'calc(68% - 6px)' }}>
-        Reject
+      <Handle type="source" position={Position.Right} id="rejected" className="handle-false" style={{ top: '72%' }} />
+      <div
+        className="micro pointer-events-none absolute flex items-center gap-1 rounded-full px-1.5 py-0.5"
+        style={{ right: '-100px', top: 'calc(72% - 9px)', color: 'var(--color-fail)', background: 'var(--tint-fail)' }}
+      >
+        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+          <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        reject
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="rejected"
-        style={{ top: '68%', background: 'rgba(244,85,74,0.25)', borderColor: 'var(--color-fail)' }}
-      />
     </NodeBase2>
   )
 }
