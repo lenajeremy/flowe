@@ -131,7 +131,7 @@ breaks one of the three.
 | Don't | Why |
 |---|---|
 | Set `Fernary` in another typeface — including another grotesk that "looks the same" | The wordmark is artwork, not text. Substituting Inter or system-ui changes the `a` and `y` and the whole lockup stops matching. |
-| Mix typefaces *within* the wordmark (e.g. Geist Mono for one letter) | Geist Mono is the machine's voice. The brand name is not the machine talking. |
+| Mix typefaces *within* the wordmark (e.g. Google Sans Code for one letter) | Google Sans Code is the machine's voice. The brand name is not the machine talking. |
 | Set the wordmark in **ALL CAPS** or small caps | Sentence case is a voice decision, not a styling one: the brand is calm and lower-key. `FERNARY` shouts. |
 | Stretch, condense, arch, or re-track the wordmark | Tracking is fixed at −0.02em at 700 weight. Anything else changes the silhouette. |
 | Write it `FernAry`, `fernary` (mid-sentence), `Fernary AI`, or `Fernery` | The product name is exactly `Fernary`, capital F. `Fernery` is the horticultural word the name derives from — use it only when explaining the name. |
@@ -208,21 +208,37 @@ app — use `--color-accent` and let the theme decide.
 
 ## 5. Typography
 
-**One family, two voices.** Fernary uses **Geist** (Vercel's geometric-humanist
-sans) throughout — professional, modern, and quietly distinctive — paired with
-**Geist Mono** for anything the machine says.
+**One family, two voices.** Fernary uses **Google Sans** — a geometric humanist
+sans, open, confident, and unfussy at both display and interface sizes — paired
+with **Google Sans Code** for anything the machine says.
 
-- **Geist** → content: headlines, body, the wordmark. Weights **400 / 500 / 600 / 700**.
-- **Geist Mono** → the machine: statuses, timestamps, ids, node metadata. Weights **400 / 500**.
+- **Google Sans** → content: headlines, body, the wordmark. Weights **400 / 500 / 600 / 700**.
+- **Google Sans Code** → the machine: statuses, timestamps, ids, node metadata. Weights **400 / 500**.
 
-Loaded via `@fontsource/geist` and `@fontsource/geist-mono` in `src/index.css`;
-exposed as `--font-sans` and `--font-mono`. Only those six faces are bundled — if
-a design needs Geist 300 or Geist Mono 700, it needs a new `@import` first, so
-don't specify weights that aren't there.
+They are siblings, not strangers. Both are drawn on the same geometric skeleton
+with matching x-height and proportions, so moving between them reads as a change
+of **register**, not a change of brand — the reason this pairing works better
+than bolting an unrelated mono onto a sans. Switching voice is supposed to be
+legible without being loud.
+
+**Licensing.** Both ship under the **SIL Open Font License 1.1**, which is what
+makes them usable in a commercial product at all. This matters, because Google's
+other brand faces are not: **Product Sans** — and anything else served with the
+`googlerestricted` header — is proprietary to Google's own products and must
+never be used here. If you are ever unsure about a Google face, check the
+`LICENSE` inside its `@fontsource` package: it states OFL explicitly when it
+applies.
+
+Loaded via `@fontsource/google-sans` and `@fontsource/google-sans-code` in
+`src/index.css`; exposed as `--font-sans` and `--font-mono`. Self-hosted on
+purpose — no external font CDN in the request path. Only those six faces are
+bundled, so if a design needs Google Sans 300 or Code 700 it needs a new
+`@import` first; don't specify weights that aren't there. (Both families are
+variable, so adding a weight is cheap when it's genuinely needed.)
 
 ### The wordmark
 
-`Fernary`, set in **Geist 700**, tracking **−0.02em**, sentence case. Never
+`Fernary`, set in **Google Sans 700**, tracking **−0.02em**, sentence case. Never
 re-typeset it in another face or weight; treat it as artwork paired with the mark.
 
 ### Type scale
@@ -242,8 +258,8 @@ every bit of it to stay readable.
 | Body L | `--text-body-lg` | 16 / 1.55 | 400 | 0 | Marketing body, long-form prose, empty-state explanations. |
 | Body | `--text-body` | 14 / 1.55 | 400 | 0 | The app's default. All form labels, menu items, list rows. |
 | Caption | `--text-caption` | 12–13 / 1.40 | 500 | 0 | Helper text under fields, secondary metadata, footer links. |
-| Mono / meta | `--text-mono` | 11–13 / 1.40 | 500 | 0 | Geist Mono. See below. |
-| Micro-caps | `.micro` | 9.5 / 1.40 | 500 | +0.09em | Geist Mono, uppercase. Status chips, category labels. **Tracking goes positive** — uppercase mono this small closes up without it. |
+| Mono / meta | `--text-mono` | 11–13 / 1.40 | 500 | 0 | Google Sans Code. See below. |
+| Micro-caps | `.micro` | 9.5 / 1.40 | 500 | +0.09em | Google Sans Code, uppercase. Status chips, category labels. **Tracking goes positive** — uppercase mono this small closes up without it. |
 
 *The type-scale tokens are being added to `@theme` in `src/index.css`. Names above
 follow the `--text-*` convention; if they land under different names, `src/index.css`
@@ -251,11 +267,11 @@ wins and this table should be corrected to match. `.micro` already exists in
 `src/index.css` and is the only type role defined as a utility class rather than a
 token.*
 
-### The Geist Mono roles, explicitly
+### The Google Sans Code roles, explicitly
 
 Mono is not decoration. It is a **signal that this text came from the system, not
 from a person**, so a reader can tell at a glance what they can and can't edit.
-Use Geist Mono for, and only for:
+Use Google Sans Code for, and only for:
 
 | Role | Examples | Weight |
 |---|---|---|
@@ -267,15 +283,34 @@ Use Geist Mono for, and only for:
 | Node metadata | node type labels, port names, integration slugs | 500 |
 
 Everything a human wrote or will read as prose — headings, body copy, labels,
-button text, error *explanations* — is Geist. An error message is prose; the error
+button text, error *explanations* — is Google Sans. An error message is prose; the error
 *code* inside it is mono.
+
+**How to apply it in code: `font-mono`, never `font-[var(--font-mono)]`.**
+Tailwind v4 treats `font-[…]` as ambiguous — `font-*` covers family, size *and*
+weight — so an un-hinted `font-[var(--font-mono)]` compiles to **no rule at
+all**. It fails silently: the class stays in the DOM, the element renders in the
+sans, and nothing warns you. This is not hypothetical; 36 call sites across 20
+files were dead this way, which meant every id, timestamp, JSON payload and
+status chip in the app was quietly rendering in the wrong voice. Use the
+`font-mono` / `font-sans` utilities that `@theme` already generates from
+`--font-mono` / `--font-sans`. If you ever genuinely need an arbitrary family,
+hint the type: `font-[family-name:var(--font-mono)]`.
+
+To check the doctrine is actually holding, count the elements the browser
+resolves to the mono family — not the ones carrying the class:
+
+```js
+[...document.querySelectorAll('*')]
+  .filter(e => getComputedStyle(e).fontFamily.includes('Code')).length
+```
 
 **Rules**
 
 - Tighten tracking as type gets bigger; leave body at default.
 - Sentence case for everything except micro-caps status chips. No ALL-CAPS headlines,
   and never an all-caps wordmark.
-- Numbers, ids, code, and status chips are **always** Geist Mono — it's the
+- Numbers, ids, code, and status chips are **always** Google Sans Code — it's the
   signal that "this is the machine talking."
 - Body copy caps at ~70 characters per line (see [§6](#6-spacing-and-layout));
   past that the eye loses the line return.
@@ -609,7 +644,7 @@ LinkedIn 300 × 300; export at 512 × 512 and let them downscale).
   on the 0,0 → 1,1 diagonal. Never a photograph — the palette is mid-tone and
   loses against imagery.
 - **Content**: the horizontal lockup (reversed white mark + white `Fernary`
-  wordmark) plus the tagline in Geist 400, and nothing else. No feature lists, no
+  wordmark) plus the tagline in Google Sans 400, and nothing else. No feature lists, no
   screenshots, no badges.
 - **Safe area**: keep everything inside the middle 60% horizontally and the top
   70% vertically. Networks crop banners differently per device and overlay the
@@ -653,7 +688,7 @@ Four blocks, top to bottom, inside `mx-auto max-w-6xl px-6`, with a `1px`
 
 **1. Brand column** — spans 4 of 12 columns (link columns take 8, split 3-up).
 
-- Horizontal lockup: mark at **20 px** + `Fernary` in Geist 600, 14 px.
+- Horizontal lockup: mark at **20 px** + `Fernary` in Google Sans 600, 14 px.
 - The tagline beneath it, at Caption size (12–13 px) in `--color-muted`, wrapped
   to at most three lines. This is the one place the tagline appears on every page,
   so it must be the canonical one: *"The automation system for AI you can actually
@@ -668,8 +703,8 @@ Four blocks, top to bottom, inside `mx-auto max-w-6xl px-6`, with a `1px`
 | **Company** | About, Blog, Contact | What someone deciding whether to trust us reads. |
 | **Legal** | Privacy, Terms, Security | Required by app stores, payment processors, and enterprise procurement. |
 
-- Column heading: Caption size, Geist 500, `--color-text`. Not a link.
-- Links: Caption size, Geist 400, `--color-muted`, → `--color-text` on hover,
+- Column heading: Caption size, Google Sans 500, `--color-text`. Not a link.
+- Links: Caption size, Google Sans 400, `--color-muted`, → `--color-text` on hover,
   underline on hover only. `gap-3` between links, `gap-8` between columns.
 - **Only list pages that exist.** A 404 in the footer costs more trust than a
   missing link. *Privacy, Terms, and Security pages do not exist yet — omit the

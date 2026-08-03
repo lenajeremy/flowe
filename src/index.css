@@ -1,10 +1,14 @@
 @import "tailwindcss";
-@import "@fontsource/geist/400.css";
-@import "@fontsource/geist/500.css";
-@import "@fontsource/geist/600.css";
-@import "@fontsource/geist/700.css"; /* display / wordmark weight */
-@import "@fontsource/geist-mono/400.css";
-@import "@fontsource/geist-mono/500.css";
+/* Latin subsets only, deliberately. The unscoped `400.css` entrypoints pull
+   every script Google ships (Armenian, Devanagari, Khmer, …) — 214 files and
+   5.6 MB of woff2 for a UI that is currently English-only. Add a subset here
+   the day the product is localised, not before. */
+@import "@fontsource/google-sans/latin-400.css";
+@import "@fontsource/google-sans/latin-500.css";
+@import "@fontsource/google-sans/latin-600.css";
+@import "@fontsource/google-sans/latin-700.css"; /* display / wordmark weight */
+@import "@fontsource/google-sans-code/latin-400.css";
+@import "@fontsource/google-sans-code/latin-500.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -16,8 +20,8 @@
 /* ────────────────────────────────────────────────────────────────
    Fernary design tokens
 
-   Two voices:  Geist      → content (what the user writes and reads)
-                Geist Mono → the machine (statuses, timestamps, ids, meta)
+   Two voices:  Google Sans      → content (what the user writes and reads)
+                Google Sans Code → the machine (statuses, timestamps, ids, meta)
 
    One accent:  Fern Emerald — a fernery quietly at work. Node types keep
    their own pastel-neon accents; chrome stays achromatic so the canvas
@@ -28,8 +32,8 @@
    ──────────────────────────────────────────────────────────────── */
 
 @theme {
-  --font-sans: 'Geist', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-sans: 'Google Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Google Sans Code', 'SFMono-Regular', Consolas, monospace;
 
   /* ── Type scale ───────────────────────────────────────────────
      Nine steps, so nobody has to invent a font-size again. Each step
@@ -37,10 +41,10 @@
      never just a size — 60px at 1.5 leading is a different idea than
      60px at 1.02.
 
-     Tracking tightens as size grows: Geist sets loose at display sizes,
-     so headlines pull in to -0.03em and the correction relaxes to 0 by
-     the time we reach body. Below body, the mono/caption steps go the
-     other way and set wide — see .micro.
+     Tracking tightens as size grows: Google Sans is geometric and sets
+     loose at display sizes, so headlines pull in to -0.03em and the
+     correction relaxes to 0 by the time we reach body. Below body, the
+     mono/caption steps go the other way and set wide — see .micro.
 
      Declared in Tailwind's --text-* namespace, so each step also
      arrives as a single utility (text-h1, text-body) that applies all
@@ -697,7 +701,7 @@ select:focus-visible { outline: none; }
 /* shadcn utility mapping — semantic classes (bg-background, border-border,
    text-muted-foreground, …) resolve through the bridge vars in :root above.
    Font/sidebar/chart entries from the generator were dropped: fonts stay the
-   app's Geist set, and no sidebar/chart shadcn components are used. */
+   app's Google Sans set, and no sidebar/chart shadcn components are used. */
 @theme inline {
   --color-ring: var(--ring);
   --color-input: var(--input);

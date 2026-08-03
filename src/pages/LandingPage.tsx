@@ -360,7 +360,7 @@ const H2 = 'text-[2.05rem] font-bold sm:text-[2.6rem]'
 const H2_STYLE = { letterSpacing: '-0.03em', lineHeight: 1.08 } as const
 const LEAD = 'text-[16px] leading-relaxed text-white/55 sm:text-[17px]'
 const HEAD_GAP = 'mb-14 sm:mb-16'
-const EYEBROW = 'font-[var(--font-mono)] text-[12px] uppercase tracking-[0.14em] text-white/35'
+const EYEBROW = 'font-mono text-[12px] uppercase tracking-[0.14em] text-white/35'
 
 // ─── Scroll-lit statement — words brighten as you read down ────
 function ScrollStatement({ lead, rest }: { lead: string; rest: string }) {
@@ -443,7 +443,7 @@ function NumberedSection({ index, name, title, sub, shot, alt }: {
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
             <p className={LEAD}>{sub}</p>
-            <div className="group flex cursor-default items-center gap-2.5 font-[var(--font-mono)] text-[13px]">
+            <div className="group flex cursor-default items-center gap-2.5 font-mono text-[13px]">
               <span className="text-white/30">{index}</span>
               <span className="text-white/55 transition-colors duration-200 group-hover:text-white">{name}</span>
               <span className="text-white/30 transition-transform duration-200 ease-[var(--ease-out)] group-hover:translate-x-1 group-hover:text-white/60">→</span>
@@ -513,7 +513,8 @@ function IntegrationTile({ type }: { type: NodeType }) {
       </div>
       <div className="min-w-0">
         <div className="truncate text-[13px] font-semibold text-white">{NODE_LABELS[type]}</div>
-        <div className="truncate text-[11px] text-white/40">{NODE_DESCRIPTIONS[type]}</div>
+        {/* What the connector can reach — a capability label, not prose */}
+        <div className="truncate font-mono text-[10.5px] text-white/40">{NODE_DESCRIPTIONS[type]}</div>
       </div>
     </div>
   )
@@ -531,7 +532,7 @@ function Integrations() {
             <p className={LEAD}>
               Thirteen integrations and hundreds of read-and-write actions — messaging, mail, code, docs, spreadsheets and commerce. Connect an account once, then reach for it in any workflow.
             </p>
-            <div className="group flex cursor-default items-center gap-2.5 font-[var(--font-mono)] text-[13px]">
+            <div className="group flex cursor-default items-center gap-2.5 font-mono text-[13px]">
               <span className="text-white/30">4.0</span>
               <span className="text-white/55 transition-colors duration-200 group-hover:text-white">Connect</span>
               <span className="text-white/30 transition-transform duration-200 ease-[var(--ease-out)] group-hover:translate-x-1 group-hover:text-white/60">→</span>
@@ -668,7 +669,9 @@ function ChatMock() {
                 style={{ color: state === 'todo' ? 'rgba(255,255,255,0.5)' : '#fff', transition:'color 400ms var(--ease-out)' }}>
                 {s.name}
               </span>
-              <span className="ml-auto text-[11.5px] text-white/40">{s.detail}</span>
+              {/* Machine voice: a schedule, a model name, a channel — what the
+                  system reports back, not what a person wrote. */}
+              <span className="ml-auto font-mono text-[11px] text-white/40">{s.detail}</span>
               <StepStatus state={state} tint={s.tint} />
             </div>
           )
@@ -731,7 +734,14 @@ function Capabilities() {
               }}>
               <Glyph d={c.icon} size={18} />
             </div>
-            <div className="mb-2 text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>{c.title}</div>
+            {/* Mono ordinal, same counting language as the 1.0 / 2.0 sections
+                above — it makes the grid read as an enumerated spec sheet. */}
+            <div className="mb-2 flex items-baseline gap-2.5">
+              <span className="font-mono text-[11px] tabular-nums text-white/25">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>{c.title}</span>
+            </div>
             <p className="text-[14px] leading-relaxed text-white/45">{c.body}</p>
           </Reveal>
         ))}
@@ -773,7 +783,7 @@ const SOCIALS: Array<{ label: string; href: string; d: string }> = [
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-4 font-[var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-white/30">{title}</div>
+      <div className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-white/30">{title}</div>
       <ul className="flex flex-col gap-2.5">{children}</ul>
     </div>
   )
@@ -818,7 +828,7 @@ function Footer({ onGetStarted }: { onGetStarted: () => void }) {
             <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/40">
               Workflows that run on a schedule, pause for approval where it matters, and remember where they left off.
             </p>
-            <p className="mt-3 font-[var(--font-mono)] text-[11px] text-white/25">Founded 2026</p>
+            <p className="mt-3 font-mono text-[11px] text-white/25">Founded 2026</p>
             <div className="mt-6 flex items-center gap-2">
               {SOCIALS.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
@@ -844,7 +854,7 @@ function Footer({ onGetStarted }: { onGetStarted: () => void }) {
         </div>
 
         <div className="mt-14 flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between" style={RULE}>
-          <p className="font-[var(--font-mono)] text-[11.5px] text-white/25">© 2026 Fernary · fernary.com</p>
+          <p className="font-mono text-[11.5px] text-white/25">© 2026 Fernary · fernary.com</p>
           <p className="text-[12.5px] text-white/25">The automation system for AI you can actually leave running.</p>
         </div>
       </div>

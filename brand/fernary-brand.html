@@ -3,8 +3,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fernary — Brand System</title>
 <link rel="icon" href="../public/favicon.svg">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist@5/index.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/google-sans@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/google-sans-code@5/index.css">
 <style>
 /* ─────────────────────────────────────────────────────────────
    Fernary brand system deck. Self-contained: inline CSS + JS,
@@ -23,8 +23,8 @@
   --sub:#5F7A70;
 
   /* type — tracking tightens as size grows */
-  --sans:'Geist','Inter',system-ui,-apple-system,sans-serif;
-  --mono:'Geist Mono',ui-monospace,'SF Mono',monospace;
+  --sans:'Google Sans','Inter',system-ui,-apple-system,sans-serif;
+  --mono:'Google Sans Code',ui-monospace,'SF Mono',monospace;
 
   --t-display:clamp(46px,6.6vw,86px);
   --t-h1:clamp(36px,4.6vw,58px);
@@ -105,10 +105,13 @@ section.light .foot{color:#8A9C94}
 .sw .h{font-family:var(--mono);font-size:11px;opacity:.72}
 
 /* type specimen rows */
-.spec{display:grid;grid-template-columns:150px 1fr;gap:var(--s6);align-items:baseline;
+/* 178px, not 150: Google Sans Code sets wider than the mono this deck used
+   before, and the longest spec label ("Display · 700 · −.03em") wrapped. */
+.spec{display:grid;grid-template-columns:178px 1fr;gap:var(--s5);align-items:baseline;
   padding:var(--s4) 0;border-bottom:1px solid var(--line)}
 .spec:last-child{border-bottom:0}
-.spec .m{font-family:var(--mono);font-size:var(--t-mono);color:var(--sub);letter-spacing:.05em}
+.spec .m{font-family:var(--mono);font-size:var(--t-mono);color:var(--sub);letter-spacing:.03em;
+  white-space:nowrap}
 
 /* do / don't */
 .judge{display:flex;flex-direction:column;gap:var(--s3);align-items:center}
@@ -255,7 +258,8 @@ section.light .foot{color:#8A9C94}
     <div>
       <div class="eyebrow">Typography</div>
       <h2>One family, two voices.</h2>
-      <p><b>Geist</b> carries everything people read and write. <b>Geist Mono</b> is the machine's voice — ids, timestamps, statuses, metadata. That contrast is the signal that the system is talking, not a person.</p>
+      <p><b>Google Sans</b> carries everything people read and write. <b>Google Sans Code</b> is the machine's voice — ids, timestamps, statuses, metadata. That contrast is the signal that the system is talking, not a person.</p>
+      <p>They are siblings, not strangers: the same geometric skeleton, so switching voice reads as a change of register rather than a change of brand.</p>
       <p>Tracking tightens as type grows: −0.03em at display, 0 at body. Sentence case everywhere except the wordmark. Never all-caps headlines.</p>
     </div>
     <div>
