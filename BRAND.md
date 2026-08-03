@@ -93,10 +93,37 @@ identity gets broken.
 
 ### Lockups
 
-- **Horizontal** — mark + `Fernary` wordmark, baseline-aligned, gap = one-half the
-  mark's width. The default lockup.
+Built by `brand/export-lockups.mjs`, which is the spec in executable form — the
+numbers below are its constants, so the files and this table cannot disagree.
+
+- **Horizontal** — mark left, `Fernary` right. The default lockup.
 - **Stacked** — mark above centred wordmark. For square or narrow spaces.
 - **Mark only** — once the audience knows the brand (app chrome, avatars, favicons).
+
+**Everything is measured against the cap height, not the em box or the mark's
+viewBox.** Google Sans 700 has a cap height of **0.676em**, so matching a font
+size to the mark's box size makes the mark twice the cap height and it swamps the
+word. The ratios that work:
+
+| | Mark ink height | Gap | Vertical relationship |
+|---|---|---|---|
+| Horizontal | **1.30 × cap** | **0.30 × mark ink**, ink edge → `F` stem | Mark ink **centred on the cap band** |
+| Stacked | **1.75 × cap** | **0.20 × mark ink**, ink bottom → cap line | Mark centred horizontally on the wordmark |
+
+Two corrections that are easy to miss and both visible if you skip them:
+
+- **Centre the mark on the cap band; do not sit it on the baseline.** A circular
+  mark's optical centre is its middle, a letter's is nearer its baseline, so
+  baseline-aligning the two leaves the mark floating above the word. *(This
+  supersedes an earlier "baseline-aligned" instruction here, which produced a
+  visibly top-heavy lockup.)*
+- **Measure gaps from the ink, not the box.** The mark's artwork fills the middle
+  85.07% of its viewBox, leaving 7.46% slack per side. Spacing to the box adds
+  that slack to the gap and the lockup drifts apart.
+
+Stacked needs a bigger mark than horizontal because side by side the mark is
+balanced against the whole width of the word, whereas stacked it is alone on its
+line above ~3.5em of wordmark, and the same ratio reads undersized.
 
 ### Clear space and minimum size
 
@@ -768,7 +795,55 @@ above is the target once Product/Company pages exist.
 | App tile | `public/app-icon.svg` | 512 × 512, radius 115, frond on `#103F35` → `#0A1512`. | PWA / touch icon, social avatars, app stores, anywhere the background is unknown. |
 | Design tokens | `src/index.css` | `@theme` palette, fonts, motion, radii, plus the light/dark token sets and `.micro`. | The authority for every colour, font, duration, and radius. |
 | Brand deck | `brand/fernary-brand.html` | Self-contained one-page HTML presentation of the identity. | Sharing the brand with someone who won't read Markdown. |
+| Raster exports | `brand/exports/*.png` | 1024 × 1024 PNGs of all four variants, alpha preserved. | Sending the logo to anyone outside the repo: app stores, press kits, Slack, print, slide decks. |
+| Lockups | `brand/exports/fernary-lockup-*.{png,svg}` | Horizontal and stacked, in Pine and white, PNG **and** SVG. | Anywhere the name has to appear with the mark. Prefer the SVG. |
+| Social banners | `brand/exports/fernary-banner-*.png` | X header, LinkedIn cover, and OG card, @2x. | Social profiles and link previews. |
+| Banner artwork | `brand/banner-art-source.png` | 1536 × 1024 generated fern photograph, no type. | The backdrop the banners are composited onto. Re-crop it rather than regenerating. |
+| Export scripts | `brand/export-logos.mjs`, `export-lockups.mjs`, `export-banners.mjs` | Regenerate everything in `brand/exports/` from the shipped geometry and font. | Run them whenever the mark, wordmark or typeface changes. |
 | This document | `BRAND.md` | The written guidelines. | Briefing a designer or contractor. |
+
+### The raster exports
+
+`node brand/export-logos.mjs brand/exports` — four files, 1024 × 1024, RGBA:
+
+| File | Background | Notes |
+|---|---|---|
+| `fernary-mark-full-colour-1024.png` | transparent | The default. |
+| `fernary-mark-monochrome-pine-1024.png` | transparent | Flat `#0B5D4E`. |
+| `fernary-mark-reversed-white-1024.png` | transparent | Flat `#ffffff` — invisible on white, by design. |
+| `fernary-app-tile-1024.png` | opaque tile, transparent corners | The 512 tile at ×2. Corners stay transparent because platforms mask icons themselves. |
+
+There is deliberately **no separate favicon PNG**: the favicon is the full-colour
+mark, so it would be the same image under a second name.
+
+### The social banners
+
+`node brand/export-banners.mjs brand/exports` — three crops of one artwork:
+
+| File | For |
+|---|---|
+| `fernary-banner-x-header-1500x500.png` | X / Twitter profile header |
+| `fernary-banner-linkedin-1584x396.png` | LinkedIn page cover |
+| `fernary-banner-og-1200x630.png` | Open Graph / link previews. The only one carrying the tagline. |
+
+**Provenance:** the backdrop in `brand/banner-art-source.png` was generated with
+OpenAI `gpt-image-2` — a photographic fern macro, no type in the image. Record
+that wherever provenance matters (press kits, stock-image audits).
+
+**The logo and every glyph are composited from the shipped vector and the shipped
+font, never generated.** Image models do not draw a wordmark or lettering
+reliably, and a subtly-wrong logo is worse than no banner. If you regenerate the
+artwork, keep that division: model paints the backdrop, we set the type.
+
+All three are right-weighted rather than centred, because §3 forbids the
+full-colour mark on busy photography and the fronds occupy the left of the frame.
+The X crop also keeps its bottom-left corner clear, where the avatar overlaps.
+
+Each export carries the **7.5% margin built into the 100 × 100 viewBox** — ink
+spans 834 of 1024 px. That is the mark's own breathing room, not padding added at
+export time, and it is *not* the clear space rule, which is larger (one leaflet
+height) and applies to whatever the logo is placed into. If a surface needs
+edge-to-edge ink, crop rather than re-drawing.
 
 **Notes for whoever picks this up:**
 
@@ -781,10 +856,11 @@ above is the target once Product/Company pages exist.
   geometry changes, all three change together, or the tab icon and the in-app mark
   will drift apart.
 - **Not yet built** *(provisional)*: `apple-touch-icon` / web-app-manifest entries
-  in `index.html` (the app tile exists but nothing references it); raster PNG
-  exports of the tile; OG / social share images; the horizontal and stacked lockups
-  as standalone files (they're currently only composed in JSX); Privacy, Terms, and
-  Security pages.
+  in `index.html` — the app tile and its 1024 PNG both exist, but nothing in
+  `index.html` references either; nor does anything reference the OG card, which
+  needs a `<meta property="og:image">` before a link preview will use it. A
+  **Security** page is also still outstanding — Privacy and Terms now live at
+  `/privacy` and `/terms`, rendered from `legal/*.md`.
 - **Unreconciled**: brand amber is `#F5A524` while the UI's waiting/hold token is
   `#F5A623` — one digit apart, visually identical, almost certainly an accident.
   Someone should pick one.
