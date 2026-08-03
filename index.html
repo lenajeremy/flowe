@@ -6,9 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fernary</title>
     <style>body { background: #0a0a0f; margin: 0; }</style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- No font CDN, deliberately. Google Sans and Google Sans Code are bundled
+         via @fontsource (see src/index.css), so nothing here reaches out — which
+         also avoids handing visitor IPs to a third party before the app loads,
+         the thing that makes hotlinked Google Fonts a GDPR problem in the EU.
+         The JetBrains Mono link that used to live here was dead weight: nothing
+         referenced that family. -->
   </head>
   <body>
     <div id="root"></div>
