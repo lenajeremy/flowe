@@ -217,6 +217,8 @@ export function Canvas({ theme }: CanvasProps) {
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.1}
         maxZoom={5}
+        connectionLineStyle={{ stroke: 'var(--color-accent)', strokeWidth: 3 }}
+        connectionRadius={40}
         deleteKeyCode={null}
         panOnDrag={activeTool === 'hand' ? true : [1, 2]}
         selectionOnDrag={activeTool === 'select'}

@@ -1,8 +1,16 @@
-import { BaseEdge, getBezierPath, type EdgeProps } from '@xyflow/react'
+import { BaseEdge, getBezierPath, Position, type EdgeProps } from '@xyflow/react'
 
-// Gradient connector — Figma frames 161-168: 1px bezier fading from
-// rgba(255,255,255,0.1) at the source into the target node's accent color,
-// with 8px translucent dots at both endpoints.
+// Gradient connector — a bezier fading from a neutral wash at the source into
+// the target node's accent, finished with an accent arrowhead so every edge
+// reads left-to-right at a glance.
+
+// Rotation that points the arrow INTO a target handle on the given side.
+const ARROW_ROTATION: Record<Position, number> = {
+  [Position.Left]: 0,
+  [Position.Right]: 180,
+  [Position.Top]: 90,
+  [Position.Bottom]: -90,
+}
 
 export function GradientEdge(props: EdgeProps) {
   const {
@@ -46,9 +54,15 @@ export function GradientEdge(props: EdgeProps) {
         }}
       />
 
-      {/* Endpoint dots — source: neutral wash, target: accent */}
-      <circle cx={sourceX} cy={sourceY} r={4} style={{ fill: 'var(--color-hover2)' }} />
-      <circle cx={targetX} cy={targetY} r={4} style={{ fill: accent }} opacity={0.35} />
+      {/* Arrowhead — accent-filled, tip resting against the target socket.
+          (The endpoints themselves are covered by the DOM handles now.) */}
+      <g transform={`rotate(${ARROW_ROTATION[targetPosition] ?? 0} ${targetX} ${targetY})`}>
+        <path
+          d={`M ${targetX - 16} ${targetY - 6} L ${targetX - 7} ${targetY} L ${targetX - 16} ${targetY + 6} Z`}
+          style={{ fill: accent }}
+          stroke="none"
+        />
+      </g>
     </>
   )
 }

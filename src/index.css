@@ -419,26 +419,75 @@ select:focus-visible { outline: none; }
    the neon self-glow only exists on dark (on white it reads as smudge). */
 .node-ico { filter: var(--node-icon-glow); }
 
-/* Sockets — Figma frames 161-168: 8px translucent dots */
+/* Sockets.
+   Output (source): the one gesture that builds a workflow, so it gets the
+   loudest affordance on the canvas — a big accent circle floated fully outside
+   the card's right edge, carrying a white arrow that says "drag from here".
+   Input (target): a quiet ring socket outside the left edge that only speaks
+   up while a connection drag is in progress. */
 .react-flow__handle {
-  width: 8px !important;
-  height: 8px !important;
   border-radius: 999px !important;
-  border: none !important;
-  background: var(--color-hover2) !important;
   transition: background var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 
-.react-flow__handle:hover,
-.react-flow__handle-connecting {
+/* ── Output: drag-me circle with arrow ── */
+.react-flow__handle.source {
+  width: 20px !important;
+  height: 20px !important;
+  border: none !important;
   background: var(--color-accent) !important;
-  box-shadow: 0 0 0 4px rgba(160, 140, 255, 0.18);
+  /* canvas-colored ring separates it from edges and the card behind */
+  box-shadow: 0 0 0 3px var(--color-canvas);
+  cursor: grab !important;
 }
+/* center the circle 16px past the card edge (6px visible gap) */
+.react-flow__handle.source.react-flow__handle-right {
+  right: -16px !important;
+}
+.react-flow__handle.source::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: #fff;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 12h13M12 5l7 7-7 7' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    center / contain no-repeat;
+}
+.react-flow__handle.source:hover,
+.react-flow__handle.source.connectingfrom {
+  transform: translate(50%, -50%) scale(1.18);
+  box-shadow: 0 0 0 3px var(--color-canvas),
+    0 0 0 7px color-mix(in oklab, var(--color-accent) 25%, transparent);
+}
+.react-flow__handle.source:active { cursor: grabbing !important; }
 
-/* Branch outcome sockets — colored to match their true/false chips */
+/* Branch outcome circles keep their verdict colors (the white arrow reads on both) */
 .react-flow__handle.handle-true  { background: var(--color-ok) !important; }
 .react-flow__handle.handle-false { background: var(--color-fail) !important; }
+
+/* ── Input: socket ring ── */
+.react-flow__handle.target {
+  width: 13px !important;
+  height: 13px !important;
+  background: var(--color-canvas) !important;
+  border: 2.5px solid var(--color-subtle) !important;
+}
+.react-flow__handle.target.react-flow__handle-left {
+  left: -13px !important;
+}
+/* While any connection is being dragged, every input socket lights up to show
+   where it can land; the one under the pointer fills solid. */
+.react-flow:has(.react-flow__connection) .react-flow__handle.target {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 22%, transparent);
+}
+.react-flow__handle.target.react-flow__handle-connecting,
+.react-flow__handle.target.valid {
+  background: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+}
 
 .react-flow__attribution { display: none !important; }
 
