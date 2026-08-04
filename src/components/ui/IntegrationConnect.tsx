@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { API } from '@/lib/config'
 import { clearResourceCache } from '@/lib/integrationResources'
 import { apiFetch } from '@/lib/http'
@@ -23,6 +24,7 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   hasManualToken: boolean
   manualField: ReactNode
 }) {
+  const navigate = useNavigate()
   const [status, setStatus] = useState<IntegrationStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [showManual, setShowManual] = useState(hasManualToken)
@@ -154,6 +156,21 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
           </button>
         </div>
       )}
+
+      {/* What connecting actually does with the credential. Shown before the
+          decision, not buried in the policy. */}
+      <p className="text-[10px] leading-relaxed text-[var(--color-subtle)]">
+        Fernary stores an access token for {label}, {' '}
+        <span className="text-[var(--color-muted)]">encrypted at rest</span> — never your password.
+        You can remove it at any time, and{' '}
+        <a
+          href="/connections"
+          onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+          className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]"
+        >
+          manage every connected account here
+        </a>.
+      </p>
 
       {/* Manual token override */}
       <button

@@ -10,6 +10,7 @@ import { WorkflowChatPage } from '@/pages/WorkflowChatPage'
 import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
 import { RunDetailPage } from '@/pages/RunDetailPage'
 import { LegalPage } from '@/pages/LegalPage'
+import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -45,6 +46,7 @@ function App() {
         <Route path="/auth/verify" element={<AuthVerifyPage />} />
         <Route path="/workflows" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/data" element={<ProtectedRoute><DataPage /></ProtectedRoute>} />
+        <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
         <Route path="/build" element={<ProtectedRoute><BuildPage /></ProtectedRoute>} />
         <Route path="/workflow/:id" element={<ProtectedRoute><WorkflowEditorPage /></ProtectedRoute>} />
         <Route path="/workflow/:id/chat" element={<ProtectedRoute><WorkflowChatPage /></ProtectedRoute>} />

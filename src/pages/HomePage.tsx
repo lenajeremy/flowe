@@ -223,6 +223,16 @@ export function HomePage() {
               <span className="h-3.5 w-3.5 [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
               Data
             </button>
+            <button
+              onClick={() => navigate('/connections')}
+              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M6.5 9.5L9.5 6.5M5 11l-1 1a2.5 2.5 0 01-3.5-3.5l2-2A2.5 2.5 0 015 6.5M11 5l1-1a2.5 2.5 0 013.5 3.5l-2 2A2.5 2.5 0 0111 9.5"
+                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              Connections
+            </button>
             <span className="h-5 w-px bg-[var(--color-border)]" />
             <UserMenu />
           </div>
