@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -4557,6 +4557,352 @@ export function GoogleContactsConfig({ data, nodeId, updateNodeData }: ProviderC
         {op.startsWith('list') || searches ? (
           <NumField label="Limit" field="contactsLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={50} />
         ) : null}
+      </IntegrationSection>
+  )
+}
+
+export function HubSpotConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'search_objects'
+  const needsId = ['get_object', 'update_object', 'delete_object', 'list_associations',
+    'associate_objects', 'disassociate_objects', 'add_to_list', 'remove_from_list'].includes(op)
+  const writesProps = op === 'create_object' || op === 'update_object'
+  const isBatch = op.startsWith('batch_')
+  const assoc = op.includes('associat')
+  const listOp = op.includes('list') && op.includes('_list')
+  return (
+      <IntegrationSection
+        provider="hubspot" label="HubSpot" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="search_objects"
+        ops={[
+          { value: 'list_objects', label: 'List Objects' },
+          { value: 'get_object', label: 'Get Object' },
+          { value: 'search_objects', label: 'Search Objects' },
+          { value: 'create_object', label: 'Create Object' },
+          { value: 'update_object', label: 'Update Object' },
+          { value: 'delete_object', label: 'Delete Object' },
+          { value: 'batch_create_objects', label: 'Batch Create Objects' },
+          { value: 'list_associations', label: 'List Associations' },
+          { value: 'associate_objects', label: 'Associate Objects' },
+          { value: 'disassociate_objects', label: 'Disassociate Objects' },
+          { value: 'list_properties', label: 'List Properties' },
+          { value: 'get_property', label: 'Get Property' },
+          { value: 'create_property', label: 'Create Property' },
+          { value: 'list_pipelines', label: 'List Pipelines' },
+          { value: 'list_owners', label: 'List Owners' },
+          { value: 'search_lists', label: 'Search Lists' },
+          { value: 'get_list', label: 'Get List' },
+          { value: 'list_memberships', label: 'List Memberships' },
+          { value: 'add_to_list', label: 'Add To List' },
+          { value: 'batch_update_objects', label: 'Batch Update Objects' },
+          { value: 'batch_read_objects', label: 'Batch Read Objects' },
+          { value: 'batch_archive_objects', label: 'Batch Archive Objects' },
+          { value: 'remove_from_list', label: 'Remove From List' },
+        ]}
+        tokenPlaceholder="HubSpot token"
+        hideManual
+      >
+        {!['list_owners', 'search_lists', 'get_list', 'list_memberships', 'add_to_list',
+           'remove_from_list'].includes(op) && (
+          <SelectField label="Object type" field="hubspotObjectType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="contacts"
+            options={[
+              { value: 'contacts', label: 'Contacts' },
+              { value: 'companies', label: 'Companies' },
+              { value: 'deals', label: 'Deals' },
+              { value: 'tickets', label: 'Tickets' },
+              { value: 'line_items', label: 'Line items' },
+              { value: 'products', label: 'Products' },
+              { value: 'quotes', label: 'Quotes' },
+              { value: 'notes', label: 'Notes' },
+              { value: 'tasks', label: 'Tasks' },
+              { value: 'calls', label: 'Calls' },
+              { value: 'emails', label: 'Emails' },
+              { value: 'meetings', label: 'Meetings' },
+            ]} />
+        )}
+
+        {needsId && (
+          <TextField label={op === 'add_to_list' || op === 'remove_from_list' ? 'Record IDs' : 'Record ID'}
+            field="hubspotObjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'add_to_list' ? '123, 456' : '{{prev-node.output}}'} />
+        )}
+        {(op === 'get_object' || op === 'update_object') && (
+          <TextField label="Look up by (optional)" field="hubspotIdProperty" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="email — to use an address instead of an ID" />
+        )}
+
+        {writesProps && (<>
+          <AreaField label="Properties" field="hubspotPropertyValues" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder={'{"email": "jane@acme.com", "firstname": "Jane"}'} />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Keys are HubSpot's internal names — <span className="font-mono">firstname</span>, not "First
+            Name". Run List Properties to see them.
+          </p>
+        </>)}
+        {op === 'create_object' && (
+          <AreaField label="Associations (optional)" field="hubspotAssociations" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="JSON array, as HubSpot documents them" />
+        )}
+
+        {op === 'search_objects' && (<>
+          <TextField label="Search text (optional)" field="hubspotQuery" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="acme" />
+          <AreaField label="Filters (optional)" field="hubspotFilters" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData}
+            placeholder={'[{"filters":[{"propertyName":"email","operator":"EQ","value":"jane@acme.com"}]}]'} />
+          <TextField label="Sort by (optional)" field="hubspotSortProperty" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="createdate" />
+          <SelectField label="Direction" field="hubspotSortDirection" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="desc"
+            options={[{ value: 'desc', label: 'Newest first' }, { value: 'asc', label: 'Oldest first' }]} />
+        </>)}
+
+        {['list_objects', 'get_object', 'search_objects', 'batch_read_objects'].includes(op) && (<>
+          <TextField label="Properties to return" field="hubspotProperties" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="email, firstname, lastname, company" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            HubSpot returns only a small default set. Anything you don't name here comes back missing
+            rather than as an error.
+          </p>
+        </>)}
+
+        {isBatch && (<>
+          <AreaField label="Inputs" field="hubspotBatchInputs" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData}
+            placeholder={op === 'batch_create_objects'
+              ? '[{"properties": {"email": "a@b.com"}}]'
+              : '[{"id": "123"}]'} />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Up to 100 records per request.
+          </p>
+        </>)}
+
+        {assoc && (<>
+          <TextField label="Associate with type" field="hubspotToObjectType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="companies" />
+          {op !== 'list_associations' && (
+            <TextField label="Associate with ID" field="hubspotToObjectId" data={data} nodeId={nodeId}
+              updateNodeData={updateNodeData} placeholder="" />
+          )}
+        </>)}
+
+        {(op === 'get_property' || op === 'create_property') && (
+          <TextField label="Property name" field="hubspotPropertyName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="internal name, e.g. lifecyclestage" />
+        )}
+        {op === 'create_property' && (<>
+          <TextField label="Label" field="hubspotLabel" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Lifecycle stage" />
+          <TextField label="Type" field="hubspotPropertyType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="string, number, date, enumeration, bool" />
+          <TextField label="Field type" field="hubspotFieldType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="text, textarea, select, checkbox, number" />
+          <TextField label="Group (optional)" field="hubspotGroupName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="contactinformation" />
+        </>)}
+
+        {(listOp || ['get_list', 'list_memberships', 'add_to_list', 'remove_from_list'].includes(op)) && (
+          <TextField label="List ID" field="hubspotListId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from Search Lists" />
+        )}
+        {(op === 'add_to_list' || op === 'remove_from_list') && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Static lists only — HubSpot computes membership of an active list itself and rejects manual
+            changes.
+          </p>
+        )}
+        {op === 'search_lists' && (
+          <TextField label="Name contains (optional)" field="hubspotQuery" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="newsletter" />
+        )}
+
+        {op === 'list_objects' && (<>
+          <TextField label="After (optional)" field="hubspotAfter" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="paging cursor from a previous run" />
+          <SelectField label="Archived" field="hubspotArchived" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Active records' }, { value: 'true', label: 'Archived records' }]} />
+        </>)}
+        {op === 'delete_object' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            HubSpot archives rather than destroys, so this can be restored in HubSpot afterwards.
+          </p>
+        )}
+
+        {['list_objects', 'search_objects', 'list_owners', 'search_lists', 'list_memberships'].includes(op) && (
+          <NumField label="Limit" field="hubspotLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function FrontConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_conversations'
+  const needsConv = ['get_conversation', 'update_conversation', 'assign_conversation',
+    'list_conversation_messages', 'reply_to_conversation', 'create_draft', 'add_comment',
+    'list_comments', 'add_tags', 'remove_tags', 'link_conversation'].includes(op)
+  const needsContact = ['get_contact', 'update_contact', 'delete_contact', 'add_contact_handle'].includes(op)
+  const writesBody = ['send_message', 'reply_to_conversation', 'create_draft', 'add_comment'].includes(op)
+  return (
+      <IntegrationSection
+        provider="front" label="Front" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_conversations"
+        ops={[
+          { value: 'list_conversations', label: 'List Conversations' },
+          { value: 'search_conversations', label: 'Search Conversations' },
+          { value: 'get_conversation', label: 'Get Conversation' },
+          { value: 'update_conversation', label: 'Update Conversation' },
+          { value: 'assign_conversation', label: 'Assign Conversation' },
+          { value: 'list_conversation_messages', label: 'List Conversation Messages' },
+          { value: 'send_message', label: 'Send Message' },
+          { value: 'reply_to_conversation', label: 'Reply To Conversation' },
+          { value: 'create_draft', label: 'Create Draft' },
+          { value: 'add_comment', label: 'Add Comment' },
+          { value: 'list_comments', label: 'List Comments' },
+          { value: 'list_tags', label: 'List Tags' },
+          { value: 'add_tags', label: 'Add Tags' },
+          { value: 'remove_tags', label: 'Remove Tags' },
+          { value: 'create_tag', label: 'Create Tag' },
+          { value: 'list_contacts', label: 'List Contacts' },
+          { value: 'get_contact', label: 'Get Contact' },
+          { value: 'create_contact', label: 'Create Contact' },
+          { value: 'update_contact', label: 'Update Contact' },
+          { value: 'delete_contact', label: 'Delete Contact' },
+          { value: 'add_contact_handle', label: 'Add Contact Handle' },
+          { value: 'list_inboxes', label: 'List Inboxes' },
+          { value: 'list_channels', label: 'List Channels' },
+          { value: 'list_teammates', label: 'List Teammates' },
+          { value: 'get_teammate', label: 'Get Teammate' },
+          { value: 'list_teams', label: 'List Teams' },
+          { value: 'list_accounts', label: 'List Accounts' },
+          { value: 'list_events', label: 'List Events' },
+          { value: 'list_links', label: 'List Links' },
+          { value: 'create_link', label: 'Create Link' },
+          { value: 'link_conversation', label: 'Link Conversation' },
+        ]}
+        tokenPlaceholder="Front token"
+        hideManual
+      >
+        {needsConv && (
+          <TextField label="Conversation ID" field="frontConversationId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="cnv_… from List Conversations" />
+        )}
+
+        {op === 'add_comment' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            A comment is internal — only teammates see it. To actually answer the customer, use Reply to
+            Conversation instead.
+          </p>
+        )}
+        {op === 'reply_to_conversation' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            This is delivered to the customer. For an internal note, use Add Comment.
+          </p>
+        )}
+
+        {op === 'send_message' && (<>
+          <TextField label="Channel ID" field="frontChannelId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="cha_… from List Channels" />
+          <TextField label="To" field="frontTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com — comma-separated" />
+          <TextField label="Subject" field="frontSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <TextField label="Cc (optional)" field="frontCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Bcc (optional)" field="frontBcc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+        </>)}
+        {writesBody && (
+          <AreaField label={op === 'add_comment' ? 'Comment' : 'Body'} field="frontBody"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+        {writesBody && (
+          <TextField label={op === 'create_draft' ? 'Author (teammate ID)' : 'Send as (optional)'}
+            field="frontAuthorId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="tea_… from List Teammates" />
+        )}
+
+        {op === 'update_conversation' && (<>
+          <SelectField label="Status" field="frontStatus" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unchanged' },
+              { value: 'open', label: 'Open' },
+              { value: 'archived', label: 'Archived' },
+              { value: 'spam', label: 'Spam' },
+              { value: 'deleted', label: 'Deleted' },
+            ]} />
+          <TextField label="Move to inbox (optional)" field="frontInboxId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="inb_…" />
+        </>)}
+        {(op === 'update_conversation' || op === 'assign_conversation') && (
+          <TextField label="Assignee (optional)" field="frontAssigneeId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="tea_… — leave blank to unassign" />
+        )}
+
+        {(op === 'add_tags' || op === 'remove_tags') && (
+          <TextField label="Tag IDs" field="frontTagId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="tag_… — comma-separated" />
+        )}
+        {op === 'create_tag' && (
+          <TextField label="Tag name" field="frontName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Escalated" />
+        )}
+
+        {(op === 'list_conversations' || op === 'search_conversations' || op === 'list_events') && (
+          <TextField label={op === 'list_events' ? 'Event types (optional)' : 'Search query'}
+            field="frontQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'list_events' ? 'assign, archive' : 'is:open tag:urgent'} />
+        )}
+        {op === 'list_conversations' && (<>
+          <TextField label="Inbox (optional)" field="frontInboxId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="inb_… — scopes the listing" />
+          <TextField label="Tag (optional)" field="frontTagId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="tag_… — scopes the listing" />
+        </>)}
+
+        {needsContact && (
+          <TextField label="Contact ID" field="frontContactId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="crd_… from List Contacts" />
+        )}
+        {(op === 'create_contact' || op === 'update_contact') && (<>
+          <TextField label="Name" field="frontName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Jane Doe" />
+          <TextField label="Description (optional)" field="frontDescription" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="" />
+        </>)}
+        {(op === 'create_contact' || op === 'add_contact_handle') && (<>
+          <TextField label="Handle" field="frontHandle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com" />
+          <SelectField label="Handle type" field="frontHandleSource" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="email"
+            options={[
+              { value: 'email', label: 'Email' },
+              { value: 'phone', label: 'Phone' },
+              { value: 'twitter', label: 'Twitter' },
+              { value: 'intercom', label: 'Intercom' },
+              { value: 'custom', label: 'Custom' },
+            ]} />
+        </>)}
+
+        {op === 'get_teammate' && (
+          <TextField label="Teammate ID" field="frontTeammateId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="tea_…" />
+        )}
+        {op === 'create_link' && (<>
+          <TextField label="URL" field="frontUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/ticket/42" />
+          <TextField label="Name (optional)" field="frontName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Ticket 42" />
+        </>)}
+        {op === 'link_conversation' && (
+          <TextField label="Link IDs" field="frontLinkId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="top_… — comma-separated" />
+        )}
+
+        {op.startsWith('list') || op.startsWith('search') ? (<>
+          <TextField label="Page token (optional)" field="frontPageToken" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from a previous run" />
+          <NumField label="Limit" field="frontLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>) : null}
       </IntegrationSection>
   )
 }

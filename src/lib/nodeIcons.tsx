@@ -94,4 +94,6 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   gumroad:          logo('gumroad'),
   googlesearchconsole: logo('googlesearchconsole'),
   googlecontacts:   logo('googlecontacts'),
+  hubspot:          logo('hubspot'),
+  front:            logo('front'),
 }

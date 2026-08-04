@@ -235,6 +235,8 @@
   --na-gumroad:          #ff90e8;
   --na-googlesearchconsole: #4c9aff;
   --na-googlecontacts:   #4c9aff;
+  --na-hubspot:          #ff7a59;
+  --na-front:            #e5e4e5;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -392,6 +394,8 @@
   --na-gumroad:          #c0399f;
   --na-googlesearchconsole: #1a73e8;
   --na-googlecontacts:   #1a73e8;
+  --na-hubspot:          #d94f2b;
+  --na-front:            #565664;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

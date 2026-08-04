@@ -45,6 +45,8 @@ import { SupabaseNode }         from './SupabaseNode'
 import { GumroadNode }          from './GumroadNode'
 import { GoogleSearchConsoleNode } from './GoogleSearchConsoleNode'
 import { GoogleContactsNode }   from './GoogleContactsNode'
+import { HubSpotNode }          from './HubSpotNode'
+import { FrontNode }            from './FrontNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -96,5 +98,7 @@ export const nodeTypes = {
   gumroad:          GumroadNode,
   googlesearchconsole: GoogleSearchConsoleNode,
   googlecontacts:   GoogleContactsNode,
+  hubspot:          HubSpotNode,
+  front:            FrontNode,
   data:             DataNode,
 }

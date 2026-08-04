@@ -493,6 +493,7 @@ const NODE_TINTS: Partial<Record<NodeType, string>> = {
   granola:'#d6cbb8', resend:'#e5e4e5', sendgrid:'#3368fa', kit:'#ff6154', airtable:'#ffb340', clickup:'#b388ff',
   typeform:'#e5e4e5', calendly:'#4c9aff', dropbox:'#3d8bff', netlify:'#32e6e2', supabase:'#3ecf8e', gumroad:'#ff90e8',
   googlesearchconsole:'#4c9aff', googlecontacts:'#4c9aff',
+  hubspot:'#ff7a59', front:'#e5e4e5',
 }
 
 // ─── Integrations — the tools Fernary can drive, one quiet wall ──
@@ -500,7 +501,7 @@ const INTEGRATIONS: NodeType[] = [
   'gmail', 'googlecalendar', 'googledrive', 'googledocs', 'googlesheets', 'googleslides',
   'googleforms', 'googlemeet', 'googlechat', 'googletasks', 'googlekeep', 'outlook',
   'slack', 'notion', 'linear', 'github', 'gitlab', 'jira',
-  'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly', 'dropbox', 'netlify', 'supabase', 'gumroad', 'googlesearchconsole', 'googlecontacts',
+  'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly', 'dropbox', 'netlify', 'supabase', 'gumroad', 'googlesearchconsole', 'googlecontacts', 'hubspot', 'front',
 ]
 
 function IntegrationTile({ type }: { type: NodeType }) {

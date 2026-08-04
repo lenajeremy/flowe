@@ -66,6 +66,8 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   netlify:   'netlify.com',
   supabase:  'supabase.com',
   gumroad:   'gumroad.com',
+  hubspot:   'hubspot.com',
+  front:     'front.com',
 }
 
 /**

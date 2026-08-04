@@ -49,6 +49,8 @@ export type NodeType =
   | 'gumroad'
   | 'googlesearchconsole'
   | 'googlecontacts'
+  | 'hubspot'
+  | 'front'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -865,6 +867,55 @@ export type FlowNodeData = {
   contactsAddMembers?: string    // comma-separated resource names
   contactsRemoveMembers?: string
   contactsLimit?: number
+
+  // hubspot
+  hubspotAfter?: string
+  hubspotArchived?: string
+  hubspotAssociations?: string    // JSON array of associations to create alongside the record
+  hubspotBatchInputs?: string    // JSON array, max 100 per request
+  hubspotFieldType?: string
+  hubspotFilters?: string    // JSON array of filter groups for search_objects
+  hubspotGroupName?: string
+  hubspotIdProperty?: string    // look a record up by a unique property such as email instead of its id
+  hubspotLabel?: string
+  hubspotLimit?: number
+  hubspotListId?: string
+  hubspotObjectId?: string
+  hubspotObjectType?: string    // contacts | companies | deals | tickets | notes | tasks | calls | emails | meetings, or a custom type id
+  hubspotProperties?: string    // comma-separated property names to return; v3 omits anything not asked for
+  hubspotPropertyName?: string
+  hubspotPropertyType?: string
+  hubspotPropertyValues?: string    // JSON object keyed by HubSpot's internal names, e.g. firstname not First Name
+  hubspotQuery?: string
+  hubspotSortDirection?: string
+  hubspotSortProperty?: string
+  hubspotToObjectId?: string
+  hubspotToObjectType?: string
+
+  // front
+  frontAssigneeId?: string
+  frontAuthorId?: string    // teammate id the message or comment is sent as
+  frontBcc?: string
+  frontBody?: string
+  frontCc?: string
+  frontChannelId?: string    // cha_… — required to start a new conversation
+  frontContactId?: string
+  frontConversationId?: string    // cnv_…
+  frontDescription?: string
+  frontHandle?: string    // an address on a channel, e.g. an email address
+  frontHandleSource?: string    // email | phone | twitter | intercom | custom
+  frontInboxId?: string
+  frontLimit?: number
+  frontLinkId?: string
+  frontName?: string
+  frontPageToken?: string
+  frontQuery?: string    // search terms, or event types for list_events
+  frontStatus?: string    // archived | open | deleted | spam
+  frontSubject?: string
+  frontTagId?: string    // comma-separated tag ids
+  frontTeammateId?: string
+  frontTo?: string
+  frontUrl?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

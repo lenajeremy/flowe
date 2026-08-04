@@ -95,6 +95,10 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'hubspot':
+      return { nodeType: 'hubspot', label: 'HubSpot', integrationOp: 'search_objects', hubspotObjectType: 'contacts', hubspotLimit: 25 }
+    case 'front':
+      return { nodeType: 'front', label: 'Front', integrationOp: 'list_conversations', frontLimit: 25 }
     case 'googlesearchconsole':
       return { nodeType: 'googlesearchconsole', label: 'Search Console', integrationOp: 'query_search_analytics', gscDimensions: 'query', gscRowLimit: 100 }
     case 'googlecontacts':
