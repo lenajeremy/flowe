@@ -29,11 +29,11 @@ export function IntegrationLogo({ type, size, onDark }: Props) {
   const url = integrationLogoUrl(type)
 
   if (inline) {
-    // The tile is part of the artwork, so it wants the same softened corner the
-    // fetched logos get rather than the chip's default square edge.
+    // A logo that carries its own tile wants the same softened corner the fetched
+    // ones get, rather than the chip's default square edge.
     return (
       <svg
-        viewBox="0 0 24 24" width={size} height={size} role="img"
+        viewBox={inline.viewBox} width={size} height={size} role="img"
         aria-label={`${NODE_LABELS[type]} logo`}
         style={{
           width: size ?? '100%',
@@ -41,8 +41,9 @@ export function IntegrationLogo({ type, size, onDark }: Props) {
           borderRadius: size ? Math.max(2, Math.round(size * 0.22)) : 6,
         }}
       >
-        <path d={inline.tile} fill={inline.tileColor} />
-        <path d={inline.mark} fill="#FFFFFF" />
+        {inline.paths.map((p, i) => (
+          <path key={i} d={p.d} fill={p.fill} />
+        ))}
       </svg>
     )
   }
