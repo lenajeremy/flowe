@@ -1,0 +1,8 @@
+# Fernary — https://fernary.com
+# Everything is public and crawlable. This file exists because the SPA catch-all
+# rewrite was otherwise serving index.html for /robots.txt, which means crawlers
+# asking for crawl rules received a page of HTML instead.
+User-agent: *
+Allow: /
+
+Sitemap: https://fernary.com/sitemap.xml
