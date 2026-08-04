@@ -38,277 +38,278 @@ const finePointer = () =>
 // the instant paint and the fallback for reduced-motion / no-WebGL.
 // NB: the hash is sin-free (Hoskins) — sin-based hashes lose precision on
 // Apple/Metal GPUs and collapse the whole field into gray noise.
-const AURORA_FRAG = `precision highp float;
-uniform float u_t;
-uniform vec2 u_r;
-uniform sampler2D u_f;
-float hash(vec2 p){
-  vec3 p3=fract(vec3(p.xyx)*0.1031);
-  p3+=dot(p3,p3.yzx+33.33);
-  return fract((p3.x+p3.y)*p3.z);
-}
-float noise(vec2 p){
-  vec2 i=floor(p),f=fract(p);
-  vec2 u=f*f*(3.0-2.0*f);
-  return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),u.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),u.x),u.y);
-}
-float fbm(vec2 p){
-  float v=0.0,a=0.5;
-  for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(11.7,-4.3);a*=0.5;}
-  return v;
-}
-void main(){
-  vec2 uv=gl_FragCoord.xy/u_r;
-  float ar=u_r.x/u_r.y;
-  // the vapor field — RG: displacement (decode mirrors the JS encode:
-  // v/SCALE*127+128, SCALE=0.15) · B: cavity, the density deficit where a
-  // body has broken through and the cloud material is simply gone
-  vec3 fld=texture2D(u_f,uv).rgb;
-  vec2 disp=(fld.rg-vec2(128.0/255.0))*(255.0/127.0)*0.15;
-  float cav=fld.b;
-  vec2 sp=vec2(uv.x*ar,uv.y);
-  float T=u_t*0.06;
-  vec3 green=vec3(0.30,0.86,0.52);
-  vec3 purple=vec3(0.06,0.66,0.64);
-  vec3 pink=vec3(0.55,0.88,0.34);
-  vec3 col=vec3(0.0);
-  for(int i=0;i<3;i++){
-    float fi=float(i);
-    // deeper curtains sway less — the vapor has depth
-    vec2 w=sp+vec2(disp.x*ar,disp.y)*(1.0-fi*0.25);
-    float x=w.x*(1.0+fi*0.35)+fi*7.31;
-    float drift=T*(0.5+fi*0.3);
-    // shimmering rays with vertical grain — segments stream slowly upward,
-    // and give the vapor's vertical motion something visible to carry
-    float ray=fbm(vec2(x*2.6+drift,w.y*1.4-drift*0.9+fi*13.7));
-    ray=pow(max(ray,0.0),3.0)*2.4;
-    // the curtain's undulating lower edge
-    float base=0.36+fi*0.11+0.22*(fbm(vec2(x*0.7-drift*0.8,fi*5.2))-0.5);
-    float d=w.y-base;
-    // sharp below, long glow fading upward
-    float profile=smoothstep(-0.045,0.01,d)*exp(-max(d,0.0)*2.6);
-    // green at the lower edge, purple through the body, pink at the top
-    vec3 c=mix(green,purple,smoothstep(-0.02,0.32,d));
-    c=mix(c,pink,smoothstep(0.28,0.62,d)*0.7);
-    col+=c*ray*profile*(1.05-fi*0.25);
-  }
-  // the hole the body tore open: dark inside, a compressed glow at the rim
-  col*=(1.0-0.85*cav)*(1.0+1.5*length(disp)*(1.0-cav));
-  col*=0.25+0.75*smoothstep(0.0,0.55,uv.y);
-  gl_FragColor=vec4(col,1.0);
-}`
-
-function AuroraShader() {
-  const ref = useRef<HTMLCanvasElement>(null)
-  const [live, setLive] = useState(false)
-
-  useEffect(() => {
-    if (reducedMotion()) return
-    const canvas = ref.current
-    if (!canvas) return
-    // NB: a canvas only ever has one WebGL context — StrictMode remounts get
-    // this same object back, so it must never be lose-context'd in cleanup.
-    const gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false })
-    if (!gl || gl.isContextLost()) return
-
-    const compile = (type: number, src: string) => {
-      const s = gl.createShader(type)!
-      gl.shaderSource(s, src)
-      gl.compileShader(s)
-      return s
-    }
-    const prog = gl.createProgram()!
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'))
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, AURORA_FRAG))
-    gl.linkProgram(prog)
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return
-    gl.useProgram(prog)
-
-    // One fullscreen triangle — no index buffer, no second triangle seam
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
-    const a = gl.getAttribLocation(prog, 'a')
-    gl.enableVertexAttribArray(a)
-    gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0)
-    const uT = gl.getUniformLocation(prog, 'u_t')
-    const uR = gl.getUniformLocation(prog, 'u_r')
-    gl.uniform1i(gl.getUniformLocation(prog, 'u_f'), 0)
-
-    // ── Vapor flow field — a coarse displacement grid stepped on the CPU.
-    // The pointer's sweep injects its own velocity into nearby cells; every
-    // step the field diffuses (vapor spreads) and dissipates (the sky
-    // drifts back to the flow it had). Uploaded as a tiny RG texture the
-    // fragment shader samples with linear filtering.
-    const FW = 48, FH = 28
-    const SCALE = 0.15 // max bend, in uv — the sky sways, it never tears
-    let fx = new Float32Array(FW * FH)
-    let fy = new Float32Array(FW * FH)
-    let fd = new Float32Array(FW * FH) // density deficit — the torn-open cavity
-    let scx = new Float32Array(FW * FH) // diffusion scratch
-    let scy = new Float32Array(FW * FH)
-    let scd = new Float32Array(FW * FH)
-    const pix = new Uint8Array(FW * FH * 4)
-    const tex = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, tex)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-    // ── Pointer — position + velocity in uv space (y-up). Only a moving
-    // hand stirs the vapor; a still one lets it settle.
-    const ptr = { x: -9, y: -9, vx: 0, vy: 0, on: false }
-    let lastMove = 0
-    const onMove = (e: PointerEvent) => {
-      const r = canvas.getBoundingClientRect()
-      const x = (e.clientX - r.left) / r.width
-      const y = 1 - (e.clientY - r.top) / r.height // GL is y-up
-      const now = performance.now()
-      if (ptr.on && now - lastMove < 120) {
-        // smoothed per-event velocity; stale gaps reset so entries don't kick
-        ptr.vx = ptr.vx * 0.7 + (x - ptr.x) * 0.3
-        ptr.vy = ptr.vy * 0.7 + (y - ptr.y) * 0.3
-      } else {
-        ptr.vx = 0
-        ptr.vy = 0
-      }
-      ptr.x = x
-      ptr.y = y
-      ptr.on = true
-      lastMove = now
-    }
-    const onLeave = () => { ptr.on = false }
-    const host = canvas.parentElement
-    const interactive = finePointer() && host
-    if (interactive) {
-      host.addEventListener('pointermove', onMove)
-      host.addEventListener('pointerleave', onLeave)
-    }
-
-    const stepField = (ar: number) => {
-      // The pointer is a solid body permeating the vapor: a wide plateau
-      // core (not a gaussian point) that drags cloud along its motion and
-      // shoves it radially out of the way, like a ball through smoke.
-      if (ptr.on) {
-        const cvx = Math.max(-0.04, Math.min(0.04, ptr.vx))
-        const cvy = Math.max(-0.04, Math.min(0.04, ptr.vy))
-        const speed = Math.hypot(cvx, cvy)
-        if (speed > 0.0004) {
-          const R = 0.16 // the body's reach — compact, a fist through the vapor
-          for (let cy = 0; cy < FH; cy++) {
-            const dy = (cy + 0.5) / FH - ptr.y
-            for (let cx = 0; cx < FW; cx++) {
-              const dx = ((cx + 0.5) / FW - ptr.x) * ar
-              const d = Math.hypot(dx, dy)
-              if (d > R) continue
-              // full strength across the core, soft skirt at the edge
-              const body = d < R * 0.45 ? 1 : 1 - (d - R * 0.45) / (R * 0.55)
-              const rx = d > 1e-4 ? dx / d : 0
-              const ry = d > 1e-4 ? dy / d : 0
-              const i = cy * FW + cx
-              // parting dominates drag: material moves out of the way,
-              // and the core tears open — cloud is displaced, not painted.
-              // Kept modest so the vapor parts nearby, not across the sky.
-              fx[i] += (cvx * 0.45 + rx * speed * 0.7) * body * 0.9
-              fy[i] += (cvy * 0.45 + ry * speed * 0.7) * body * 0.9
-              fd[i] = Math.min(1, fd[i] + (0.05 + speed * 4) * body)
-            }
-          }
-        }
-      }
-      // diffuse + dissipate — the tear is sharp but shortlived: the sky
-      // finds its old flow again in a beat or two
-      // (α must stay ≤0.25 to keep the explicit step stable)
-      for (let cy = 0; cy < FH; cy++) {
-        const row = cy * FW
-        const up = Math.min(FH - 1, cy + 1) * FW
-        const dn = Math.max(0, cy - 1) * FW
-        for (let cx = 0; cx < FW; cx++) {
-          const i = row + cx
-          const l = row + Math.max(0, cx - 1)
-          const r = row + Math.min(FW - 1, cx + 1)
-          scx[i] = (fx[i] + 0.15 * (fx[l] + fx[r] + fx[up + cx] + fx[dn + cx] - 4 * fx[i])) * 0.97
-          scy[i] = (fy[i] + 0.15 * (fy[l] + fy[r] + fy[up + cx] + fy[dn + cx] - 4 * fy[i])) * 0.97
-          scd[i] = (fd[i] + 0.15 * (fd[l] + fd[r] + fd[up + cx] + fd[dn + cx] - 4 * fd[i])) * 0.97
-        }
-      }
-      ;[fx, scx] = [scx, fx]
-      ;[fy, scy] = [scy, fy]
-      ;[fd, scd] = [scd, fd]
-      // encode around 128 so a resting sky is exactly zero displacement;
-      // the cavity rides in B
-      for (let i = 0; i < FW * FH; i++) {
-        pix[i * 4] = Math.max(0, Math.min(255, Math.round((fx[i] / SCALE) * 127 + 128)))
-        pix[i * 4 + 1] = Math.max(0, Math.min(255, Math.round((fy[i] / SCALE) * 127 + 128)))
-        pix[i * 4 + 2] = Math.max(0, Math.min(255, Math.round(fd[i] * 255)))
-        pix[i * 4 + 3] = 255
-      }
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FW, FH, 0, gl.RGBA, gl.UNSIGNED_BYTE, pix)
-    }
-
-    const fit = () => {
-      // Soft by nature — render below CSS resolution and let it upscale,
-      // but high enough that the curtain rays keep their definition
-      const w = Math.max(1, Math.round(canvas.clientWidth * 0.8))
-      const h = Math.max(1, Math.round(canvas.clientHeight * 0.8))
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w
-        canvas.height = h
-        gl.viewport(0, 0, w, h)
-      }
-    }
-
-    // Only burn GPU while the hero is on screen and the tab is visible
-    let raf = 0
-    let onScreen = true
-    let pageVisible = !document.hidden
-    const start = performance.now()
-    const frame = () => {
-      raf = 0
-      if (!onScreen || !pageVisible) return
-      fit()
-      stepField(canvas.width / Math.max(1, canvas.height))
-      gl.uniform1f(uT, (performance.now() - start) / 1000)
-      gl.uniform2f(uR, canvas.width, canvas.height)
-      gl.drawArrays(gl.TRIANGLES, 0, 3)
-      setLive(true) // fade in only once a real frame exists
-      raf = requestAnimationFrame(frame)
-    }
-    const play = () => {
-      if (!raf && onScreen && pageVisible) raf = requestAnimationFrame(frame)
-    }
-    const io = new IntersectionObserver(([entry]) => {
-      onScreen = entry.isIntersecting
-      play()
-    })
-    io.observe(canvas)
-    const onVis = () => {
-      pageVisible = !document.hidden
-      play()
-    }
-    document.addEventListener('visibilitychange', onVis)
-
-    play()
-    return () => {
-      io.disconnect()
-      document.removeEventListener('visibilitychange', onVis)
-      if (interactive) {
-        host.removeEventListener('pointermove', onMove)
-        host.removeEventListener('pointerleave', onLeave)
-      }
-      if (raf) cancelAnimationFrame(raf)
-    }
-  }, [])
-
-  return (
-    <canvas
-      ref={ref}
-      aria-hidden
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      style={{ opacity: live ? 0.9 : 0, transition: 'opacity 1600ms var(--ease-out)' }}
-    />
-  )
-}
+// Shader disabled — the static aurora.jpg reads better. Kept for reference.
+// const AURORA_FRAG = `precision highp float;
+// uniform float u_t;
+// uniform vec2 u_r;
+// uniform sampler2D u_f;
+// float hash(vec2 p){
+//   vec3 p3=fract(vec3(p.xyx)*0.1031);
+//   p3+=dot(p3,p3.yzx+33.33);
+//   return fract((p3.x+p3.y)*p3.z);
+// }
+// float noise(vec2 p){
+//   vec2 i=floor(p),f=fract(p);
+//   vec2 u=f*f*(3.0-2.0*f);
+//   return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),u.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),u.x),u.y);
+// }
+// float fbm(vec2 p){
+//   float v=0.0,a=0.5;
+//   for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(11.7,-4.3);a*=0.5;}
+//   return v;
+// }
+// void main(){
+//   vec2 uv=gl_FragCoord.xy/u_r;
+//   float ar=u_r.x/u_r.y;
+//   // the vapor field — RG: displacement (decode mirrors the JS encode:
+//   // v/SCALE*127+128, SCALE=0.15) · B: cavity, the density deficit where a
+//   // body has broken through and the cloud material is simply gone
+//   vec3 fld=texture2D(u_f,uv).rgb;
+//   vec2 disp=(fld.rg-vec2(128.0/255.0))*(255.0/127.0)*0.15;
+//   float cav=fld.b;
+//   vec2 sp=vec2(uv.x*ar,uv.y);
+//   float T=u_t*0.06;
+//   vec3 green=vec3(0.30,0.86,0.52);
+//   vec3 purple=vec3(0.06,0.66,0.64);
+//   vec3 pink=vec3(0.55,0.88,0.34);
+//   vec3 col=vec3(0.0);
+//   for(int i=0;i<3;i++){
+//     float fi=float(i);
+//     // deeper curtains sway less — the vapor has depth
+//     vec2 w=sp+vec2(disp.x*ar,disp.y)*(1.0-fi*0.25);
+//     float x=w.x*(1.0+fi*0.35)+fi*7.31;
+//     float drift=T*(0.5+fi*0.3);
+//     // shimmering rays with vertical grain — segments stream slowly upward,
+//     // and give the vapor's vertical motion something visible to carry
+//     float ray=fbm(vec2(x*2.6+drift,w.y*1.4-drift*0.9+fi*13.7));
+//     ray=pow(max(ray,0.0),3.0)*2.4;
+//     // the curtain's undulating lower edge
+//     float base=0.36+fi*0.11+0.22*(fbm(vec2(x*0.7-drift*0.8,fi*5.2))-0.5);
+//     float d=w.y-base;
+//     // sharp below, long glow fading upward
+//     float profile=smoothstep(-0.045,0.01,d)*exp(-max(d,0.0)*2.6);
+//     // green at the lower edge, purple through the body, pink at the top
+//     vec3 c=mix(green,purple,smoothstep(-0.02,0.32,d));
+//     c=mix(c,pink,smoothstep(0.28,0.62,d)*0.7);
+//     col+=c*ray*profile*(1.05-fi*0.25);
+//   }
+//   // the hole the body tore open: dark inside, a compressed glow at the rim
+//   col*=(1.0-0.85*cav)*(1.0+1.5*length(disp)*(1.0-cav));
+//   col*=0.25+0.75*smoothstep(0.0,0.55,uv.y);
+//   gl_FragColor=vec4(col,1.0);
+// }`
+//
+// function AuroraShader() {
+//   const ref = useRef<HTMLCanvasElement>(null)
+//   const [live, setLive] = useState(false)
+//
+//   useEffect(() => {
+//     if (reducedMotion()) return
+//     const canvas = ref.current
+//     if (!canvas) return
+//     // NB: a canvas only ever has one WebGL context — StrictMode remounts get
+//     // this same object back, so it must never be lose-context'd in cleanup.
+//     const gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false })
+//     if (!gl || gl.isContextLost()) return
+//
+//     const compile = (type: number, src: string) => {
+//       const s = gl.createShader(type)!
+//       gl.shaderSource(s, src)
+//       gl.compileShader(s)
+//       return s
+//     }
+//     const prog = gl.createProgram()!
+//     gl.attachShader(prog, compile(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'))
+//     gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, AURORA_FRAG))
+//     gl.linkProgram(prog)
+//     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return
+//     gl.useProgram(prog)
+//
+//     // One fullscreen triangle — no index buffer, no second triangle seam
+//     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
+//     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+//     const a = gl.getAttribLocation(prog, 'a')
+//     gl.enableVertexAttribArray(a)
+//     gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0)
+//     const uT = gl.getUniformLocation(prog, 'u_t')
+//     const uR = gl.getUniformLocation(prog, 'u_r')
+//     gl.uniform1i(gl.getUniformLocation(prog, 'u_f'), 0)
+//
+//     // ── Vapor flow field — a coarse displacement grid stepped on the CPU.
+//     // The pointer's sweep injects its own velocity into nearby cells; every
+//     // step the field diffuses (vapor spreads) and dissipates (the sky
+//     // drifts back to the flow it had). Uploaded as a tiny RG texture the
+//     // fragment shader samples with linear filtering.
+//     const FW = 48, FH = 28
+//     const SCALE = 0.15 // max bend, in uv — the sky sways, it never tears
+//     let fx = new Float32Array(FW * FH)
+//     let fy = new Float32Array(FW * FH)
+//     let fd = new Float32Array(FW * FH) // density deficit — the torn-open cavity
+//     let scx = new Float32Array(FW * FH) // diffusion scratch
+//     let scy = new Float32Array(FW * FH)
+//     let scd = new Float32Array(FW * FH)
+//     const pix = new Uint8Array(FW * FH * 4)
+//     const tex = gl.createTexture()
+//     gl.bindTexture(gl.TEXTURE_2D, tex)
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+//
+//     // ── Pointer — position + velocity in uv space (y-up). Only a moving
+//     // hand stirs the vapor; a still one lets it settle.
+//     const ptr = { x: -9, y: -9, vx: 0, vy: 0, on: false }
+//     let lastMove = 0
+//     const onMove = (e: PointerEvent) => {
+//       const r = canvas.getBoundingClientRect()
+//       const x = (e.clientX - r.left) / r.width
+//       const y = 1 - (e.clientY - r.top) / r.height // GL is y-up
+//       const now = performance.now()
+//       if (ptr.on && now - lastMove < 120) {
+//         // smoothed per-event velocity; stale gaps reset so entries don't kick
+//         ptr.vx = ptr.vx * 0.7 + (x - ptr.x) * 0.3
+//         ptr.vy = ptr.vy * 0.7 + (y - ptr.y) * 0.3
+//       } else {
+//         ptr.vx = 0
+//         ptr.vy = 0
+//       }
+//       ptr.x = x
+//       ptr.y = y
+//       ptr.on = true
+//       lastMove = now
+//     }
+//     const onLeave = () => { ptr.on = false }
+//     const host = canvas.parentElement
+//     const interactive = finePointer() && host
+//     if (interactive) {
+//       host.addEventListener('pointermove', onMove)
+//       host.addEventListener('pointerleave', onLeave)
+//     }
+//
+//     const stepField = (ar: number) => {
+//       // The pointer is a solid body permeating the vapor: a wide plateau
+//       // core (not a gaussian point) that drags cloud along its motion and
+//       // shoves it radially out of the way, like a ball through smoke.
+//       if (ptr.on) {
+//         const cvx = Math.max(-0.04, Math.min(0.04, ptr.vx))
+//         const cvy = Math.max(-0.04, Math.min(0.04, ptr.vy))
+//         const speed = Math.hypot(cvx, cvy)
+//         if (speed > 0.0004) {
+//           const R = 0.16 // the body's reach — compact, a fist through the vapor
+//           for (let cy = 0; cy < FH; cy++) {
+//             const dy = (cy + 0.5) / FH - ptr.y
+//             for (let cx = 0; cx < FW; cx++) {
+//               const dx = ((cx + 0.5) / FW - ptr.x) * ar
+//               const d = Math.hypot(dx, dy)
+//               if (d > R) continue
+//               // full strength across the core, soft skirt at the edge
+//               const body = d < R * 0.45 ? 1 : 1 - (d - R * 0.45) / (R * 0.55)
+//               const rx = d > 1e-4 ? dx / d : 0
+//               const ry = d > 1e-4 ? dy / d : 0
+//               const i = cy * FW + cx
+//               // parting dominates drag: material moves out of the way,
+//               // and the core tears open — cloud is displaced, not painted.
+//               // Kept modest so the vapor parts nearby, not across the sky.
+//               fx[i] += (cvx * 0.45 + rx * speed * 0.7) * body * 0.9
+//               fy[i] += (cvy * 0.45 + ry * speed * 0.7) * body * 0.9
+//               fd[i] = Math.min(1, fd[i] + (0.05 + speed * 4) * body)
+//             }
+//           }
+//         }
+//       }
+//       // diffuse + dissipate — the tear is sharp but shortlived: the sky
+//       // finds its old flow again in a beat or two
+//       // (α must stay ≤0.25 to keep the explicit step stable)
+//       for (let cy = 0; cy < FH; cy++) {
+//         const row = cy * FW
+//         const up = Math.min(FH - 1, cy + 1) * FW
+//         const dn = Math.max(0, cy - 1) * FW
+//         for (let cx = 0; cx < FW; cx++) {
+//           const i = row + cx
+//           const l = row + Math.max(0, cx - 1)
+//           const r = row + Math.min(FW - 1, cx + 1)
+//           scx[i] = (fx[i] + 0.15 * (fx[l] + fx[r] + fx[up + cx] + fx[dn + cx] - 4 * fx[i])) * 0.97
+//           scy[i] = (fy[i] + 0.15 * (fy[l] + fy[r] + fy[up + cx] + fy[dn + cx] - 4 * fy[i])) * 0.97
+//           scd[i] = (fd[i] + 0.15 * (fd[l] + fd[r] + fd[up + cx] + fd[dn + cx] - 4 * fd[i])) * 0.97
+//         }
+//       }
+//       ;[fx, scx] = [scx, fx]
+//       ;[fy, scy] = [scy, fy]
+//       ;[fd, scd] = [scd, fd]
+//       // encode around 128 so a resting sky is exactly zero displacement;
+//       // the cavity rides in B
+//       for (let i = 0; i < FW * FH; i++) {
+//         pix[i * 4] = Math.max(0, Math.min(255, Math.round((fx[i] / SCALE) * 127 + 128)))
+//         pix[i * 4 + 1] = Math.max(0, Math.min(255, Math.round((fy[i] / SCALE) * 127 + 128)))
+//         pix[i * 4 + 2] = Math.max(0, Math.min(255, Math.round(fd[i] * 255)))
+//         pix[i * 4 + 3] = 255
+//       }
+//       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FW, FH, 0, gl.RGBA, gl.UNSIGNED_BYTE, pix)
+//     }
+//
+//     const fit = () => {
+//       // Soft by nature — render below CSS resolution and let it upscale,
+//       // but high enough that the curtain rays keep their definition
+//       const w = Math.max(1, Math.round(canvas.clientWidth * 0.8))
+//       const h = Math.max(1, Math.round(canvas.clientHeight * 0.8))
+//       if (canvas.width !== w || canvas.height !== h) {
+//         canvas.width = w
+//         canvas.height = h
+//         gl.viewport(0, 0, w, h)
+//       }
+//     }
+//
+//     // Only burn GPU while the hero is on screen and the tab is visible
+//     let raf = 0
+//     let onScreen = true
+//     let pageVisible = !document.hidden
+//     const start = performance.now()
+//     const frame = () => {
+//       raf = 0
+//       if (!onScreen || !pageVisible) return
+//       fit()
+//       stepField(canvas.width / Math.max(1, canvas.height))
+//       gl.uniform1f(uT, (performance.now() - start) / 1000)
+//       gl.uniform2f(uR, canvas.width, canvas.height)
+//       gl.drawArrays(gl.TRIANGLES, 0, 3)
+//       setLive(true) // fade in only once a real frame exists
+//       raf = requestAnimationFrame(frame)
+//     }
+//     const play = () => {
+//       if (!raf && onScreen && pageVisible) raf = requestAnimationFrame(frame)
+//     }
+//     const io = new IntersectionObserver(([entry]) => {
+//       onScreen = entry.isIntersecting
+//       play()
+//     })
+//     io.observe(canvas)
+//     const onVis = () => {
+//       pageVisible = !document.hidden
+//       play()
+//     }
+//     document.addEventListener('visibilitychange', onVis)
+//
+//     play()
+//     return () => {
+//       io.disconnect()
+//       document.removeEventListener('visibilitychange', onVis)
+//       if (interactive) {
+//         host.removeEventListener('pointermove', onMove)
+//         host.removeEventListener('pointerleave', onLeave)
+//       }
+//       if (raf) cancelAnimationFrame(raf)
+//     }
+//   }, [])
+//
+//   return (
+//     <canvas
+//       ref={ref}
+//       aria-hidden
+//       className="pointer-events-none absolute inset-0 h-full w-full"
+//       style={{ opacity: live ? 0.9 : 0, transition: 'opacity 1600ms var(--ease-out)' }}
+//     />
+//   )
+// }
 
 // ─── In-view hook — fires once, slightly before the element lands ──
 function useInView<T extends HTMLElement>(rootMargin = '0px 0px -12% 0px') {
@@ -909,7 +910,7 @@ export function LandingPage() {
         <img src="/aurora.jpg" alt="" aria-hidden
           className="aurora-drift pointer-events-none absolute inset-x-0 top-0 h-full w-full object-cover"
           style={{ opacity:0.7, filter:'hue-rotate(188deg) saturate(0.82)' }} />
-        <AuroraShader />
+        {/* <AuroraShader /> */}
         <div className="pointer-events-none absolute inset-0"
           style={{ background:'linear-gradient(to bottom, rgba(5,5,7,0.2), rgba(5,5,7,0.6) 60%, #050507)' }} />
 
@@ -932,12 +933,9 @@ export function LandingPage() {
             ))}
           </h2>
           <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            {/* States what the app *is*, not only what you do with it. Google's
-                homepage review wants the purpose legible without inference. */}
             <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
-              <strong className="font-medium text-white/80">Fernary is a workflow automation app for business.</strong>{' '}
-              Describe what you want in plain English — it builds the workflow, connects your
-              tools, and runs it on a schedule while you&rsquo;re away.
+              Describe what you want in plain English — Fernary builds the workflow,
+              connects your tools, and runs it on a schedule while you&rsquo;re away.
             </p>
             <div className="rise-in flex items-center gap-3" style={{ animationDelay:'600ms' }}>
               <button onClick={handleCreate} disabled={creating}
