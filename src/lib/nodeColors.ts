@@ -48,6 +48,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   calendly:         'var(--na-calendly)',
   dropbox:          'var(--na-dropbox)',
   netlify:          'var(--na-netlify)',
+  supabase:         'var(--na-supabase)',
   data:             'var(--na-data)',
 }
 
@@ -98,6 +99,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   calendly:         'M11.5 4.5A4 4 0 108 12.5',
   dropbox:          'M5 2.5L2 5l3 2.5L8 5zM11 2.5L8 5l3 2.5L14 5zM5 8.5L2 11l3 2.5L8 11zM11 8.5L8 11l3 2.5L14 11z',
   netlify:          'M8 2l5.5 6L8 14 2.5 8z',
+  supabase:         'M8.5 2L4 9h4l-.5 5L12 7H8z',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -145,6 +147,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   calendly:         'Calendly',
   dropbox:          'Dropbox',
   netlify:          'Netlify',
+  supabase:         'Supabase',
   data:             'Data Store',
 }
 
@@ -192,5 +195,6 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   calendly:         'Scheduling & bookings',
   dropbox:          'Files & sharing',
   netlify:          'Sites & deploys',
+  supabase:         'Projects & database',
   data:             'Persist & recall data',
 }

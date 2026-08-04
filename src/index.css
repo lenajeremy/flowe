@@ -231,6 +231,7 @@
   --na-calendly:         #4c9aff;
   --na-dropbox:          #3d8bff;
   --na-netlify:          #32e6e2;
+  --na-supabase:         #3ecf8e;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -384,6 +385,7 @@
   --na-calendly:         #0b5ed9;
   --na-dropbox:          #0061ff;
   --na-netlify:          #0d8a86;
+  --na-supabase:         #1a8f5f;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

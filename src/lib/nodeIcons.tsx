@@ -90,4 +90,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   calendly:         logo('calendly'),
   dropbox:          logo('dropbox'),
   netlify:          logo('netlify'),
+  supabase:         logo('supabase'),
 }

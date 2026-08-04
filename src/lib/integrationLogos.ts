@@ -55,6 +55,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   calendly:  'calendly.com',
   dropbox:   'dropbox.com',
   netlify:   'netlify.com',
+  supabase:  'supabase.com',
 }
 
 /**

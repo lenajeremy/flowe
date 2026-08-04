@@ -88,7 +88,7 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'airtable' | 'clickup' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceProvider = 'airtable' | 'clickup' | 'supabase' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
 type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -4007,6 +4007,164 @@ export function NetlifyConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
           <NumField label="Page (optional)" field="netlifyPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
           <NumField label="Per page (optional)" field="netlifyPerPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={50} />
         </>)}
+      </IntegrationSection>
+  )
+}
+
+export function SupabaseConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_projects'
+  const projectOps = !['list_projects', 'create_project', 'list_regions',
+    'list_organizations', 'get_organization'].includes(op)
+  const isSql = op === 'run_sql' || op === 'run_sql_read_only'
+  const fnOps = op.includes('function')
+  return (
+      <IntegrationSection
+        provider="supabase" label="Supabase" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_projects"
+        ops={[
+          { value: 'list_projects', label: 'List Projects' },
+          { value: 'get_project', label: 'Get Project' },
+          { value: 'get_project_health', label: 'Get Project Health' },
+          { value: 'list_regions', label: 'List Regions' },
+          { value: 'create_project', label: 'Create Project' },
+          { value: 'delete_project', label: 'Delete Project' },
+          { value: 'pause_project', label: 'Pause Project' },
+          { value: 'restore_project', label: 'Restore Project' },
+          { value: 'restart_project', label: 'Restart Project' },
+          { value: 'list_api_keys', label: 'List API Keys' },
+          { value: 'create_api_key', label: 'Create API Key' },
+          { value: 'delete_api_key', label: 'Delete API Key' },
+          { value: 'list_organizations', label: 'List Organizations' },
+          { value: 'get_organization', label: 'Get Organization' },
+          { value: 'list_organization_projects', label: 'List Organization Projects' },
+          { value: 'list_organization_members', label: 'List Organization Members' },
+          { value: 'run_sql_read_only', label: 'Run SQL Read Only' },
+          { value: 'run_sql', label: 'Run SQL' },
+          { value: 'get_database_metadata', label: 'Get Database Metadata' },
+          { value: 'list_migrations', label: 'List Migrations' },
+          { value: 'apply_migration', label: 'Apply Migration' },
+          { value: 'rollback_migrations', label: 'Rollback Migrations' },
+          { value: 'list_backups', label: 'List Backups' },
+          { value: 'restore_pitr', label: 'Restore PITR' },
+          { value: 'list_functions', label: 'List Functions' },
+          { value: 'get_function', label: 'Get Function' },
+          { value: 'get_function_body', label: 'Get Function Body' },
+          { value: 'create_function', label: 'Create Function' },
+          { value: 'update_function', label: 'Update Function' },
+          { value: 'deploy_function', label: 'Deploy Function' },
+          { value: 'delete_function', label: 'Delete Function' },
+          { value: 'list_secrets', label: 'List Secrets' },
+          { value: 'create_secrets', label: 'Create Secrets' },
+          { value: 'delete_secrets', label: 'Delete Secrets' },
+          { value: 'get_auth_config', label: 'Get Auth Config' },
+          { value: 'update_auth_config', label: 'Update Auth Config' },
+          { value: 'list_storage_buckets', label: 'List Storage Buckets' },
+          { value: 'list_branches', label: 'List Branches' },
+          { value: 'get_branch', label: 'Get Branch' },
+          { value: 'create_branch', label: 'Create Branch' },
+          { value: 'delete_branch', label: 'Delete Branch' },
+          { value: 'merge_branch', label: 'Merge Branch' },
+          { value: 'reset_branch', label: 'Reset Branch' },
+          { value: 'get_custom_hostname', label: 'Get Custom Hostname' },
+          { value: 'set_custom_hostname', label: 'Set Custom Hostname' },
+          { value: 'verify_custom_hostname', label: 'Verify Custom Hostname' },
+          { value: 'activate_custom_hostname', label: 'Activate Custom Hostname' },
+          { value: 'delete_custom_hostname', label: 'Delete Custom Hostname' },
+          { value: 'get_network_restrictions', label: 'Get Network Restrictions' },
+          { value: 'apply_network_restrictions', label: 'Apply Network Restrictions' },
+          { value: 'list_network_bans', label: 'List Network Bans' },
+          { value: 'delete_network_bans', label: 'Delete Network Bans' },
+          { value: 'get_postgrest_config', label: 'Get PostgREST Config' },
+          { value: 'update_postgrest_config', label: 'Update PostgREST Config' },
+          { value: 'generate_types', label: 'Generate Types' },
+          { value: 'list_snippets', label: 'List Snippets' },
+          { value: 'get_snippet', label: 'Get Snippet' },
+        ]}
+        tokenPlaceholder="sbp_..."
+        hideManual
+      >
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          This is Supabase's management API — projects, functions, config. Reading rows from your
+          tables isn't part of it; that lives on your project's own PostgREST host.
+        </p>
+
+        {projectOps && (
+          <ResourceField label="Project" provider="supabase" kind="project" field="supabaseProjectRef"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="the 20-character project ref" />
+        )}
+
+        {isSql && (<>
+          <AreaField label="SQL" field="supabaseSql" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="select id, email from auth.users where created_at > $1" />
+          <TextField label="Parameters (optional)" field="supabaseSqlParams" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='["2026-08-01"] — bound to $1, $2 …' />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Put values in parameters rather than building the statement with{' '}
+            <span className="font-mono">{'{{'}templates{'}}'}</span> — text substituted straight into SQL
+            is injectable.
+          </p>
+        </>)}
+        {op === 'run_sql' && (<>
+          <SelectField label="Allow writes" field="supabaseAllowWrite" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[
+              { value: 'false', label: 'No — block this operation' },
+              { value: 'true', label: 'Yes — I intend to modify the database' },
+            ]} />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            This runs as the database owner on the live project. DROP, DELETE and ALTER all succeed, and
+            nothing is recorded in migration history. Use Run SQL Read-Only unless you mean to write.
+          </p>
+        </>)}
+
+        {op === 'create_project' && (<>
+          <TextField label="Name" field="supabaseName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="my-project" />
+          <TextField label="Organization slug" field="supabaseOrgSlug" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Organizations" />
+          <TextField label="Database password" field="supabaseDbPass" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="a strong password — you cannot retrieve it later" />
+          <TextField label="Region (optional)" field="supabaseRegion" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="eu-west-1 — see List Regions" />
+        </>)}
+        {op === 'delete_project' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            Deleting a project destroys its database and cannot be undone.
+          </p>
+        )}
+
+        {fnOps && op !== 'list_functions' && (
+          <TextField label="Function slug" field="supabaseFunctionSlug" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Functions" />
+        )}
+        {(op === 'create_function' || op === 'update_function' || op === 'deploy_function') && (<>
+          <TextField label="Entrypoint (optional)" field="supabaseEntrypoint" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="index.ts" />
+          <AreaField label="Source" field="supabaseFunctionBody" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+
+        {op.includes('secret') && op !== 'list_secrets' && (
+          <AreaField label="Secrets" field="supabaseSecrets" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"STRIPE_KEY": "sk_live_…"} — or a JSON array of {name, value}' />
+        )}
+
+        {op.includes('api_key') && op !== 'list_api_keys' && (
+          <TextField label="API key ID" field="supabaseApiKeyId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List API Keys" />
+        )}
+        {op === 'get_organization' && (
+          <TextField label="Organization slug" field="supabaseOrgSlug" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Organizations" />
+        )}
+        {op.includes('branch') && op !== 'list_branches' && (
+          <TextField label="Branch" field="supabaseBranchRef" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="branch ref or name" />
+        )}
+        {op === 'update_auth_config' && (
+          <AreaField label="Auth config" field="supabaseAuthConfig" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"site_url": "https://example.com"}' />
+        )}
       </IntegrationSection>
   )
 }

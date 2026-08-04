@@ -95,6 +95,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'supabase':
+      return { nodeType: 'supabase', label: 'Supabase', integrationOp: 'list_projects' }
     case 'netlify':
       return { nodeType: 'netlify', label: 'Netlify', integrationOp: 'list_sites' }
     case 'dropbox':

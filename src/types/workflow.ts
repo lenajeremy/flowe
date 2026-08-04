@@ -45,6 +45,7 @@ export type NodeType =
   | 'calendly'
   | 'dropbox'
   | 'netlify'
+  | 'supabase'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -749,6 +750,54 @@ export type FlowNodeData = {
   netlifyLogType?: string
   netlifyPage?: number    // 1-based
   netlifyPerPage?: number    // capped at 100
+
+  // supabase
+  supabaseAllowWrite?: string    // "true" is required before run_sql will execute
+  supabaseAllowedCidrs?: string
+  supabaseAllowedCidrsV6?: string
+  supabaseApiKeyId?: string
+  supabaseApiKeyType?: string
+  supabaseAuthConfig?: string
+  supabaseBranchName?: string
+  supabaseBranchRef?: string
+  supabaseConfirmDelete?: string
+  supabaseCursor?: string
+  supabaseDbPass?: string    // database password for a new project
+  supabaseEntrypointPath?: string
+  supabaseForce?: string
+  supabaseFunctionBody?: string
+  supabaseFunctionSlug?: string
+  supabaseGitBranch?: string
+  supabaseHostname?: string
+  supabaseImportMapPath?: string
+  supabaseIncludedSchemas?: string
+  supabaseInstanceSize?: string
+  supabaseIpAddresses?: string
+  supabaseLimit?: number
+  supabaseMigrationName?: string
+  supabaseMigrationVersion?: string
+  supabaseName?: string
+  supabaseOrgSlug?: string
+  supabasePersistent?: string
+  supabasePostgrestMaxRows?: number
+  supabasePostgrestSchema?: string
+  supabasePostgrestSearchPath?: string
+  supabaseProjectRef?: string    // the 20-character project ref, NOT the project UUID
+  supabaseRecoveryTimeUnix?: string
+  supabaseRegion?: string
+  supabaseRevealKeys?: string
+  supabaseRollbackSql?: string
+  supabaseSecretNames?: string
+  supabaseSecrets?: string    // JSON object or array of name/value pairs
+  supabaseSiteUrl?: string
+  supabaseSnippetId?: string
+  supabaseSortBy?: string
+  supabaseSortOrder?: string
+  supabaseSql?: string    // raw SQL; prefer parameters over string interpolation
+  supabaseSqlParams?: string    // JSON array bound to $1, $2 … in the statement
+  supabaseUriAllowList?: string
+  supabaseVerifyJwt?: string
+  supabaseWithData?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown
