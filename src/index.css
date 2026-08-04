@@ -212,6 +212,9 @@
   --na-googledrive:      #1fa463;
   --na-googledocs:       #4c8bf5;
   --na-googlesheets:     #0f9d58;
+  --na-jira:             #4c9aff;
+  --na-confluence:       #4c9aff;
+  --na-bitbucket:        #4c9aff;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -346,6 +349,9 @@
   --na-googledrive:      #128a50;
   --na-googledocs:       #2f6fe0;
   --na-googlesheets:     #0b8148;
+  --na-jira:             #0052cc;
+  --na-confluence:       #0052cc;
+  --na-bitbucket:        #0052cc;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

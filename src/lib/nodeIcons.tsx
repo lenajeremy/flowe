@@ -71,4 +71,7 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   googledrive:      logo('googledrive'),
   googledocs:       logo('googledocs'),
   googlesheets:     logo('googlesheets'),
+  jira:             logo('jira'),
+  confluence:       logo('confluence'),
+  bitbucket:        logo('bitbucket'),
 }

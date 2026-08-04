@@ -13,7 +13,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Input/Output', items: ['textInput', 'imageInput', 'textOutput'] },
   { category: 'Actions', items: ['llm', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
   { category: 'Data', items: ['data'] },
-  { category: 'Integrations', items: ['notion', 'linear', 'github', 'gitlab', 'gmail', 'googlecalendar', 'outlook', 'slack', 'googledrive', 'googledocs', 'googlesheets', 'stripe', 'shopify'] },
+  { category: 'Integrations', items: ['notion', 'linear', 'github', 'gitlab', 'gmail', 'googlecalendar', 'outlook', 'slack', 'googledrive', 'googledocs', 'googlesheets', 'stripe', 'shopify', 'jira', 'confluence', 'bitbucket'] },
 ]
 
 function PaletteItem({ type }: { type: NodeType }) {

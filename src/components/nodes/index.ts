@@ -22,6 +22,9 @@ import { SlackNode }            from './SlackNode'
 import { GoogleDriveNode }      from './GoogleDriveNode'
 import { GoogleDocsNode }       from './GoogleDocsNode'
 import { GoogleSheetsNode }     from './GoogleSheetsNode'
+import { JiraNode }             from './JiraNode'
+import { ConfluenceNode }       from './ConfluenceNode'
+import { BitbucketNode }        from './BitbucketNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -50,5 +53,8 @@ export const nodeTypes = {
   googledrive:      GoogleDriveNode,
   googledocs:       GoogleDocsNode,
   googlesheets:     GoogleSheetsNode,
+  jira:             JiraNode,
+  confluence:       ConfluenceNode,
+  bitbucket:        BitbucketNode,
   data:             DataNode,
 }

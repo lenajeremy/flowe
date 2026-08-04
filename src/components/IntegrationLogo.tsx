@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import type { NodeType } from '@/types/workflow'
 import { NODE_LABELS, NODE_ICON_PATHS } from '@/lib/nodeColors'
-import { integrationLogoUrl, INVERT_ON_DARK } from '@/lib/integrationLogos'
+import { integrationLogoUrl, INLINE_LOGOS, INVERT_ON_DARK } from '@/lib/integrationLogos'
 
 /**
  * A third-party brand logo, sized to fill whatever box it's given.
  *
- * The logos come from a CDN, so failure is a real state, not a theoretical
+ * Most logos come from a CDN, so failure is a real state, not a theoretical
  * one: on error we fall back to the node's original stroke glyph rather than
  * leaving a broken-image box. The glyph paths stay in the codebase for exactly
- * this reason.
+ * this reason. Atlassian's marks are inline SVG instead, so they have no
+ * loading or failure state at all.
  */
 interface Props {
   type: NodeType
@@ -24,7 +25,27 @@ interface Props {
 
 export function IntegrationLogo({ type, size, onDark }: Props) {
   const [failed, setFailed] = useState(false)
+  const inline = INLINE_LOGOS[type]
   const url = integrationLogoUrl(type)
+
+  if (inline) {
+    // The tile is part of the artwork, so it wants the same softened corner the
+    // fetched logos get rather than the chip's default square edge.
+    return (
+      <svg
+        viewBox="0 0 24 24" width={size} height={size} role="img"
+        aria-label={`${NODE_LABELS[type]} logo`}
+        style={{
+          width: size ?? '100%',
+          height: size ?? '100%',
+          borderRadius: size ? Math.max(2, Math.round(size * 0.22)) : 6,
+        }}
+      >
+        <path d={inline.tile} fill={inline.tileColor} />
+        <path d={inline.mark} fill="#FFFFFF" />
+      </svg>
+    )
+  }
 
   if (!url || failed) {
     // currentColor so the fallback still picks up the node accent from its wrapper.

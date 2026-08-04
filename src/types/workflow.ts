@@ -26,6 +26,9 @@ export type NodeType =
   | 'googledrive'
   | 'googledocs'
   | 'googlesheets'
+  | 'jira'
+  | 'confluence'
+  | 'bitbucket'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -317,6 +320,71 @@ export type FlowNodeData = {
   gsheetsRows?: string         // JSON array-of-arrays
   gsheetsStartRow?: number
   gsheetsEndRow?: number
+
+  // jira
+  jiraIssueKey?: string
+  jiraProjectKey?: string
+  jiraSummary?: string
+  jiraDescription?: string
+  jiraIssueType?: string
+  jiraJql?: string
+  jiraLimit?: number
+  jiraFields?: string
+  jiraAssignee?: string
+  jiraPriority?: string
+  jiraLabels?: string
+  jiraParentKey?: string
+  jiraDueDate?: string
+  jiraTransition?: string
+  jiraComment?: string
+  jiraTimeSpent?: string
+  jiraStarted?: string
+  jiraLinkType?: string
+  jiraLinkedIssue?: string
+  jiraQuery?: string
+  jiraBoardId?: string
+  jiraSprintId?: string
+  jiraSprintName?: string
+  jiraStartDate?: string
+  jiraEndDate?: string
+  jiraAttachName?: string
+  jiraAttachBody?: string
+
+  // confluence
+  confluenceSpaceKey?: string
+  confluencePageId?: string
+  confluenceTitle?: string
+  confluenceBody?: string
+  confluenceParentId?: string
+  confluenceCql?: string
+  confluenceLimit?: number
+  confluenceComment?: string
+  confluenceLabel?: string
+  confluenceStatus?: string    // current | draft
+  confluenceAttachName?: string
+  confluenceAttachBody?: string
+
+  // bitbucket
+  bitbucketWorkspace?: string
+  bitbucketRepo?: string
+  bitbucketPrId?: string
+  bitbucketTitle?: string
+  bitbucketBody?: string
+  bitbucketSource?: string
+  bitbucketDest?: string
+  bitbucketBranch?: string
+  bitbucketRef?: string
+  bitbucketPath?: string
+  bitbucketContent?: string
+  bitbucketMessage?: string
+  bitbucketMergeStrategy?: string  // merge_commit | squash | fast_forward
+  bitbucketState?: string
+  bitbucketLimit?: number
+  bitbucketQuery?: string
+  bitbucketPrivate?: string        // 'true' | 'false'
+  bitbucketIssueId?: string
+  bitbucketKind?: string
+  bitbucketPriority?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

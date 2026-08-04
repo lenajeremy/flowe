@@ -83,6 +83,12 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'gmail', label: 'Gmail', integrationOp: 'send_email', gmailTo: '', gmailSubject: '', gmailBody: '', gmailLimit: 10 }
     case 'stripe':
       return { nodeType: 'stripe', label: 'Stripe', integrationOp: 'list_customers', stripeLimit: 10, stripeQuantity: 1 }
+    case 'jira':
+      return { nodeType: 'jira', label: 'Jira', integrationOp: 'search_issues', jiraIssueType: 'Task', jiraLimit: 25 }
+    case 'confluence':
+      return { nodeType: 'confluence', label: 'Confluence', integrationOp: 'list_pages', confluenceStatus: 'current', confluenceLimit: 25 }
+    case 'bitbucket':
+      return { nodeType: 'bitbucket', label: 'Bitbucket', integrationOp: 'list_pull_requests', bitbucketState: 'OPEN', bitbucketLimit: 25 }
     case 'shopify':
       return { nodeType: 'shopify', label: 'Shopify', integrationOp: 'list_orders', shopifyStatus: 'any', shopifyLimit: 10 }
     case 'googlecalendar':

@@ -29,6 +29,9 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   googledrive:      'var(--na-googledrive)',
   googledocs:       'var(--na-googledocs)',
   googlesheets:     'var(--na-googlesheets)',
+  jira:             'var(--na-jira)',
+  confluence:       'var(--na-confluence)',
+  bitbucket:        'var(--na-bitbucket)',
   data:             'var(--na-data)',
 }
 
@@ -60,6 +63,9 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   googledrive:      'M8 3 14 13H2z',
   googledocs:       'M4 2h5l3 3v9H4V2zM9 2v3h3M6 8h4M6 10.5h4',
   googlesheets:     'M3 3h10v10H3zM3 6.5h10M3 10h10M6.5 3v10M9.5 3v10',
+  jira:             'M7.5 8.5h5.5v3.5a3 3 0 01-3-3zM5 6h5.5v3.5a3 3 0 01-3-3zM2.5 3.5H8V7a3 3 0 01-3-3z',
+  confluence:       'M2.5 11.5c1.5-2.5 3-3.5 4.5-3 1.3.4 2 1.8 3 2.3 1 .5 2 .3 3-.8M13.5 5c-1.5 2.5-3 3.5-4.5 3-1.3-.4-2-1.8-3-2.3-1-.5-2-.3-3 .8',
+  bitbucket:        'M2 3h12l-1.8 10H3.8zM5.5 6h5l-.7 4H6.2z',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -88,6 +94,9 @@ export const NODE_LABELS: Record<NodeType, string> = {
   googledrive:      'Google Drive',
   googledocs:       'Google Docs',
   googlesheets:     'Google Sheets',
+  jira:             'Jira',
+  confluence:       'Confluence',
+  bitbucket:        'Bitbucket',
   data:             'Data Store',
 }
 
@@ -116,5 +125,8 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   googledrive:      'Files & folders',
   googledocs:       'Documents',
   googlesheets:     'Spreadsheets',
+  jira:             'Issues & sprints',
+  confluence:       'Pages & spaces',
+  bitbucket:        'Repos & pull requests',
   data:             'Persist & recall data',
 }

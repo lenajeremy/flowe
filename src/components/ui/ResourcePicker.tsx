@@ -17,8 +17,8 @@ import {
  * token / unknown ID that the dropdown can't represent.
  */
 export function ResourcePicker({ provider, kind, id, value, onChange, placeholder }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
-  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label'
+  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket'
+  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board'
   id: string
   value: string
   onChange: (value: string) => void

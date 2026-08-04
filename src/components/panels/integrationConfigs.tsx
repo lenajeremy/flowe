@@ -88,8 +88,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label'
+type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -1515,6 +1515,432 @@ export function GoogleSheetsConfig({ data, nodeId, updateNodeData }: ProviderCon
         </>)}
         {op === 'create_spreadsheet' && (
           <TextField label="Title" field="gsheetsTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function JiraConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'search_issues'
+  // Ops that act on an existing issue, and so need a key.
+  const needsIssue = ['get_issue', 'update_issue', 'delete_issue', 'assign_issue', 'transition_issue',
+    'list_transitions', 'link_issues', 'add_comment', 'list_comments', 'add_worklog', 'list_worklogs',
+    'add_attachment', 'move_issues_to_sprint'].includes(op)
+  return (
+      <IntegrationSection
+        provider="jira" label="Jira" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="search_issues"
+        ops={[
+          { value: 'search_issues', label: 'Search Issues (JQL)' },
+          { value: 'get_issue', label: 'Get Issue' },
+          { value: 'create_issue', label: 'Create Issue' },
+          { value: 'update_issue', label: 'Update Issue' },
+          { value: 'delete_issue', label: 'Delete Issue' },
+          { value: 'assign_issue', label: 'Assign Issue' },
+          { value: 'transition_issue', label: 'Transition Issue' },
+          { value: 'list_transitions', label: 'List Transitions' },
+          { value: 'link_issues', label: 'Link Issues' },
+          { value: 'add_comment', label: 'Add Comment' },
+          { value: 'list_comments', label: 'List Comments' },
+          { value: 'add_worklog', label: 'Log Work' },
+          { value: 'list_worklogs', label: 'List Worklogs' },
+          { value: 'add_attachment', label: 'Add Attachment' },
+          { value: 'list_projects', label: 'List Projects' },
+          { value: 'get_project', label: 'Get Project' },
+          { value: 'list_issue_types', label: 'List Issue Types' },
+          { value: 'search_users', label: 'Search Users' },
+          { value: 'get_current_user', label: 'Current User' },
+          { value: 'list_boards', label: 'List Boards' },
+          { value: 'list_sprints', label: 'List Sprints' },
+          { value: 'get_sprint_issues', label: 'Sprint Issues' },
+          { value: 'create_sprint', label: 'Create Sprint' },
+          { value: 'move_issues_to_sprint', label: 'Move Issues to Sprint' },
+        ]}
+        tokenPlaceholder="Atlassian API token"
+        hideManual
+      >
+        {op === 'search_issues' && (<>
+          <AreaField label="JQL" field="jiraJql" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='project = ENG AND status != Done ORDER BY created DESC' />
+          <TextField label="Fields (optional)" field="jiraFields" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="summary,status,assignee" />
+        </>)}
+
+        {needsIssue && (
+          <TextField label={op === 'move_issues_to_sprint' ? 'Issue keys' : 'Issue key'}
+            field="jiraIssueKey" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'move_issues_to_sprint' ? 'ENG-1, ENG-2' : 'ENG-1234'} />
+        )}
+
+        {(op === 'create_issue' || op === 'get_project' || op === 'list_issue_types' || op === 'list_boards') && (
+          <ResourceField label={op === 'create_issue' ? 'Project' : 'Project (optional)'}
+            provider="jira" kind="project" field="jiraProjectKey" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="ENG" />
+        )}
+
+        {(op === 'create_issue' || op === 'update_issue') && (<>
+          <TextField label={op === 'update_issue' ? 'Summary (optional)' : 'Summary'} field="jiraSummary"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label="Description (optional)" field="jiraDescription" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          {op === 'create_issue' && (
+            <SelectField label="Issue type" field="jiraIssueType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="Task"
+              options={[
+                { value: 'Task', label: 'Task' },
+                { value: 'Bug', label: 'Bug' },
+                { value: 'Story', label: 'Story' },
+                { value: 'Epic', label: 'Epic' },
+                { value: 'Sub-task', label: 'Sub-task' },
+              ]} />
+          )}
+          <SelectField label="Priority (optional)" field="jiraPriority" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unset' },
+              { value: 'Highest', label: 'Highest' },
+              { value: 'High', label: 'High' },
+              { value: 'Medium', label: 'Medium' },
+              { value: 'Low', label: 'Low' },
+              { value: 'Lowest', label: 'Lowest' },
+            ]} />
+          <TextField label="Labels (optional)" field="jiraLabels" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="backend, urgent" />
+          <TextField label="Due date (optional)" field="jiraDueDate" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="2026-08-31" />
+          <TextField label="Parent issue (optional)" field="jiraParentKey" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="ENG-100 — for a sub-task or epic child" />
+        </>)}
+
+        {(op === 'create_issue' || op === 'update_issue' || op === 'assign_issue') && (
+          <TextField label={op === 'assign_issue' ? 'Assignee' : 'Assignee (optional)'} field="jiraAssignee"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="me, jane@example.com, or an account ID" />
+        )}
+
+        {op === 'transition_issue' && (
+          <TextField label="Target status" field="jiraTransition" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="In Progress" />
+        )}
+
+        {(op === 'add_comment' || op === 'transition_issue' || op === 'add_worklog') && (
+          <AreaField label={op === 'add_comment' ? 'Comment' : 'Comment (optional)'} field="jiraComment"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'add_worklog' && (<>
+          <TextField label="Time spent" field="jiraTimeSpent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="3h 30m" />
+          <DateTimeField label="Started (optional)" field="jiraStarted" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+
+        {op === 'link_issues' && (<>
+          <SelectField label="Link type" field="jiraLinkType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="Relates"
+            options={[
+              { value: 'Relates', label: 'Relates to' },
+              { value: 'Blocks', label: 'Blocks' },
+              { value: 'Duplicate', label: 'Duplicates' },
+              { value: 'Cloners', label: 'Clones' },
+            ]} />
+          <TextField label="Linked issue" field="jiraLinkedIssue" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="ENG-5678" />
+        </>)}
+
+        {op === 'add_attachment' && (<>
+          <TextField label="File name" field="jiraAttachName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="report.txt" />
+          <AreaField label="File content" field="jiraAttachBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        </>)}
+
+        {op === 'search_users' && (
+          <TextField label="Search query" field="jiraQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane" />
+        )}
+
+        {(op === 'list_sprints' || op === 'create_sprint') && (
+          <ResourceField label="Board" provider="jira" kind="board" field="jiraBoardId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="board ID" />
+        )}
+
+        {(op === 'get_sprint_issues' || op === 'move_issues_to_sprint') && (
+          <TextField label="Sprint ID" field="jiraSprintId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'move_issues_to_sprint' ? "sprint ID, or 'backlog'" : 'from List Sprints'} />
+        )}
+
+        {op === 'create_sprint' && (<>
+          <TextField label="Sprint name" field="jiraSprintName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Sprint 24" />
+          <DateTimeField label="Start (optional)" field="jiraStartDate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label="End (optional)" field="jiraEndDate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+
+        {['search_issues', 'list_comments', 'list_projects', 'search_users', 'list_boards', 'list_sprints', 'get_sprint_issues'].includes(op) && (
+          <NumField label="Limit" field="jiraLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function ConfluenceConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_pages'
+  const needsPage = ['get_page', 'update_page', 'delete_page', 'list_child_pages', 'add_comment',
+    'list_comments', 'list_labels', 'add_label', 'list_attachments', 'upload_attachment'].includes(op)
+  return (
+      <IntegrationSection
+        provider="confluence" label="Confluence" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_pages"
+        ops={[
+          { value: 'list_pages', label: 'List Pages' },
+          { value: 'get_page', label: 'Get Page' },
+          { value: 'find_page_by_title', label: 'Find Page by Title' },
+          { value: 'search_pages', label: 'Search Pages (CQL)' },
+          { value: 'list_child_pages', label: 'List Child Pages' },
+          { value: 'create_page', label: 'Create Page' },
+          { value: 'update_page', label: 'Update Page' },
+          { value: 'delete_page', label: 'Delete Page' },
+          { value: 'list_spaces', label: 'List Spaces' },
+          { value: 'get_space', label: 'Get Space' },
+          { value: 'list_blog_posts', label: 'List Blog Posts' },
+          { value: 'create_blog_post', label: 'Create Blog Post' },
+          { value: 'add_comment', label: 'Add Comment' },
+          { value: 'list_comments', label: 'List Comments' },
+          { value: 'list_labels', label: 'List Labels' },
+          { value: 'add_label', label: 'Add Label' },
+          { value: 'list_attachments', label: 'List Attachments' },
+          { value: 'upload_attachment', label: 'Upload Attachment' },
+          { value: 'get_current_user', label: 'Current User' },
+        ]}
+        tokenPlaceholder="Atlassian API token"
+        hideManual
+      >
+        {['get_space', 'create_page', 'create_blog_post', 'list_pages', 'find_page_by_title'].includes(op) && (
+          <ResourceField
+            label={['get_space', 'create_page', 'create_blog_post'].includes(op) ? 'Space' : 'Space (optional)'}
+            provider="confluence" kind="space" field="confluenceSpaceKey" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="ENG" />
+        )}
+
+        {needsPage && (
+          <TextField label={op === 'list_child_pages' ? 'Parent page ID' : 'Page ID'} field="confluencePageId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        )}
+
+        {(op === 'create_page' || op === 'create_blog_post' || op === 'find_page_by_title') && (
+          <TextField label="Title" field="confluenceTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Weekly report" />
+        )}
+        {op === 'update_page' && (
+          <TextField label="Title (optional)" field="confluenceTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="leave blank to keep the current title" />
+        )}
+
+        {['create_page', 'update_page', 'create_blog_post'].includes(op) && (<>
+          <AreaField label="Body" field="confluenceBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}} — plain text, or Confluence storage-format HTML" />
+          <SelectField label="Status" field="confluenceStatus" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="current"
+            options={[{ value: 'current', label: 'Published' }, { value: 'draft', label: 'Draft' }]} />
+        </>)}
+
+        {op === 'create_page' && (
+          <TextField label="Parent page (optional)" field="confluenceParentId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="page ID to nest under" />
+        )}
+
+        {op === 'search_pages' && (
+          <AreaField label="CQL" field="confluenceCql" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='text ~ "onboarding" AND space = ENG' />
+        )}
+
+        {op === 'add_comment' && (
+          <AreaField label="Comment" field="confluenceComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'add_label' && (
+          <TextField label="Labels" field="confluenceLabel" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="runbook, q3" />
+        )}
+
+        {op === 'upload_attachment' && (<>
+          <TextField label="File name" field="confluenceAttachName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="notes.txt" />
+          <AreaField label="File content" field="confluenceAttachBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        </>)}
+
+        {['list_pages', 'list_spaces', 'search_pages', 'find_page_by_title', 'list_child_pages',
+          'list_blog_posts', 'list_comments', 'list_attachments'].includes(op) && (
+          <NumField label="Limit" field="confluenceLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function BitbucketConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_pull_requests'
+  const accountOp = op === 'get_current_user' || op === 'list_workspaces' || op === 'list_repositories'
+  const needsPr = ['get_pull_request', 'merge_pull_request', 'decline_pull_request', 'approve_pull_request',
+    'comment_on_pull_request', 'list_pr_comments', 'list_pr_commits', 'get_pr_diff'].includes(op)
+  return (
+      <IntegrationSection
+        provider="bitbucket" label="Bitbucket" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_pull_requests"
+        ops={[
+          { value: 'list_pull_requests', label: 'List Pull Requests' },
+          { value: 'get_pull_request', label: 'Get Pull Request' },
+          { value: 'create_pull_request', label: 'Create Pull Request' },
+          { value: 'merge_pull_request', label: 'Merge Pull Request' },
+          { value: 'decline_pull_request', label: 'Decline Pull Request' },
+          { value: 'approve_pull_request', label: 'Approve Pull Request' },
+          { value: 'comment_on_pull_request', label: 'Comment on Pull Request' },
+          { value: 'list_pr_comments', label: 'List PR Comments' },
+          { value: 'list_pr_commits', label: 'List PR Commits' },
+          { value: 'get_pr_diff', label: 'Get PR Diff' },
+          { value: 'list_repositories', label: 'List Repositories' },
+          { value: 'get_repository', label: 'Get Repository' },
+          { value: 'create_repository', label: 'Create Repository' },
+          { value: 'list_branches', label: 'List Branches' },
+          { value: 'create_branch', label: 'Create Branch' },
+          { value: 'delete_branch', label: 'Delete Branch' },
+          { value: 'list_commits', label: 'List Commits' },
+          { value: 'get_commit', label: 'Get Commit' },
+          { value: 'get_file', label: 'Get File' },
+          { value: 'commit_file', label: 'Commit File' },
+          { value: 'list_issues', label: 'List Issues' },
+          { value: 'get_issue', label: 'Get Issue' },
+          { value: 'create_issue', label: 'Create Issue' },
+          { value: 'comment_on_issue', label: 'Comment on Issue' },
+          { value: 'list_pipelines', label: 'List Pipelines' },
+          { value: 'trigger_pipeline', label: 'Trigger Pipeline' },
+          { value: 'list_workspaces', label: 'List Workspaces' },
+          { value: 'get_current_user', label: 'Current User' },
+        ]}
+        tokenPlaceholder="Bitbucket access token"
+        hideManual
+      >
+        {!accountOp && (
+          <ResourceField label="Repository" provider="bitbucket" kind="repo" field="bitbucketRepo"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="my-service" />
+        )}
+
+        {needsPr && (
+          <TextField label="Pull request ID" field="bitbucketPrId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="42" />
+        )}
+
+        {op === 'create_pull_request' && (<>
+          <TextField label="Source branch" field="bitbucketSource" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="feature/checkout" />
+          <TextField label="Destination branch (optional)" field="bitbucketDest" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="main — defaults to the repo's main branch" />
+        </>)}
+
+        {(op === 'create_pull_request' || op === 'create_issue') && (
+          <TextField label="Title" field="bitbucketTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {['create_pull_request', 'create_issue', 'comment_on_pull_request', 'comment_on_issue', 'create_repository'].includes(op) && (
+          <AreaField
+            label={op === 'comment_on_pull_request' || op === 'comment_on_issue' ? 'Comment'
+              : op === 'create_repository' ? 'Description (optional)' : 'Description'}
+            field="bitbucketBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'merge_pull_request' && (
+          <SelectField label="Merge strategy" field="bitbucketMergeStrategy" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="merge_commit"
+            options={[
+              { value: 'merge_commit', label: 'Merge commit' },
+              { value: 'squash', label: 'Squash' },
+              { value: 'fast_forward', label: 'Fast forward' },
+            ]} />
+        )}
+
+        {op === 'create_repository' && (
+          <SelectField label="Visibility" field="bitbucketPrivate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="true"
+            options={[{ value: 'true', label: 'Private' }, { value: 'false', label: 'Public' }]} />
+        )}
+
+        {(op === 'create_branch' || op === 'delete_branch' || op === 'commit_file' || op === 'trigger_pipeline') && (
+          <TextField label={op === 'trigger_pipeline' ? 'Branch' : 'Branch name'} field="bitbucketBranch"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        )}
+
+        {(op === 'create_branch' || op === 'get_file' || op === 'list_commits' || op === 'get_commit') && (
+          <TextField
+            label={op === 'get_commit' ? 'Commit hash' : op === 'create_branch' ? 'Branch off (optional)' : 'Branch, tag or commit (optional)'}
+            field="bitbucketRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
+        )}
+
+        {(op === 'get_file' || op === 'commit_file') && (
+          <TextField label="File path" field="bitbucketPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="docs/readme.md" />
+        )}
+
+        {op === 'commit_file' && (<>
+          <AreaField label="File content" field="bitbucketContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <TextField label="Commit message" field="bitbucketMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Update docs" />
+        </>)}
+
+        {op === 'merge_pull_request' && (
+          <TextField label="Merge message (optional)" field="bitbucketMessage" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Merged by Fernary" />
+        )}
+
+        {(op === 'get_issue' || op === 'comment_on_issue') && (
+          <TextField label="Issue ID" field="bitbucketIssueId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="17" />
+        )}
+
+        {op === 'create_issue' && (<>
+          <SelectField label="Kind" field="bitbucketKind" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="bug"
+            options={[
+              { value: 'bug', label: 'Bug' },
+              { value: 'enhancement', label: 'Enhancement' },
+              { value: 'proposal', label: 'Proposal' },
+              { value: 'task', label: 'Task' },
+            ]} />
+          <SelectField label="Priority" field="bitbucketPriority" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="major"
+            options={[
+              { value: 'trivial', label: 'Trivial' },
+              { value: 'minor', label: 'Minor' },
+              { value: 'major', label: 'Major' },
+              { value: 'critical', label: 'Critical' },
+              { value: 'blocker', label: 'Blocker' },
+            ]} />
+        </>)}
+
+        {op === 'list_pull_requests' && (
+          <SelectField label="State" field="bitbucketState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="OPEN"
+            options={[
+              { value: 'OPEN', label: 'Open' },
+              { value: 'MERGED', label: 'Merged' },
+              { value: 'DECLINED', label: 'Declined' },
+              { value: 'SUPERSEDED', label: 'Superseded' },
+            ]} />
+        )}
+        {op === 'list_issues' && (
+          <SelectField label="State" field="bitbucketState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="new"
+            options={[
+              { value: 'new', label: 'New' },
+              { value: 'open', label: 'Open' },
+              { value: 'resolved', label: 'Resolved' },
+              { value: 'closed', label: 'Closed' },
+            ]} />
+        )}
+
+        {op === 'list_repositories' && (
+          <TextField label="Filter (optional)" field="bitbucketQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='name ~ "api"' />
+        )}
+
+        <TextField label="Workspace (optional)" field="bitbucketWorkspace" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+          placeholder="defaults to your connected workspace" />
+
+        {['list_pull_requests', 'list_repositories', 'list_branches', 'list_commits', 'list_issues',
+          'list_pipelines', 'list_pr_comments', 'list_pr_commits', 'list_workspaces'].includes(op) && (
+          <NumField label="Limit" field="bitbucketLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
   )

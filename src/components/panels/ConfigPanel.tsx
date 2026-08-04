@@ -14,6 +14,7 @@ import {
   NotionConfig, LinearConfig, GithubConfig, GitlabConfig, GmailConfig,
   StripeConfig, ShopifyConfig, GoogleCalendarConfig, OutlookConfig, SlackConfig,
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
+  JiraConfig, ConfluenceConfig, BitbucketConfig,
 } from '@/components/panels/integrationConfigs'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
@@ -954,6 +955,9 @@ export function ConfigPanel() {
         {nodeType === 'googledocs' && <GoogleDocsConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {nodeType === 'googlesheets' && <GoogleSheetsConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'jira' && <JiraConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'confluence' && <ConfluenceConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'bitbucket' && <BitbucketConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (
