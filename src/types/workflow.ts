@@ -46,6 +46,7 @@ export type NodeType =
   | 'dropbox'
   | 'netlify'
   | 'supabase'
+  | 'gumroad'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -798,6 +799,35 @@ export type FlowNodeData = {
   supabaseUriAllowList?: string
   supabaseVerifyJwt?: string
   supabaseWithData?: string
+
+  // gumroad
+  gumroadAfter?: string    // YYYY-MM-DD, exclusive
+  gumroadAmount?: string    // refund amount in cents; omit to refund in full
+  gumroadAmountOff?: string    // cents, or a percentage when the offer type is percent
+  gumroadBefore?: string    // YYYY-MM-DD, exclusive
+  gumroadCategoryId?: string
+  gumroadCode?: string
+  gumroadCustomPermalink?: string
+  gumroadDescription?: string
+  gumroadEmail?: string
+  gumroadIncrementUses?: string    // "true" counts this check against the licence uses
+  gumroadLicenseKey?: string
+  gumroadMaxPurchases?: string
+  gumroadName?: string
+  gumroadOfferCodeId?: string
+  gumroadOfferType?: string    // cents | percent
+  gumroadPageKey?: string    // opaque paging key from a previous list_sales
+  gumroadPrice?: string    // CENTS — 1000 is $10.00
+  gumroadPriceDifference?: string    // variant surcharge, in cents
+  gumroadProductId?: string
+  gumroadRequired?: string
+  gumroadResourceName?: string    // sale | refund | dispute | cancellation | subscription_updated
+  gumroadSaleId?: string
+  gumroadSubscriberId?: string
+  gumroadTitle?: string
+  gumroadTrackingUrl?: string
+  gumroadUrl?: string
+  gumroadWebhookId?: string
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

@@ -56,6 +56,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   dropbox:   'dropbox.com',
   netlify:   'netlify.com',
   supabase:  'supabase.com',
+  gumroad:   'gumroad.com',
 }
 
 /**

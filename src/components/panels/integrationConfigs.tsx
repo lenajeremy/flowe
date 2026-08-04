@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -4164,6 +4164,201 @@ export function SupabaseConfig({ data, nodeId, updateNodeData }: ProviderConfigP
         {op === 'update_auth_config' && (
           <AreaField label="Auth config" field="supabaseAuthConfig" data={data} nodeId={nodeId}
             updateNodeData={updateNodeData} placeholder='{"site_url": "https://example.com"}' />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GumroadConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_sales'
+  const productScoped = op.includes('product') || op.includes('variant') || op.includes('offer_code') ||
+    op.includes('custom_field') || op === 'list_subscribers' || op.includes('license')
+  const money = ['create_product', 'update_product'].includes(op)
+  const saleOp = ['get_sale', 'mark_as_shipped', 'refund_sale'].includes(op)
+  const licenceOp = op.includes('license')
+  return (
+      <IntegrationSection
+        provider="gumroad" label="Gumroad" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_sales"
+        ops={[
+          { value: 'get_user', label: 'Get User' },
+          { value: 'list_products', label: 'List Products' },
+          { value: 'get_product', label: 'Get Product' },
+          { value: 'create_product', label: 'Create Product' },
+          { value: 'update_product', label: 'Update Product' },
+          { value: 'delete_product', label: 'Delete Product' },
+          { value: 'enable_product', label: 'Enable Product' },
+          { value: 'disable_product', label: 'Disable Product' },
+          { value: 'list_variant_categories', label: 'List Variant Categories' },
+          { value: 'create_variant_category', label: 'Create Variant Category' },
+          { value: 'list_variants', label: 'List Variants' },
+          { value: 'create_variant', label: 'Create Variant' },
+          { value: 'list_offer_codes', label: 'List Offer Codes' },
+          { value: 'get_offer_code', label: 'Get Offer Code' },
+          { value: 'create_offer_code', label: 'Create Offer Code' },
+          { value: 'update_offer_code', label: 'Update Offer Code' },
+          { value: 'delete_offer_code', label: 'Delete Offer Code' },
+          { value: 'list_custom_fields', label: 'List Custom Fields' },
+          { value: 'create_custom_field', label: 'Create Custom Field' },
+          { value: 'delete_custom_field', label: 'Delete Custom Field' },
+          { value: 'list_sales', label: 'List Sales' },
+          { value: 'get_sale', label: 'Get Sale' },
+          { value: 'mark_as_shipped', label: 'Mark As Shipped' },
+          { value: 'refund_sale', label: 'Refund Sale' },
+          { value: 'list_subscribers', label: 'List Subscribers' },
+          { value: 'get_subscriber', label: 'Get Subscriber' },
+          { value: 'verify_license', label: 'Verify License' },
+          { value: 'enable_license', label: 'Enable License' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'disable_license', label: 'Disable License' },
+          { value: 'decrement_license_uses', label: 'Decrement License Uses' },
+        ]}
+        tokenPlaceholder="Gumroad token"
+        hideManual
+      >
+        {productScoped && (
+          <TextField label="Product ID" field="gumroadProductId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Products" />
+        )}
+        {op === 'list_sales' && (
+          <TextField label="Product ID (optional)" field="gumroadProductId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="narrow to one product" />
+        )}
+
+        {money && (<>
+          <TextField label={op === 'update_product' ? 'Name (optional)' : 'Name'} field="gumroadName"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="My course" />
+          <AreaField label="Description (optional)" field="gumroadDescription" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label={op === 'update_product' ? 'Price in cents (optional)' : 'Price in cents'}
+            field="gumroadPrice" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="1000 = $10.00" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Prices are in <span className="text-[var(--color-muted)]">cents</span>. Entering 10 sells
+            this for ten cents, not ten dollars.
+          </p>
+        </>)}
+        {op === 'create_product' && (<>
+          <TextField label="File URL (optional)" field="gumroadUrl" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="https://…" />
+          <TextField label="Custom permalink (optional)" field="gumroadCustomPermalink" data={data}
+            nodeId={nodeId} updateNodeData={updateNodeData} placeholder="my-course" />
+        </>)}
+
+        {saleOp && (
+          <TextField label="Sale ID" field="gumroadSaleId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Sales" />
+        )}
+        {op === 'refund_sale' && (<>
+          <TextField label="Amount in cents (optional)" field="gumroadAmount" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="leave blank to refund in full" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            Refunds move real money and cannot be undone from here.
+          </p>
+        </>)}
+        {op === 'mark_as_shipped' && (
+          <TextField label="Tracking URL (optional)" field="gumroadTrackingUrl" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="https://…" />
+        )}
+        {op === 'list_sales' && (<>
+          <TextField label="After (optional)" field="gumroadAfter" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="2026-08-01" />
+          <TextField label="Before (optional)" field="gumroadBefore" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="2026-08-31" />
+          <TextField label="Buyer email (optional)" field="gumroadEmail" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+          <TextField label="Page key (optional)" field="gumroadPageKey" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from a previous run's response" />
+        </>)}
+
+        {licenceOp && (<>
+          <TextField label="Licence key" field="gumroadLicenseKey" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+          {op === 'verify_license' && (<>
+            <SelectField label="Count this as a use" field="gumroadIncrementUses" data={data} nodeId={nodeId}
+              updateNodeData={updateNodeData} fallback="false"
+              options={[
+                { value: 'false', label: 'No — just check it' },
+                { value: 'true', label: 'Yes — this is a real activation' },
+              ]} />
+          </>)}
+        </>)}
+
+        {op === 'create_variant_category' && (
+          <TextField label="Title" field="gumroadTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Tier" />
+        )}
+        {op === 'create_variant' && (<>
+          <TextField label="Category ID" field="gumroadCategoryId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Variant Categories" />
+          <TextField label="Name" field="gumroadName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Pro" />
+          <TextField label="Surcharge in cents (optional)" field="gumroadPriceDifference" data={data}
+            nodeId={nodeId} updateNodeData={updateNodeData} placeholder="500 = $5.00 more" />
+        </>)}
+
+        {op === 'create_offer_code' && (<>
+          <TextField label="Code" field="gumroadCode" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="LAUNCH20" />
+          <TextField label="Amount off" field="gumroadAmountOff" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="cents, or a percentage if you pick percent below" />
+          <SelectField label="Discount type" field="gumroadOfferType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="cents"
+            options={[
+              { value: 'cents', label: 'Fixed amount off (cents)' },
+              { value: 'percent', label: 'Percentage off' },
+            ]} />
+        </>)}
+        {(op === 'create_offer_code' || op === 'update_offer_code') && (
+          <TextField label="Max uses (optional)" field="gumroadMaxPurchases" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="100" />
+        )}
+        {['get_offer_code', 'update_offer_code', 'delete_offer_code'].includes(op) && (
+          <TextField label="Offer code ID" field="gumroadOfferCodeId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Offer Codes" />
+        )}
+
+        {op === 'create_custom_field' && (<>
+          <TextField label="Field name" field="gumroadName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Company" />
+          <SelectField label="Required" field="gumroadRequired" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Optional' }, { value: 'true', label: 'Required' }]} />
+        </>)}
+        {op === 'delete_custom_field' && (
+          <TextField label="Field name" field="gumroadName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="custom fields are addressed by name, not an ID" />
+        )}
+
+        {op === 'get_subscriber' && (
+          <TextField label="Subscriber ID" field="gumroadSubscriberId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Subscribers" />
+        )}
+        {(op === 'list_subscribers' || op === 'list_sales') && op === 'list_subscribers' && (
+          <TextField label="Email (optional)" field="gumroadEmail" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+        )}
+
+        {(op === 'create_webhook' || op === 'list_webhooks') && (
+          <SelectField label="Resource" field="gumroadResourceName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="sale"
+            options={[
+              { value: 'sale', label: 'Sale' },
+              { value: 'refund', label: 'Refund' },
+              { value: 'dispute', label: 'Dispute' },
+              { value: 'cancellation', label: 'Cancellation' },
+              { value: 'subscription_updated', label: 'Subscription updated' },
+            ]} />
+        )}
+        {op === 'create_webhook' && (
+          <TextField label="Post URL" field="gumroadUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/gumroad" />
+        )}
+        {op === 'delete_webhook' && (
+          <TextField label="Webhook ID" field="gumroadWebhookId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Webhooks" />
         )}
       </IntegrationSection>
   )

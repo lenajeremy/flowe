@@ -384,6 +384,7 @@ async function executeNode(
     case 'dropbox':
     case 'netlify':
     case 'supabase':
+    case 'gumroad':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this

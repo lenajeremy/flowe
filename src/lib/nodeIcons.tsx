@@ -91,4 +91,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   dropbox:          logo('dropbox'),
   netlify:          logo('netlify'),
   supabase:         logo('supabase'),
+  gumroad:          logo('gumroad'),
 }
