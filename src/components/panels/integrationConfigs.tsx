@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -2812,6 +2812,171 @@ export function SendGridConfig({ data, nodeId, updateNodeData }: ProviderConfigP
 
         {isList && (
           <NumField label="Limit" field="sendgridLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function KitConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_subscriber'
+  const needsSubscriber = ['get_subscriber', 'update_subscriber', 'unsubscribe',
+    'get_subscriber_stats', 'list_subscriber_tags', 'untag_subscriber'].includes(op)
+  const needsEmail = ['create_subscriber', 'add_subscriber_to_form', 'add_subscriber_to_sequence',
+    'tag_subscriber', 'update_subscriber'].includes(op)
+  const needsTag = ['rename_tag', 'tag_subscriber', 'untag_subscriber', 'list_tag_subscribers'].includes(op)
+  const needsBroadcast = ['get_broadcast', 'update_broadcast', 'delete_broadcast',
+    'get_broadcast_stats', 'get_broadcast_link_clicks'].includes(op)
+  const named = ['create_tag', 'rename_tag', 'create_sequence', 'create_custom_field'].includes(op)
+  const isList = ['list_subscribers', 'list_tags', 'list_forms', 'list_sequences', 'list_broadcasts',
+    'list_custom_fields', 'list_purchases', 'list_webhooks', 'list_segments', 'list_email_templates',
+    'list_tag_subscribers', 'list_form_subscribers', 'list_sequence_subscribers', 'list_subscriber_tags'].includes(op)
+  return (
+      <IntegrationSection
+        provider="kit" label="Kit" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="create_subscriber"
+        ops={[
+          { value: 'create_subscriber', label: 'Create Subscriber' },
+          { value: 'list_subscribers', label: 'List / Find Subscribers' },
+          { value: 'get_subscriber', label: 'Get Subscriber' },
+          { value: 'update_subscriber', label: 'Update Subscriber' },
+          { value: 'unsubscribe', label: 'Unsubscribe' },
+          { value: 'get_subscriber_stats', label: 'Subscriber Stats' },
+          { value: 'list_subscriber_tags', label: "Subscriber's Tags" },
+          { value: 'list_tags', label: 'List Tags' },
+          { value: 'create_tag', label: 'Create Tag' },
+          { value: 'rename_tag', label: 'Rename Tag' },
+          { value: 'tag_subscriber', label: 'Tag a Subscriber' },
+          { value: 'untag_subscriber', label: 'Remove a Tag' },
+          { value: 'list_tag_subscribers', label: 'Subscribers with a Tag' },
+          { value: 'list_forms', label: 'List Forms' },
+          { value: 'add_subscriber_to_form', label: 'Add Subscriber to Form' },
+          { value: 'list_form_subscribers', label: 'Form Subscribers' },
+          { value: 'list_sequences', label: 'List Sequences' },
+          { value: 'get_sequence', label: 'Get Sequence' },
+          { value: 'create_sequence', label: 'Create Sequence' },
+          { value: 'add_subscriber_to_sequence', label: 'Add Subscriber to Sequence' },
+          { value: 'list_sequence_subscribers', label: 'Sequence Subscribers' },
+          { value: 'list_broadcasts', label: 'List Broadcasts' },
+          { value: 'get_broadcast', label: 'Get Broadcast' },
+          { value: 'create_broadcast', label: 'Create Broadcast' },
+          { value: 'update_broadcast', label: 'Update Broadcast' },
+          { value: 'delete_broadcast', label: 'Delete Broadcast' },
+          { value: 'get_broadcast_stats', label: 'Broadcast Stats' },
+          { value: 'get_broadcast_link_clicks', label: 'Broadcast Link Clicks' },
+          { value: 'list_custom_fields', label: 'List Custom Fields' },
+          { value: 'create_custom_field', label: 'Create Custom Field' },
+          { value: 'delete_custom_field', label: 'Delete Custom Field' },
+          { value: 'list_purchases', label: 'List Purchases' },
+          { value: 'get_purchase', label: 'Get Purchase' },
+          { value: 'create_purchase', label: 'Record a Purchase' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'list_segments', label: 'List Segments' },
+          { value: 'list_email_templates', label: 'List Email Templates' },
+          { value: 'get_account', label: 'Account' },
+          { value: 'get_email_stats', label: 'Email Stats' },
+          { value: 'get_growth_stats', label: 'Growth Stats' },
+        ]}
+        tokenPlaceholder="Kit V4 API key"
+        hideManual
+      >
+        {needsEmail && (
+          <TextField label={op === 'update_subscriber' ? 'New email (optional)' : 'Email'} field="kitEmail"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+        )}
+        {op === 'list_subscribers' && (
+          <TextField label="Email (optional)" field="kitEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="exact address — this is how you look a subscriber up" />
+        )}
+        {needsSubscriber && (
+          <TextField label="Subscriber ID" field="kitSubscriberId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List / Find Subscribers" />
+        )}
+        {(op === 'create_subscriber' || op === 'update_subscriber' || op === 'add_subscriber_to_form') && (<>
+          <TextField label="First name (optional)" field="kitFirstName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane" />
+          <TextField label="Custom fields (optional)" field="kitFields" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"last_name": "Doe"} — the field must exist in Kit already' />
+        </>)}
+        {(op === 'create_subscriber' || op === 'list_subscribers') && (
+          <SelectField label="State" field="kitState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: op === 'list_subscribers' ? 'Any' : 'Default (active)' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+              { value: 'bounced', label: 'Bounced' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]} />
+        )}
+        {op === 'list_subscribers' && (
+          <DateTimeField label="Created after (optional)" field="kitCreatedAfter" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        )}
+
+        {needsTag && (
+          <TextField label="Tag ID" field="kitTagId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Tags" />
+        )}
+        {named && (
+          <TextField label={op === 'create_custom_field' ? 'Label' : 'Name'} field="kitName"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Newsletter signups" />
+        )}
+
+        {(op === 'add_subscriber_to_form' || op === 'list_form_subscribers') && (
+          <TextField label="Form ID" field="kitFormId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Forms" />
+        )}
+        {['get_sequence', 'add_subscriber_to_sequence', 'list_sequence_subscribers'].includes(op) && (
+          <TextField label="Sequence ID" field="kitSequenceId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Sequences" />
+        )}
+
+        {needsBroadcast && (
+          <TextField label="Broadcast ID" field="kitBroadcastId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Broadcasts" />
+        )}
+        {(op === 'create_broadcast' || op === 'update_broadcast') && (<>
+          <TextField label={op === 'update_broadcast' ? 'Subject (optional)' : 'Subject'} field="kitSubject"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <AreaField label="Content" field="kitContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <TextField label="Internal note (optional)" field="kitDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="August issue" />
+          <DateTimeField label="Send at (optional)" field="kitSendAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          {op === 'create_broadcast' && (
+            <TextField label="Only these tags (optional)" field="kitTagId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+              placeholder="comma-separated tag IDs" />
+          )}
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Leaving "send at" blank keeps the broadcast as a draft in Kit rather than sending it.
+          </p>
+        </>)}
+
+        {op === 'delete_custom_field' && (
+          <TextField label="Field ID" field="kitFieldId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Custom Fields" />
+        )}
+        {op === 'get_purchase' && (
+          <TextField label="Purchase ID" field="kitPurchaseId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Purchases" />
+        )}
+        {op === 'create_purchase' && (
+          <AreaField label="Purchase (JSON)" field="kitPurchase" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"email_address":"jane@acme.com","transaction_id":"t_1","currency":"USD","products":[{"name":"Course","pid":"p1","lid":"l1","unit_price":49.0,"quantity":1}]}' />
+        )}
+
+        {op === 'create_webhook' && (<>
+          <TextField label="Target URL" field="kitUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/kit" />
+          <TextField label="Event" field="kitEvent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="subscriber.subscriber_activate" />
+        </>)}
+        {op === 'delete_webhook' && (
+          <TextField label="Webhook ID" field="kitWebhookId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Webhooks" />
+        )}
+
+        {isList && (
+          <NumField label="Limit" field="kitLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
   )

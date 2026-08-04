@@ -83,4 +83,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   granola:          logo('granola'),
   resend:           logo('resend'),
   sendgrid:         logo('sendgrid'),
+  kit:              logo('kit'),
 }

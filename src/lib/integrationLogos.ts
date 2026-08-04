@@ -48,6 +48,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   granola:   'granola.ai',
   resend:    'resend.com',
   sendgrid:  'sendgrid.com',
+  kit:       'kit.com',
 }
 
 /**

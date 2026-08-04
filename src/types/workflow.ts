@@ -38,6 +38,7 @@ export type NodeType =
   | 'granola'
   | 'resend'
   | 'sendgrid'
+  | 'kit'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -539,6 +540,30 @@ export type FlowNodeData = {
   sendgridEndDate?: string
   sendgridAggregate?: string
   sendgridLimit?: number
+
+  // kit
+  kitEmail?: string
+  kitFirstName?: string
+  kitState?: string
+  kitFields?: string
+  kitSubscriberId?: string
+  kitCreatedAfter?: string
+  kitTagId?: string
+  kitFormId?: string
+  kitSequenceId?: string
+  kitBroadcastId?: string
+  kitFieldId?: string
+  kitPurchaseId?: string
+  kitPurchase?: string
+  kitWebhookId?: string
+  kitUrl?: string
+  kitEvent?: string
+  kitName?: string
+  kitSubject?: string
+  kitContent?: string
+  kitDescription?: string
+  kitSendAt?: string
+  kitLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

@@ -376,6 +376,7 @@ async function executeNode(
     case 'granola':
     case 'resend':
     case 'sendgrid':
+    case 'kit':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this
