@@ -37,6 +37,7 @@ export type NodeType =
   | 'googlekeep'
   | 'granola'
   | 'resend'
+  | 'sendgrid'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -509,6 +510,35 @@ export type FlowNodeData = {
   resendEvents?: string
   resendWebhookId?: string
   resendLimit?: number
+
+  // sendgrid
+  sendgridFrom?: string
+  sendgridTo?: string
+  sendgridCc?: string
+  sendgridBcc?: string
+  sendgridReplyTo?: string
+  sendgridSubject?: string
+  sendgridHtml?: string
+  sendgridText?: string
+  sendgridSendAt?: string
+  sendgridTemplateId?: string
+  sendgridTemplateData?: string
+  sendgridEmail?: string
+  sendgridContactId?: string
+  sendgridFirstName?: string
+  sendgridLastName?: string
+  sendgridCustomFields?: string
+  sendgridListId?: string
+  sendgridSegmentId?: string
+  sendgridSingleSendId?: string
+  sendgridJobId?: string
+  sendgridName?: string
+  sendgridQuery?: string
+  sendgridFieldType?: string
+  sendgridStartDate?: string
+  sendgridEndDate?: string
+  sendgridAggregate?: string
+  sendgridLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

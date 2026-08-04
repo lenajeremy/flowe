@@ -95,6 +95,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'sendgrid':
+      return { nodeType: 'sendgrid', label: 'SendGrid', integrationOp: 'send_email', sendgridLimit: 25 }
     case 'resend':
       return { nodeType: 'resend', label: 'Resend', integrationOp: 'send_email', resendLimit: 25 }
     case 'granola':

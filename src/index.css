@@ -223,6 +223,7 @@
   --na-googlekeep:       #ffd94d;
   --na-granola:          #d6cbb8;
   --na-resend:           #e5e4e5;
+  --na-sendgrid:         #3368fa;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -368,6 +369,7 @@
   --na-googlekeep:       #ae8d13;
   --na-granola:          #8a7a5e;
   --na-resend:           #565664;
+  --na-sendgrid:         #1f4fd0;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

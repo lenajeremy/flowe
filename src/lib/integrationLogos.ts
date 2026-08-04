@@ -47,6 +47,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   bitbucket: 'bitbucket.com',
   granola:   'granola.ai',
   resend:    'resend.com',
+  sendgrid:  'sendgrid.com',
 }
 
 /**

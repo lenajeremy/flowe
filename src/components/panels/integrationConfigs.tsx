@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -2641,6 +2641,177 @@ export function ResendConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
 
         {isList && (
           <NumField label="Limit" field="resendLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function SendGridConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_email'
+  const needsList = ['get_list', 'update_list', 'delete_list', 'remove_contacts_from_list'].includes(op)
+  const needsContact = ['get_contact', 'delete_contact', 'remove_contacts_from_list'].includes(op)
+  const needsSingleSend = ['get_single_send', 'schedule_single_send', 'delete_single_send'].includes(op)
+  const needsEmail = ['upsert_contact', 'add_global_unsubscribe', 'delete_bounce', 'delete_global_unsubscribe'].includes(op)
+  const namedCreate = ['create_list', 'update_list', 'create_segment', 'create_template',
+    'create_single_send', 'create_custom_field'].includes(op)
+  const isList = ['list_contacts', 'list_lists', 'list_single_sends', 'list_templates'].includes(op)
+  return (
+      <IntegrationSection
+        provider="sendgrid" label="SendGrid" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="send_email"
+        ops={[
+          { value: 'send_email', label: 'Send Email' },
+          { value: 'upsert_contact', label: 'Create or Update Contact' },
+          { value: 'get_import_status', label: 'Check Contact Import' },
+          { value: 'search_contacts', label: 'Search Contacts (SGQL)' },
+          { value: 'get_contact', label: 'Get Contact' },
+          { value: 'list_contacts', label: 'List Contacts' },
+          { value: 'delete_contact', label: 'Delete Contact' },
+          { value: 'get_contact_count', label: 'Contact Count' },
+          { value: 'list_lists', label: 'List Lists' },
+          { value: 'create_list', label: 'Create List' },
+          { value: 'get_list', label: 'Get List' },
+          { value: 'update_list', label: 'Rename List' },
+          { value: 'delete_list', label: 'Delete List' },
+          { value: 'remove_contacts_from_list', label: 'Remove Contacts from List' },
+          { value: 'list_segments', label: 'List Segments' },
+          { value: 'get_segment', label: 'Get Segment' },
+          { value: 'create_segment', label: 'Create Segment' },
+          { value: 'delete_segment', label: 'Delete Segment' },
+          { value: 'list_single_sends', label: 'List Single Sends' },
+          { value: 'get_single_send', label: 'Get Single Send' },
+          { value: 'create_single_send', label: 'Create Single Send' },
+          { value: 'schedule_single_send', label: 'Schedule Single Send' },
+          { value: 'delete_single_send', label: 'Delete Single Send' },
+          { value: 'list_templates', label: 'List Templates' },
+          { value: 'get_template', label: 'Get Template' },
+          { value: 'create_template', label: 'Create Template' },
+          { value: 'delete_template', label: 'Delete Template' },
+          { value: 'list_bounces', label: 'List Bounces' },
+          { value: 'delete_bounce', label: 'Delete Bounce' },
+          { value: 'list_blocks', label: 'List Blocks' },
+          { value: 'list_spam_reports', label: 'List Spam Reports' },
+          { value: 'list_invalid_emails', label: 'List Invalid Emails' },
+          { value: 'list_global_unsubscribes', label: 'List Unsubscribes' },
+          { value: 'add_global_unsubscribe', label: 'Add Unsubscribe' },
+          { value: 'delete_global_unsubscribe', label: 'Remove Unsubscribe' },
+          { value: 'get_stats', label: 'Delivery Stats' },
+          { value: 'list_verified_senders', label: 'List Verified Senders' },
+          { value: 'list_custom_fields', label: 'List Custom Fields' },
+          { value: 'create_custom_field', label: 'Create Custom Field' },
+          { value: 'get_account', label: 'Account Profile' },
+          { value: 'list_key_scopes', label: 'What Can This Key Do?' },
+        ]}
+        tokenPlaceholder="SG...."
+        hideManual
+      >
+        {op === 'send_email' && (<>
+          <TextField label="From" field="sendgridFrom" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="hello@yourdomain.com — must be a verified sender" />
+          <TextField label="To" field="sendgridTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com, sam@acme.com" />
+          <TextField label="Subject" field="sendgridSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="HTML body" field="sendgridHtml" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Plain-text body (optional)" field="sendgridText" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="" />
+          <TextField label="Cc (optional)" field="sendgridCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Bcc (optional)" field="sendgridBcc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Reply-to (optional)" field="sendgridReplyTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Dynamic template ID (optional)" field="sendgridTemplateId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="d-… — supplies the subject and body" />
+          <TextField label="Template data (optional)" field="sendgridTemplateData" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"name": "Jane"}' />
+          <TextField label="Send at (optional)" field="sendgridSendAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="unix seconds — at most 72 hours ahead" />
+        </>)}
+
+        {needsEmail && (
+          <TextField label="Email" field="sendgridEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com" />
+        )}
+        {op === 'upsert_contact' && (<>
+          <TextField label="First name (optional)" field="sendgridFirstName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane" />
+          <TextField label="Last name (optional)" field="sendgridLastName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Doe" />
+          <TextField label="Add to lists (optional)" field="sendgridListId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="comma-separated list IDs" />
+          <TextField label="Custom fields (optional)" field="sendgridCustomFields" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"e1_T": "pro"} — keyed by field ID, not name' />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            SendGrid queues contact upserts, so the contact isn't readable straight away. Don't chain a
+            Get Contact after this — use Check Contact Import with the returned job ID.
+          </p>
+        </>)}
+
+        {op === 'get_import_status' && (
+          <TextField label="Job ID" field="sendgridJobId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{prev-node.output}}" />
+        )}
+
+        {(op === 'search_contacts' || op === 'create_segment') && (
+          <AreaField label="SGQL query" field="sendgridQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="email LIKE '%@acme.com'" />
+        )}
+
+        {needsContact && (
+          <TextField label={op === 'remove_contacts_from_list' ? 'Contact IDs' : 'Contact ID'}
+            field="sendgridContactId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from Search Contacts" />
+        )}
+        {(needsList || op === 'create_segment') && (
+          <TextField label={op === 'create_segment' ? 'Parent list IDs (optional)' : 'List ID'}
+            field="sendgridListId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Lists" />
+        )}
+        {(op === 'get_segment' || op === 'delete_segment') && (
+          <TextField label="Segment ID" field="sendgridSegmentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Segments" />
+        )}
+        {needsSingleSend && (
+          <TextField label="Single send ID" field="sendgridSingleSendId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Single Sends" />
+        )}
+        {(op === 'get_template' || op === 'delete_template') && (
+          <TextField label="Template ID" field="sendgridTemplateId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Templates" />
+        )}
+
+        {namedCreate && (
+          <TextField label="Name" field="sendgridName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="August newsletter" />
+        )}
+        {op === 'create_single_send' && (<>
+          <TextField label="Subject" field="sendgridSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="HTML body" field="sendgridHtml" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <TextField label="Sender ID" field="sendgridFrom" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Verified Senders" />
+          <TextField label="Send to lists" field="sendgridListId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="comma-separated list IDs" />
+        </>)}
+        {op === 'schedule_single_send' && (
+          <TextField label="Send at" field="sendgridSendAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="now — or an ISO 8601 timestamp" />
+        )}
+
+        {op === 'create_custom_field' && (
+          <SelectField label="Field type" field="sendgridFieldType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="Text"
+            options={[{ value: 'Text', label: 'Text' }, { value: 'Number', label: 'Number' }, { value: 'Date', label: 'Date' }]} />
+        )}
+
+        {op === 'get_stats' && (<>
+          <TextField label="Start date" field="sendgridStartDate" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="2026-08-01" />
+          <TextField label="End date (optional)" field="sendgridEndDate" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="2026-08-31" />
+          <SelectField label="Group by" field="sendgridAggregate" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="day"
+            options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />
+        </>)}
+
+        {isList && (
+          <NumField label="Limit" field="sendgridLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
   )
