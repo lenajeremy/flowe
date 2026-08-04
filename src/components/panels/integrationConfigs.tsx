@@ -88,8 +88,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'airtable' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base'
+type ResourceProvider = 'airtable' | 'clickup' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -3151,6 +3151,245 @@ export function AirtableConfig({ data, nodeId, updateNodeData }: ProviderConfigP
 
         {op === 'list_comments' && (
           <NumField label="Limit" field="airtableLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function ClickUpConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_tasks'
+  const workspaceOps = ['list_spaces', 'search_tasks', 'list_time_entries', 'create_time_entry',
+    'get_running_timer', 'start_timer', 'stop_timer', 'list_goals', 'create_goal',
+    'list_webhooks', 'create_webhook'].includes(op)
+  const needsSpace = ['get_space', 'list_folders', 'list_lists', 'create_list',
+    'list_space_tags', 'list_views'].includes(op)
+  const needsList = ['get_list', 'list_tasks', 'create_task', 'list_custom_fields',
+    'list_list_members', 'search_tasks', 'create_webhook', 'list_views'].includes(op)
+  const needsTask = ['get_task', 'update_task', 'delete_task', 'list_comments', 'create_comment',
+    'create_checklist', 'add_tag_to_task', 'remove_tag_from_task', 'set_custom_field_value',
+    'remove_custom_field_value', 'add_dependency', 'delete_dependency', 'link_tasks', 'unlink_tasks',
+    'create_time_entry', 'start_timer', 'list_attachments', 'list_task_members'].includes(op)
+  const taskFields = op === 'create_task' || op === 'update_task'
+  const named = ['create_list', 'create_task', 'update_task', 'create_checklist',
+    'create_checklist_item', 'update_checklist_item', 'create_goal'].includes(op)
+  return (
+      <IntegrationSection
+        provider="clickup" label="ClickUp" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_tasks"
+        ops={[
+          { value: 'list_tasks', label: 'List Tasks' },
+          { value: 'search_tasks', label: 'Search Tasks (across lists)' },
+          { value: 'get_task', label: 'Get Task' },
+          { value: 'create_task', label: 'Create Task' },
+          { value: 'update_task', label: 'Update Task' },
+          { value: 'delete_task', label: 'Delete Task' },
+          { value: 'list_comments', label: 'List Comments' },
+          { value: 'create_comment', label: 'Add Comment' },
+          { value: 'update_comment', label: 'Update Comment' },
+          { value: 'delete_comment', label: 'Delete Comment' },
+          { value: 'create_checklist', label: 'Create Checklist' },
+          { value: 'create_checklist_item', label: 'Add Checklist Item' },
+          { value: 'update_checklist_item', label: 'Update Checklist Item' },
+          { value: 'delete_checklist', label: 'Delete Checklist' },
+          { value: 'list_space_tags', label: 'List Tags' },
+          { value: 'add_tag_to_task', label: 'Add Tag to Task' },
+          { value: 'remove_tag_from_task', label: 'Remove Tag from Task' },
+          { value: 'list_custom_fields', label: 'List Custom Fields' },
+          { value: 'set_custom_field_value', label: 'Set Custom Field' },
+          { value: 'remove_custom_field_value', label: 'Clear Custom Field' },
+          { value: 'add_dependency', label: 'Add Dependency' },
+          { value: 'delete_dependency', label: 'Remove Dependency' },
+          { value: 'link_tasks', label: 'Link Tasks' },
+          { value: 'unlink_tasks', label: 'Unlink Tasks' },
+          { value: 'list_time_entries', label: 'List Time Entries' },
+          { value: 'create_time_entry', label: 'Log Time' },
+          { value: 'get_running_timer', label: 'Running Timer' },
+          { value: 'start_timer', label: 'Start Timer' },
+          { value: 'stop_timer', label: 'Stop Timer' },
+          { value: 'list_workspaces', label: 'List Workspaces' },
+          { value: 'list_spaces', label: 'List Spaces' },
+          { value: 'get_space', label: 'Get Space' },
+          { value: 'list_folders', label: 'List Folders' },
+          { value: 'list_lists', label: 'List Lists' },
+          { value: 'get_list', label: 'Get List' },
+          { value: 'create_list', label: 'Create List' },
+          { value: 'list_attachments', label: 'Task Attachments' },
+          { value: 'list_goals', label: 'List Goals' },
+          { value: 'create_goal', label: 'Create Goal' },
+          { value: 'list_list_members', label: 'List Members' },
+          { value: 'list_task_members', label: 'Task Members' },
+          { value: 'list_views', label: 'List Views' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'get_authorized_user', label: 'Authorized User' },
+        ]}
+        tokenPlaceholder="pk_..."
+        hideManual
+      >
+        {(workspaceOps || op === 'get_task' || taskFields) && (
+          <ResourceField label={workspaceOps ? 'Workspace' : 'Workspace (optional)'}
+            provider="clickup" kind="workspace" field="clickupWorkspaceId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="from List Workspaces" />
+        )}
+
+        {needsSpace && (
+          <TextField label={op === 'list_lists' || op === 'create_list' ? 'Space ID (if no folder)' : 'Space ID'}
+            field="clickupSpaceId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Spaces" />
+        )}
+        {['list_lists', 'create_list', 'list_views'].includes(op) && (
+          <TextField label="Folder ID (optional)" field="clickupFolderId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="omit for lists that sit directly in the space" />
+        )}
+        {needsList && (
+          <TextField label={op === 'search_tasks' ? 'List IDs (optional)' : 'List ID'} field="clickupListId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'search_tasks' ? 'comma-separated to narrow the search' : 'from List Lists'} />
+        )}
+        {needsTask && (
+          <TextField label="Task ID" field="clickupTaskId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Tasks" />
+        )}
+
+        {named && (
+          <TextField label={op === 'update_task' || op === 'update_checklist_item' ? 'Name (optional)' : 'Name'}
+            field="clickupName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {taskFields && (<>
+          <AreaField label="Description (optional)" field="clickupDescription" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <TextField label="Status (optional)" field="clickupStatus" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="must be a status that exists in the target list" />
+          <SelectField label="Priority (optional)" field="clickupPriority" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unset' },
+              { value: '1', label: 'Urgent' },
+              { value: '2', label: 'High' },
+              { value: '3', label: 'Normal' },
+              { value: '4', label: 'Low' },
+            ]} />
+          <TextField label="Due date (optional)" field="clickupDueDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="unix timestamp in milliseconds" />
+          <TextField label="Time estimate (optional)" field="clickupTimeEstimate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="milliseconds" />
+          <TextField label="Assignees (optional)" field="clickupAssignees" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="numeric user IDs, comma-separated — not emails" />
+          <TextField label="Parent task (optional)" field="clickupParent" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="task ID — makes this a subtask" />
+          {op === 'create_task' && (
+            <TextField label="Tags (optional)" field="clickupTagName" data={data} nodeId={nodeId}
+              updateNodeData={updateNodeData} placeholder="comma-separated" />
+          )}
+        </>)}
+
+        {(op === 'add_tag_to_task' || op === 'remove_tag_from_task') && (
+          <TextField label="Tag name" field="clickupTagName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Tags" />
+        )}
+
+        {(op === 'list_tasks' || op === 'search_tasks') && (<>
+          <TextField label="Statuses (optional)" field="clickupStatuses" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="to do, in progress — comma-separated" />
+          <TextField label="Assignees (optional)" field="clickupAssignees" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="numeric user IDs, comma-separated" />
+          <SelectField label="Closed tasks" field="clickupIncludeClosed" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Exclude closed' }, { value: 'true', label: 'Include closed' }]} />
+          {op === 'list_tasks' && (
+            <SelectField label="Subtasks" field="clickupSubtasks" data={data} nodeId={nodeId}
+              updateNodeData={updateNodeData} fallback="false"
+              options={[{ value: 'false', label: 'Top-level only' }, { value: 'true', label: 'Include subtasks' }]} />
+          )}
+          <TextField label="Order by (optional)" field="clickupOrderBy" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="created, updated, due_date" />
+        </>)}
+
+        {['create_comment', 'update_comment', 'create_time_entry', 'start_timer'].includes(op) && (
+          <AreaField label={op.includes('timer') || op === 'create_time_entry' ? 'Description (optional)' : 'Comment'}
+            field="clickupComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+        {(op === 'update_comment' || op === 'delete_comment') && (
+          <TextField label="Comment ID" field="clickupCommentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Comments" />
+        )}
+
+        {['create_checklist_item', 'update_checklist_item', 'delete_checklist'].includes(op) && (
+          <TextField label="Checklist ID" field="clickupChecklistId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from the task" />
+        )}
+        {op === 'update_checklist_item' && (<>
+          <TextField label="Item ID" field="clickupChecklistItemId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="" />
+          <SelectField label="Resolved" field="clickupResolved" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unchanged' },
+              { value: 'true', label: 'Resolved' },
+              { value: 'false', label: 'Not resolved' },
+            ]} />
+        </>)}
+
+        {(op === 'set_custom_field_value' || op === 'remove_custom_field_value') && (
+          <TextField label="Field ID" field="clickupFieldId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Custom Fields" />
+        )}
+        {op === 'set_custom_field_value' && (
+          <TextField label="Value" field="clickupFieldValue" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="plain text, or JSON for a typed field" />
+        )}
+
+        {(op === 'add_dependency' || op === 'delete_dependency') && (<>
+          <TextField label="Waits for (optional)" field="clickupDependsOn" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="task ID this one depends on" />
+          <TextField label="Blocks (optional)" field="clickupDependencyOf" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="task ID that waits for this one" />
+        </>)}
+        {(op === 'link_tasks' || op === 'unlink_tasks') && (
+          <TextField label="Other task ID" field="clickupLinksTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="" />
+        )}
+
+        {op === 'create_time_entry' && (<>
+          <TextField label="Duration" field="clickupDuration" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="milliseconds — 3600000 is one hour" />
+          <TextField label="Start (optional)" field="clickupStartDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="unix timestamp in milliseconds" />
+        </>)}
+        {op === 'list_time_entries' && (<>
+          <TextField label="From (optional)" field="clickupStartDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="unix milliseconds" />
+          <TextField label="To (optional)" field="clickupEndDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="unix milliseconds" />
+        </>)}
+
+        {op === 'create_goal' && (
+          <TextField label="Due date (optional)" field="clickupDueDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="unix milliseconds" />
+        )}
+
+        {op === 'create_webhook' && (<>
+          <TextField label="Endpoint URL" field="clickupUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/clickup" />
+          <TextField label="Events (optional)" field="clickupEvents" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="taskCreated, taskUpdated" />
+        </>)}
+        {op === 'delete_webhook' && (
+          <TextField label="Webhook ID" field="clickupWebhookId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Webhooks" />
+        )}
+
+        {['get_task', 'update_task', 'delete_task'].includes(op) && (
+          <SelectField label="ID type" field="clickupCustomTaskIds" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[
+              { value: 'false', label: "ClickUp's own task ID" },
+              { value: 'true', label: 'A custom task ID (needs the workspace above)' },
+            ]} />
         )}
       </IntegrationSection>
   )

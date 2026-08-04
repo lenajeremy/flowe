@@ -36,6 +36,7 @@ import { ResendNode }           from './ResendNode'
 import { SendGridNode }         from './SendGridNode'
 import { KitNode }              from './KitNode'
 import { AirtableNode }         from './AirtableNode'
+import { ClickUpNode }          from './ClickUpNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -78,5 +79,6 @@ export const nodeTypes = {
   sendgrid:         SendGridNode,
   kit:              KitNode,
   airtable:         AirtableNode,
+  clickup:          ClickUpNode,
   data:             DataNode,
 }

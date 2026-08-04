@@ -490,7 +490,7 @@ const NODE_TINTS: Partial<Record<NodeType, string>> = {
   jira:'#4c9aff', confluence:'#4c9aff', bitbucket:'#4c9aff',
   googlemeet:'#ffb443', googleslides:'#ffc93d', googleforms:'#a768e8',
   googletasks:'#4c9aff', googlechat:'#34c98a', googlekeep:'#ffd94d',
-  granola:'#d6cbb8', resend:'#e5e4e5', sendgrid:'#3368fa', kit:'#ff6154', airtable:'#ffb340',
+  granola:'#d6cbb8', resend:'#e5e4e5', sendgrid:'#3368fa', kit:'#ff6154', airtable:'#ffb340', clickup:'#b388ff',
 }
 
 // ─── Integrations — the tools Fernary can drive, one quiet wall ──
@@ -498,7 +498,7 @@ const INTEGRATIONS: NodeType[] = [
   'gmail', 'googlecalendar', 'googledrive', 'googledocs', 'googlesheets', 'googleslides',
   'googleforms', 'googlemeet', 'googlechat', 'googletasks', 'googlekeep', 'outlook',
   'slack', 'notion', 'linear', 'github', 'gitlab', 'jira',
-  'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable',
+  'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup',
 ]
 
 function IntegrationTile({ type }: { type: NodeType }) {

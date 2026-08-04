@@ -43,6 +43,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   sendgrid:         'var(--na-sendgrid)',
   kit:              'var(--na-kit)',
   airtable:         'var(--na-airtable)',
+  clickup:          'var(--na-clickup)',
   data:             'var(--na-data)',
 }
 
@@ -88,6 +89,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   sendgrid:         'M2 2.5h5.5v5.5H2zM8.5 8h5.5v5.5H8.5zM8.5 2.5H14V8H8.5zM2 8h5.5v5.5H2z',
   kit:              'M4 13V3l4 5 4-5v10',
   airtable:         'M2 5.5l6-2.5 6 2.5-6 2.5zM2 8l6 2.5L14 8M2 10.5l6 2.5 6-2.5',
+  clickup:          'M3 10.5l5-5 5 5M5.5 13l2.5-2.5L10.5 13',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -130,6 +132,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   sendgrid:         'SendGrid',
   kit:              'Kit',
   airtable:         'Airtable',
+  clickup:          'ClickUp',
   data:             'Data Store',
 }
 
@@ -172,5 +175,6 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   sendgrid:         'Email & marketing',
   kit:              'Creator newsletters',
   airtable:         'Bases & records',
+  clickup:          'Tasks & time',
   data:             'Persist & recall data',
 }

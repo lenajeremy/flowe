@@ -85,4 +85,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   sendgrid:         logo('sendgrid'),
   kit:              logo('kit'),
   airtable:         logo('airtable'),
+  clickup:          logo('clickup'),
 }

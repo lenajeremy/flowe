@@ -378,6 +378,7 @@ async function executeNode(
     case 'sendgrid':
     case 'kit':
     case 'airtable':
+    case 'clickup':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this

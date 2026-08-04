@@ -50,6 +50,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   sendgrid:  'sendgrid.com',
   kit:       'kit.com',
   airtable:  'airtable.com',
+  clickup:   'clickup.com',
 }
 
 /**

@@ -40,6 +40,7 @@ export type NodeType =
   | 'sendgrid'
   | 'kit'
   | 'airtable'
+  | 'clickup'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -595,6 +596,44 @@ export type FlowNodeData = {
   airtableWebhookId?: string
   airtableCursor?: string
   airtableLimit?: number
+
+  // clickup
+  clickupWorkspaceId?: string
+  clickupSpaceId?: string
+  clickupFolderId?: string
+  clickupListId?: string
+  clickupTaskId?: string
+  clickupCustomTaskIds?: string
+  clickupName?: string
+  clickupDescription?: string
+  clickupStatus?: string
+  clickupStatuses?: string
+  clickupPriority?: string
+  clickupDueDate?: string
+  clickupTimeEstimate?: string
+  clickupAssignees?: string
+  clickupParent?: string
+  clickupTagName?: string
+  clickupSubtasks?: string
+  clickupIncludeClosed?: string
+  clickupOrderBy?: string
+  clickupComment?: string
+  clickupCommentId?: string
+  clickupChecklistId?: string
+  clickupChecklistItemId?: string
+  clickupResolved?: string
+  clickupFieldId?: string
+  clickupFieldValue?: string
+  clickupDependsOn?: string
+  clickupDependencyOf?: string
+  clickupLinksTo?: string
+  clickupDuration?: string
+  clickupStartDate?: string
+  clickupEndDate?: string
+  clickupUrl?: string
+  clickupEvents?: string
+  clickupWebhookId?: string
+  clickupLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown
