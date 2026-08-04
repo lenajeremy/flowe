@@ -14,10 +14,15 @@ import { NODE_ICON_PATHS, NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColor
 // deliberately fixed (not theme tokens). Structure follows the Linear
 // pattern: one voice per screen — a headline, a real product shot, air.
 
+// Both are read inside useState initialisers, so they run during render —
+// including the build-time prerender, where there is no window. The defaults are
+// the common browser case; the client corrects on mount.
 const reducedMotion = () =>
+  typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const finePointer = () =>
+  typeof window === 'undefined' ||
   window.matchMedia('(pointer: fine)').matches
 
 // ─── Live aurora — the hero backdrop, rendered rather than drawn ──
