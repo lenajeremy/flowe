@@ -16,7 +16,7 @@ import {
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
   JiraConfig, ConfluenceConfig, BitbucketConfig,
   GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
-  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, TypeformConfig, CalendlyConfig,
+  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, TypeformConfig, CalendlyConfig, DropboxConfig,
 } from '@/components/panels/integrationConfigs'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
@@ -974,6 +974,7 @@ export function ConfigPanel() {
         {nodeType === 'clickup' && <ClickUpConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'typeform' && <TypeformConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'calendly' && <CalendlyConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'dropbox' && <DropboxConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (

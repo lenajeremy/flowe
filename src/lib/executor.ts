@@ -381,6 +381,7 @@ async function executeNode(
     case 'clickup':
     case 'typeform':
     case 'calendly':
+    case 'dropbox':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this

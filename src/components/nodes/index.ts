@@ -39,6 +39,7 @@ import { AirtableNode }         from './AirtableNode'
 import { ClickUpNode }          from './ClickUpNode'
 import { TypeformNode }         from './TypeformNode'
 import { CalendlyNode }         from './CalendlyNode'
+import { DropboxNode }          from './DropboxNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -84,5 +85,6 @@ export const nodeTypes = {
   clickup:          ClickUpNode,
   typeform:         TypeformNode,
   calendly:         CalendlyNode,
+  dropbox:          DropboxNode,
   data:             DataNode,
 }

@@ -46,6 +46,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   clickup:          'var(--na-clickup)',
   typeform:         'var(--na-typeform)',
   calendly:         'var(--na-calendly)',
+  dropbox:          'var(--na-dropbox)',
   data:             'var(--na-data)',
 }
 
@@ -94,6 +95,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   clickup:          'M3 10.5l5-5 5 5M5.5 13l2.5-2.5L10.5 13',
   typeform:         'M3 4h10M8 4v9',
   calendly:         'M11.5 4.5A4 4 0 108 12.5',
+  dropbox:          'M5 2.5L2 5l3 2.5L8 5zM11 2.5L8 5l3 2.5L14 5zM5 8.5L2 11l3 2.5L8 11zM11 8.5L8 11l3 2.5L14 11z',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -139,6 +141,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   clickup:          'ClickUp',
   typeform:         'Typeform',
   calendly:         'Calendly',
+  dropbox:          'Dropbox',
   data:             'Data Store',
 }
 
@@ -184,5 +187,6 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   clickup:          'Tasks & time',
   typeform:         'Forms & responses',
   calendly:         'Scheduling & bookings',
+  dropbox:          'Files & sharing',
   data:             'Persist & recall data',
 }

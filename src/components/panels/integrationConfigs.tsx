@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -3665,6 +3665,135 @@ export function CalendlyConfig({ data, nodeId, updateNodeData }: ProviderConfigP
         {['list_event_types', 'list_scheduled_events', 'list_invitees', 'list_memberships',
           'list_routing_forms', 'list_routing_form_submissions', 'list_webhooks'].includes(op) && (
           <NumField label="Limit" field="calendlyLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function DropboxConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_folder'
+  const needsPath = !['list_folder_continue', 'revoke_shared_link', 'list_shared_links',
+    'list_file_requests', 'get_current_account', 'get_space_usage'].includes(op)
+  const sharing = ['add_file_member', 'list_file_members'].includes(op)
+  return (
+      <IntegrationSection
+        provider="dropbox" label="Dropbox" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_folder"
+        ops={[
+          { value: 'list_folder', label: 'List Folder' },
+          { value: 'list_folder_continue', label: 'List Folder (next page)' },
+          { value: 'search', label: 'Search' },
+          { value: 'get_metadata', label: 'Get Metadata' },
+          { value: 'download', label: 'Read File (text)' },
+          { value: 'upload', label: 'Write File' },
+          { value: 'get_temporary_link', label: 'Get Temporary Link' },
+          { value: 'create_folder', label: 'Create Folder' },
+          { value: 'move', label: 'Move' },
+          { value: 'copy', label: 'Copy' },
+          { value: 'delete', label: 'Delete' },
+          { value: 'list_revisions', label: 'List Revisions' },
+          { value: 'restore', label: 'Restore Revision' },
+          { value: 'create_shared_link', label: 'Create Shared Link' },
+          { value: 'list_shared_links', label: 'List Shared Links' },
+          { value: 'revoke_shared_link', label: 'Revoke Shared Link' },
+          { value: 'add_file_member', label: 'Share File with People' },
+          { value: 'list_file_members', label: 'List File Members' },
+          { value: 'share_folder', label: 'Share Folder' },
+          { value: 'list_file_requests', label: 'List File Requests' },
+          { value: 'create_file_request', label: 'Create File Request' },
+          { value: 'get_current_account', label: 'Account Info' },
+          { value: 'get_space_usage', label: 'Space Usage' },
+        ]}
+        tokenPlaceholder="Dropbox token"
+        hideManual
+      >
+        {needsPath && (
+          <TextField label={op === 'create_file_request' ? 'Destination folder' : 'Path'}
+            field="dropboxPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'list_folder' ? '/Reports — leave empty for your Dropbox root' : '/Reports/q3.txt'} />
+        )}
+        {needsPath && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Paths start at your Dropbox root with a slash, like <span className="font-mono">/Reports/q3.txt</span>.
+          </p>
+        )}
+
+        {(op === 'move' || op === 'copy') && (
+          <TextField label="Destination path" field="dropboxToPath" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="/Archive/q3.txt" />
+        )}
+
+        {op === 'download' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Returns the file's text, so it suits .txt, .md, .csv and .json. For a PDF or an image use
+            Get Temporary Link and an HTTP Request node instead.
+          </p>
+        )}
+
+        {op === 'upload' && (<>
+          <AreaField label="Content" field="dropboxContent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <SelectField label="If the file exists" field="dropboxOverwrite" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[
+              { value: 'false', label: 'Keep both — Dropbox renames the new one' },
+              { value: 'true', label: 'Overwrite it' },
+            ]} />
+        </>)}
+
+        {op === 'list_folder' && (
+          <SelectField label="Subfolders" field="dropboxRecursive" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="false"
+            options={[
+              { value: 'false', label: 'This folder only' },
+              { value: 'true', label: 'Include subfolders' },
+            ]} />
+        )}
+        {op === 'list_folder_continue' && (
+          <TextField label="Cursor" field="dropboxCursor" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{prev-node.output}} — the cursor from List Folder" />
+        )}
+        {op === 'search' && (
+          <TextField label="Query" field="dropboxQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="invoice" />
+        )}
+        {op === 'restore' && (
+          <TextField label="Revision" field="dropboxRev" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Revisions" />
+        )}
+        {op === 'revoke_shared_link' && (
+          <TextField label="Shared link URL" field="dropboxUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://www.dropbox.com/s/…" />
+        )}
+        {op === 'create_shared_link' && (
+          <SelectField label="Who can open it" field="dropboxVisibility" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: "Dropbox's default for the account" },
+              { value: 'public', label: 'Anyone with the link' },
+              { value: 'team_only', label: 'Team only (paid plans)' },
+              { value: 'password', label: 'Password protected (paid plans)' },
+            ]} />
+        )}
+
+        {sharing && op === 'add_file_member' && (<>
+          <TextField label="Share with" field="dropboxEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com, sam@acme.com" />
+          <SelectField label="Access" field="dropboxAccessLevel" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="viewer"
+            options={[{ value: 'viewer', label: 'Can view' }, { value: 'editor', label: 'Can edit' }]} />
+          <TextField label="Message (optional)" field="dropboxMessage" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="sent with the invitation" />
+        </>)}
+
+        {op === 'create_file_request' && (
+          <TextField label="Title" field="dropboxTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Send me your invoices" />
+        )}
+
+        {['list_folder', 'search', 'list_revisions', 'list_file_members', 'list_file_requests',
+          'list_folder_continue'].includes(op) && (
+          <NumField label="Limit" field="dropboxLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={100} />
         )}
       </IntegrationSection>
   )

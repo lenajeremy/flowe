@@ -95,6 +95,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'dropbox':
+      return { nodeType: 'dropbox', label: 'Dropbox', integrationOp: 'list_folder', dropboxLimit: 100 }
     case 'typeform':
       return { nodeType: 'typeform', label: 'Typeform', integrationOp: 'list_responses', typeformLimit: 25 }
     case 'calendly':

@@ -43,6 +43,7 @@ export type NodeType =
   | 'clickup'
   | 'typeform'
   | 'calendly'
+  | 'dropbox'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -679,6 +680,23 @@ export type FlowNodeData = {
   calendlyEvents?: string
   calendlyWebhookId?: string
   calendlyLimit?: number
+
+  // dropbox
+  dropboxPath?: string
+  dropboxToPath?: string
+  dropboxContent?: string
+  dropboxOverwrite?: string
+  dropboxRecursive?: string
+  dropboxCursor?: string
+  dropboxQuery?: string
+  dropboxRev?: string
+  dropboxUrl?: string
+  dropboxVisibility?: string
+  dropboxEmail?: string
+  dropboxAccessLevel?: string
+  dropboxMessage?: string
+  dropboxTitle?: string
+  dropboxLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown
