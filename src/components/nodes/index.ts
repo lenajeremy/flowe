@@ -25,6 +25,12 @@ import { GoogleSheetsNode }     from './GoogleSheetsNode'
 import { JiraNode }             from './JiraNode'
 import { ConfluenceNode }       from './ConfluenceNode'
 import { BitbucketNode }        from './BitbucketNode'
+import { GoogleMeetNode }       from './GoogleMeetNode'
+import { GoogleSlidesNode }     from './GoogleSlidesNode'
+import { GoogleFormsNode }      from './GoogleFormsNode'
+import { GoogleTasksNode }      from './GoogleTasksNode'
+import { GoogleChatNode }       from './GoogleChatNode'
+import { GoogleKeepNode }       from './GoogleKeepNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -56,5 +62,11 @@ export const nodeTypes = {
   jira:             JiraNode,
   confluence:       ConfluenceNode,
   bitbucket:        BitbucketNode,
+  googlemeet:       GoogleMeetNode,
+  googleslides:     GoogleSlidesNode,
+  googleforms:      GoogleFormsNode,
+  googletasks:      GoogleTasksNode,
+  googlechat:       GoogleChatNode,
+  googlekeep:       GoogleKeepNode,
   data:             DataNode,
 }

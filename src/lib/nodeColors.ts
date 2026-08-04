@@ -32,6 +32,12 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   jira:             'var(--na-jira)',
   confluence:       'var(--na-confluence)',
   bitbucket:        'var(--na-bitbucket)',
+  googlemeet:       'var(--na-googlemeet)',
+  googleslides:     'var(--na-googleslides)',
+  googleforms:      'var(--na-googleforms)',
+  googletasks:      'var(--na-googletasks)',
+  googlechat:       'var(--na-googlechat)',
+  googlekeep:       'var(--na-googlekeep)',
   data:             'var(--na-data)',
 }
 
@@ -66,6 +72,12 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   jira:             'M7.5 8.5h5.5v3.5a3 3 0 01-3-3zM5 6h5.5v3.5a3 3 0 01-3-3zM2.5 3.5H8V7a3 3 0 01-3-3z',
   confluence:       'M2.5 11.5c1.5-2.5 3-3.5 4.5-3 1.3.4 2 1.8 3 2.3 1 .5 2 .3 3-.8M13.5 5c-1.5 2.5-3 3.5-4.5 3-1.3-.4-2-1.8-3-2.3-1-.5-2-.3-3 .8',
   bitbucket:        'M2 3h12l-1.8 10H3.8zM5.5 6h5l-.7 4H6.2z',
+  googlemeet:       'M2 4.5h7v7H2zM9 7l4-2.5v7L9 9z',
+  googleslides:     'M2.5 3h11v10h-11zM5 6h6v4H5z',
+  googleforms:      'M4 2h5l3 3v9H4V2zM9 2v3h3M6 8h4M6 10.5h2.5',
+  googletasks:      'M3 8.5l3 3 7-7M3 4h4M3 12.5h2',
+  googlechat:       'M2.5 3.5h11v7h-6l-3 3v-3h-2z',
+  googlekeep:       'M8 2a4 4 0 00-2.5 7.2V11h5V9.2A4 4 0 008 2zM6.5 13h3',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -97,6 +109,12 @@ export const NODE_LABELS: Record<NodeType, string> = {
   jira:             'Jira',
   confluence:       'Confluence',
   bitbucket:        'Bitbucket',
+  googlemeet:       'Google Meet',
+  googleslides:     'Google Slides',
+  googleforms:      'Google Forms',
+  googletasks:      'Google Tasks',
+  googlechat:       'Google Chat',
+  googlekeep:       'Google Keep',
   data:             'Data Store',
 }
 
@@ -128,5 +146,11 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   jira:             'Issues & sprints',
   confluence:       'Pages & spaces',
   bitbucket:        'Repos & pull requests',
+  googlemeet:       'Meetings & transcripts',
+  googleslides:     'Presentations',
+  googleforms:      'Forms & responses',
+  googletasks:      'To-dos & lists',
+  googlechat:       'Spaces & messages',
+  googlekeep:       'Notes & checklists',
   data:             'Persist & recall data',
 }

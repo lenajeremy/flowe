@@ -15,6 +15,8 @@ import {
   StripeConfig, ShopifyConfig, GoogleCalendarConfig, OutlookConfig, SlackConfig,
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
   JiraConfig, ConfluenceConfig, BitbucketConfig,
+  GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
+  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig,
 } from '@/components/panels/integrationConfigs'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
@@ -958,6 +960,12 @@ export function ConfigPanel() {
         {nodeType === 'jira' && <JiraConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'confluence' && <ConfluenceConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'bitbucket' && <BitbucketConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googlemeet' && <GoogleMeetConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googleslides' && <GoogleSlidesConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googleforms' && <GoogleFormsConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googletasks' && <GoogleTasksConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googlechat' && <GoogleChatConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'googlekeep' && <GoogleKeepConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (

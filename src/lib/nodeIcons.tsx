@@ -74,4 +74,10 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   jira:             logo('jira'),
   confluence:       logo('confluence'),
   bitbucket:        logo('bitbucket'),
+  googlemeet:       logo('googlemeet'),
+  googleslides:     logo('googleslides'),
+  googleforms:      logo('googleforms'),
+  googletasks:      logo('googletasks'),
+  googlechat:       logo('googlechat'),
+  googlekeep:       logo('googlekeep'),
 }

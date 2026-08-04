@@ -488,6 +488,8 @@ const NODE_TINTS: Partial<Record<NodeType, string>> = {
   googledrive:'#1fa463', googledocs:'#4c8bf5', googlesheets:'#0f9d58',
   stripe:'#635bff', shopify:'#96bf48',
   jira:'#4c9aff', confluence:'#4c9aff', bitbucket:'#4c9aff',
+  googlemeet:'#ffb443', googleslides:'#ffc93d', googleforms:'#a768e8',
+  googletasks:'#4c9aff', googlechat:'#34c98a', googlekeep:'#ffd94d',
 }
 
 // ─── Integrations — the tools Fernary can drive, one quiet wall ──
@@ -495,6 +497,7 @@ const INTEGRATIONS: NodeType[] = [
   'slack', 'gmail', 'outlook', 'notion', 'linear', 'github', 'gitlab',
   'googlecalendar', 'googledrive', 'googledocs', 'googlesheets', 'stripe', 'shopify',
   'jira', 'confluence', 'bitbucket',
+  'googlemeet', 'googleslides', 'googleforms', 'googletasks', 'googlechat', 'googlekeep',
 ]
 
 function IntegrationTile({ type }: { type: NodeType }) {

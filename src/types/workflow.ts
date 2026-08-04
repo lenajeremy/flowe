@@ -29,6 +29,12 @@ export type NodeType =
   | 'jira'
   | 'confluence'
   | 'bitbucket'
+  | 'googlemeet'
+  | 'googleslides'
+  | 'googleforms'
+  | 'googletasks'
+  | 'googlechat'
+  | 'googlekeep'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -385,6 +391,83 @@ export type FlowNodeData = {
   bitbucketIssueId?: string
   bitbucketKind?: string
   bitbucketPriority?: string
+
+  // googlemeet
+  meetSpace?: string
+  meetAccessType?: string        // OPEN | TRUSTED | RESTRICTED
+  meetModeration?: string        // ON | OFF
+  meetConferenceRecord?: string
+  meetTranscript?: string
+  meetFilter?: string
+  meetLimit?: number
+
+  // googleslides
+  slidesPresentationId?: string
+  slidesTitle?: string
+  slidesSlideId?: string
+  slidesLayout?: string          // TITLE_AND_BODY | TITLE_ONLY | SECTION_HEADER | BLANK
+  slidesHeading?: string
+  slidesBody?: string
+  slidesFind?: string
+  slidesReplace?: string
+  slidesImageUrl?: string
+  slidesObjectId?: string
+  slidesNotes?: string
+  slidesTemplateId?: string
+  slidesReplacements?: string
+  slidesIndex?: number
+
+  // googleforms
+  formsFormId?: string
+  formsTitle?: string
+  formsDescription?: string
+  formsQuestion?: string
+  formsQuestionType?: string     // TEXT | PARAGRAPH | RADIO | CHECKBOX | DROPDOWN | SCALE | DATE | TIME
+  formsOptions?: string
+  formsRequired?: string         // 'true' | 'false'
+  formsItemId?: string
+  formsResponseId?: string
+  formsIndex?: number
+  formsIsQuiz?: string           // 'true' | 'false'
+  formsAccepting?: string        // 'true' | 'false'
+  formsLimit?: number
+
+  // googletasks
+  tasksListId?: string
+  tasksTaskId?: string
+  tasksTitle?: string
+  tasksNotes?: string
+  tasksDue?: string
+  tasksStatus?: string           // needsAction | completed
+  tasksParent?: string
+  tasksPrevious?: string
+  tasksShowCompleted?: string    // 'true' | 'false'
+  tasksDueMin?: string
+  tasksDueMax?: string
+  tasksDestinationList?: string
+  tasksLimit?: number
+
+  // googlechat
+  chatSpace?: string
+  chatMessageId?: string
+  chatText?: string
+  chatThread?: string
+  chatDisplayName?: string
+  chatSpaceType?: string         // SPACE | GROUP_CHAT
+  chatMemberEmail?: string
+  chatMembership?: string
+  chatEmoji?: string
+  chatFilter?: string
+  chatLimit?: number
+
+  // googlekeep
+  keepNoteName?: string
+  keepTitle?: string
+  keepText?: string
+  keepListItems?: string
+  keepEmail?: string
+  keepFilter?: string
+  keepLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

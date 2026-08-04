@@ -25,6 +25,12 @@ const GOOGLE_PRODUCTS: Partial<Record<NodeType, string>> = {
   googledrive:    'drive',
   googledocs:     'docs',
   googlesheets:   'sheets',
+  googlemeet:     'meet',
+  googleslides:   'slides',
+  googleforms:    'forms',
+  googletasks:    'tasks',
+  googlechat:     'chat',
+  googlekeep:     'keep',
 }
 
 // Domain logo.dev resolves the mark from. Marketing domains, not app

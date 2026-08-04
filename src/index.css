@@ -215,6 +215,12 @@
   --na-jira:             #4c9aff;
   --na-confluence:       #4c9aff;
   --na-bitbucket:        #4c9aff;
+  --na-googlemeet:       #ffb443;
+  --na-googleslides:     #ffc93d;
+  --na-googleforms:      #a768e8;
+  --na-googletasks:      #4c9aff;
+  --na-googlechat:       #34c98a;
+  --na-googlekeep:       #ffd94d;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -352,6 +358,12 @@
   --na-jira:             #0052cc;
   --na-confluence:       #0052cc;
   --na-bitbucket:        #0052cc;
+  --na-googlemeet:       #c47800;
+  --na-googleslides:     #b38600;
+  --na-googleforms:      #7238c4;
+  --na-googletasks:      #1f66d0;
+  --na-googlechat:       #0f9257;
+  --na-googlekeep:       #ae8d13;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

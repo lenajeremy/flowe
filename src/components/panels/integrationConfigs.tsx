@@ -88,8 +88,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board'
+type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -1942,6 +1942,475 @@ export function BitbucketConfig({ data, nodeId, updateNodeData }: ProviderConfig
           'list_pipelines', 'list_pr_comments', 'list_pr_commits', 'list_workspaces'].includes(op) && (
           <NumField label="Limit" field="bitbucketLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleMeetConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_space'
+  const needsRecord = ['get_conference_record', 'list_participants', 'list_recordings', 'list_transcripts'].includes(op)
+  return (
+      <IntegrationSection
+        provider="googlemeet" label="Google Meet" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="create_space"
+        ops={[
+          { value: 'create_space', label: 'Create Meeting' },
+          { value: 'get_space', label: 'Get Meeting' },
+          { value: 'update_space', label: 'Update Meeting' },
+          { value: 'end_active_conference', label: 'End Conference' },
+          { value: 'list_conference_records', label: 'List Conferences' },
+          { value: 'get_conference_record', label: 'Get Conference' },
+          { value: 'list_participants', label: 'List Participants' },
+          { value: 'list_recordings', label: 'List Recordings' },
+          { value: 'list_transcripts', label: 'List Transcripts' },
+          { value: 'get_transcript_text', label: 'Get Transcript Text' },
+          { value: 'list_transcript_entries', label: 'Transcript Entries' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {['get_space', 'update_space', 'end_active_conference', 'list_conference_records'].includes(op) && (
+          <TextField label={op === 'list_conference_records' ? 'Meeting (optional)' : 'Meeting'}
+            field="meetSpace" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="spaces/… or a meeting code" />
+        )}
+
+        {(op === 'create_space' || op === 'update_space') && (<>
+          <SelectField label="Who can join" field="meetAccessType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="TRUSTED"
+            options={[
+              { value: 'TRUSTED', label: 'People in your organization' },
+              { value: 'OPEN', label: 'Anyone with the link' },
+              { value: 'RESTRICTED', label: 'Invited people only' },
+            ]} />
+          <SelectField label="Moderation" field="meetModeration" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unset' },
+              { value: 'ON', label: 'On — host controls' },
+              { value: 'OFF', label: 'Off' },
+            ]} />
+        </>)}
+
+        {needsRecord && (
+          <TextField label="Conference record" field="meetConferenceRecord" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="conferenceRecords/… from List Conferences" />
+        )}
+
+        {(op === 'get_transcript_text' || op === 'list_transcript_entries') && (
+          <TextField label="Transcript" field="meetTranscript" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="…/transcripts/… from List Transcripts" />
+        )}
+
+        {op === 'list_conference_records' && (
+          <TextField label="Filter (optional)" field="meetFilter" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='start_time>="2026-08-01T00:00:00Z"' />
+        )}
+
+        {['list_conference_records', 'list_participants', 'get_transcript_text', 'list_transcript_entries'].includes(op) && (
+          <NumField label="Limit" field="meetLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleSlidesConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_presentation'
+  const needsDeck = op !== 'create_presentation' && op !== 'create_from_template'
+  const needsSlide = ['add_text_box', 'add_image', 'update_speaker_notes', 'get_thumbnail',
+    'duplicate_slide', 'delete_slide'].includes(op)
+  return (
+      <IntegrationSection
+        provider="googleslides" label="Google Slides" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="create_presentation"
+        ops={[
+          { value: 'create_presentation', label: 'Create Presentation' },
+          { value: 'create_from_template', label: 'Create from Template' },
+          { value: 'get_presentation', label: 'Get Presentation' },
+          { value: 'list_slides', label: 'List Slides' },
+          { value: 'add_slide', label: 'Add Slide' },
+          { value: 'duplicate_slide', label: 'Duplicate Slide' },
+          { value: 'delete_slide', label: 'Delete Slide' },
+          { value: 'replace_all_text', label: 'Replace All Text' },
+          { value: 'add_text_box', label: 'Add Text Box' },
+          { value: 'add_image', label: 'Add Image' },
+          { value: 'update_speaker_notes', label: 'Update Speaker Notes' },
+          { value: 'get_thumbnail', label: 'Get Slide Thumbnail' },
+          { value: 'delete_object', label: 'Delete Object' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {needsDeck && (
+          <TextField label="Presentation ID" field="slidesPresentationId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        )}
+
+        {(op === 'create_presentation' || op === 'create_from_template') && (
+          <TextField label="Title" field="slidesTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Q3 review" />
+        )}
+
+        {op === 'create_from_template' && (<>
+          <TextField label="Template presentation ID" field="slidesTemplateId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="the deck to copy" />
+          <AreaField label="Replacements" field="slidesReplacements" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"{{client}}": "Acme", "{{date}}": "August 2026"}' />
+        </>)}
+
+        {op === 'add_slide' && (<>
+          <SelectField label="Layout" field="slidesLayout" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="TITLE_AND_BODY"
+            options={[
+              { value: 'TITLE_AND_BODY', label: 'Title and body' },
+              { value: 'TITLE_ONLY', label: 'Title only' },
+              { value: 'SECTION_HEADER', label: 'Section header' },
+              { value: 'BLANK', label: 'Blank' },
+            ]} />
+          <TextField label="Heading" field="slidesHeading" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Body" field="slidesBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Speaker notes (optional)" field="slidesNotes" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+          <NumField label="Position (optional)" field="slidesIndex" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={0} />
+        </>)}
+
+        {needsSlide && (
+          <TextField label="Slide ID" field="slidesSlideId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Slides" />
+        )}
+
+        {op === 'add_text_box' && (
+          <AreaField label="Text" field="slidesBody" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'add_image' && (
+          <TextField label="Image URL" field="slidesImageUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://… — must be publicly reachable" />
+        )}
+
+        {op === 'update_speaker_notes' && (
+          <AreaField label="Speaker notes" field="slidesNotes" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'replace_all_text' && (<>
+          <TextField label="Find" field="slidesFind" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{client}}" />
+          <TextField label="Replace with" field="slidesReplace" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Acme Inc" />
+        </>)}
+
+        {op === 'delete_object' && (
+          <TextField label="Object ID" field="slidesObjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="shape or image objectId" />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleFormsConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_form'
+  return (
+      <IntegrationSection
+        provider="googleforms" label="Google Forms" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="create_form"
+        ops={[
+          { value: 'create_form', label: 'Create Form' },
+          { value: 'get_form', label: 'Get Form' },
+          { value: 'add_question', label: 'Add Question' },
+          { value: 'update_form_info', label: 'Update Form Info' },
+          { value: 'set_quiz_mode', label: 'Set Quiz Mode' },
+          { value: 'delete_item', label: 'Delete Item' },
+          { value: 'list_responses', label: 'List Responses' },
+          { value: 'get_response', label: 'Get Response' },
+          { value: 'set_publish_settings', label: 'Open or Close Responses' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {op !== 'create_form' && (
+          <TextField label="Form ID" field="formsFormId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{prev-node.output}}" />
+        )}
+
+        {(op === 'create_form' || op === 'update_form_info') && (
+          <TextField label={op === 'update_form_info' ? 'Title (optional)' : 'Title'} field="formsTitle"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Customer feedback" />
+        )}
+
+        {(op === 'create_form' || op === 'update_form_info' || op === 'add_question') && (
+          <AreaField label={op === 'add_question' ? 'Helper text (optional)' : 'Description (optional)'}
+            field="formsDescription" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {op === 'add_question' && (<>
+          <TextField label="Question" field="formsQuestion" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="How did you hear about us?" />
+          <SelectField label="Answer type" field="formsQuestionType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="TEXT"
+            options={[
+              { value: 'TEXT', label: 'Short answer' },
+              { value: 'PARAGRAPH', label: 'Paragraph' },
+              { value: 'RADIO', label: 'Multiple choice' },
+              { value: 'CHECKBOX', label: 'Checkboxes' },
+              { value: 'DROPDOWN', label: 'Dropdown' },
+              { value: 'SCALE', label: 'Linear scale' },
+              { value: 'DATE', label: 'Date' },
+              { value: 'TIME', label: 'Time' },
+            ]} />
+          <TextField label="Options" field="formsOptions" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Search, A friend, Advert — or 1,5 for a scale" />
+          <SelectField label="Required" field="formsRequired" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Optional' }, { value: 'true', label: 'Required' }]} />
+        </>)}
+
+        {(op === 'add_question' || op === 'delete_item') && (
+          <NumField label="Position" field="formsIndex" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={0} />
+        )}
+
+        {op === 'set_quiz_mode' && (
+          <SelectField label="Quiz mode" field="formsIsQuiz" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="true"
+            options={[{ value: 'true', label: 'On' }, { value: 'false', label: 'Off' }]} />
+        )}
+
+        {op === 'set_publish_settings' && (
+          <SelectField label="Accepting responses" field="formsAccepting" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="true"
+            options={[{ value: 'true', label: 'Open — accepting responses' }, { value: 'false', label: 'Closed' }]} />
+        )}
+
+        {op === 'get_response' && (
+          <TextField label="Response ID" field="formsResponseId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Responses" />
+        )}
+
+        {op === 'list_responses' && (
+          <NumField label="Limit" field="formsLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleTasksConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_tasks'
+  const needsTask = ['get_task', 'update_task', 'complete_task', 'delete_task', 'move_task'].includes(op)
+  return (
+      <IntegrationSection
+        provider="googletasks" label="Google Tasks" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_tasks"
+        ops={[
+          { value: 'list_tasks', label: 'List Tasks' },
+          { value: 'get_task', label: 'Get Task' },
+          { value: 'create_task', label: 'Create Task' },
+          { value: 'update_task', label: 'Update Task' },
+          { value: 'complete_task', label: 'Complete Task' },
+          { value: 'delete_task', label: 'Delete Task' },
+          { value: 'move_task', label: 'Move Task' },
+          { value: 'clear_completed', label: 'Clear Completed' },
+          { value: 'list_task_lists', label: 'List Task Lists' },
+          { value: 'get_task_list', label: 'Get Task List' },
+          { value: 'create_task_list', label: 'Create Task List' },
+          { value: 'update_task_list', label: 'Rename Task List' },
+          { value: 'delete_task_list', label: 'Delete Task List' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {op !== 'list_task_lists' && op !== 'create_task_list' && (
+          <ResourceField label={op === 'delete_task_list' ? 'Task list' : 'Task list (optional)'}
+            provider="googletasks" kind="tasklist" field="tasksListId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="defaults to your primary list" />
+        )}
+
+        {needsTask && (
+          <TextField label="Task ID" field="tasksTaskId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Tasks" />
+        )}
+
+        {['create_task', 'update_task', 'create_task_list', 'update_task_list'].includes(op) && (
+          <TextField label={op === 'update_task' ? 'Title (optional)' : 'Title'} field="tasksTitle"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        )}
+
+        {(op === 'create_task' || op === 'update_task') && (<>
+          <AreaField label="Notes (optional)" field="tasksNotes" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <DateTimeField label="Due (optional)" field="tasksDue" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+
+        {op === 'update_task' && (
+          <SelectField label="Status (optional)" field="tasksStatus" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unchanged' },
+              { value: 'needsAction', label: 'Not done' },
+              { value: 'completed', label: 'Completed' },
+            ]} />
+        )}
+
+        {(op === 'create_task' || op === 'move_task') && (<>
+          <TextField label="Parent task (optional)" field="tasksParent" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="task ID — makes this a subtask" />
+          <TextField label="Position after (optional)" field="tasksPrevious" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="sibling task ID" />
+        </>)}
+
+        {op === 'move_task' && (
+          <TextField label="Move to list (optional)" field="tasksDestinationList" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="another task list ID" />
+        )}
+
+        {op === 'list_tasks' && (<>
+          <SelectField label="Completed tasks" field="tasksShowCompleted" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="false"
+            options={[{ value: 'false', label: 'Hide completed' }, { value: 'true', label: 'Include completed' }]} />
+          <DateTimeField label="Due after (optional)" field="tasksDueMin" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label="Due before (optional)" field="tasksDueMax" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+
+        {(op === 'list_tasks' || op === 'list_task_lists') && (
+          <NumField label="Limit" field="tasksLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleChatConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_message'
+  const needsSpace = ['get_space', 'update_space', 'delete_space', 'send_message', 'reply_in_thread',
+    'list_messages', 'list_members', 'add_member'].includes(op)
+  const needsMessage = ['get_message', 'update_message', 'delete_message', 'add_reaction'].includes(op)
+  return (
+      <IntegrationSection
+        provider="googlechat" label="Google Chat" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="send_message"
+        ops={[
+          { value: 'send_message', label: 'Send Message' },
+          { value: 'reply_in_thread', label: 'Reply in Thread' },
+          { value: 'get_message', label: 'Get Message' },
+          { value: 'update_message', label: 'Update Message' },
+          { value: 'delete_message', label: 'Delete Message' },
+          { value: 'list_messages', label: 'List Messages' },
+          { value: 'add_reaction', label: 'Add Reaction' },
+          { value: 'list_spaces', label: 'List Spaces' },
+          { value: 'get_space', label: 'Get Space' },
+          { value: 'create_space', label: 'Create Space' },
+          { value: 'setup_space', label: 'Create Space with Members' },
+          { value: 'update_space', label: 'Rename Space' },
+          { value: 'delete_space', label: 'Delete Space' },
+          { value: 'find_direct_message', label: 'Find Direct Message' },
+          { value: 'list_members', label: 'List Members' },
+          { value: 'add_member', label: 'Add Member' },
+          { value: 'remove_member', label: 'Remove Member' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {needsSpace && (
+          <ResourceField label="Space" provider="googlechat" kind="space" field="chatSpace"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="spaces/…" />
+        )}
+
+        {needsMessage && (
+          <TextField label="Message" field="chatMessageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="spaces/…/messages/… from List Messages" />
+        )}
+
+        {['send_message', 'reply_in_thread', 'update_message'].includes(op) && (
+          <AreaField label="Message text" field="chatText" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+
+        {(op === 'send_message' || op === 'reply_in_thread') && (
+          <TextField label={op === 'reply_in_thread' ? 'Thread' : 'Thread key (optional)'} field="chatThread"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'reply_in_thread' ? 'thread name, or any key you chose' : 'group replies under one key'} />
+        )}
+
+        {op === 'add_reaction' && (
+          <TextField label="Emoji" field="chatEmoji" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="👍 — the emoji itself, not :thumbsup:" />
+        )}
+
+        {['create_space', 'setup_space', 'update_space'].includes(op) && (<>
+          <TextField label="Space name" field="chatDisplayName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Launch war room" />
+          {op !== 'update_space' && (
+            <SelectField label="Type" field="chatSpaceType" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="SPACE"
+              options={[{ value: 'SPACE', label: 'Named space' }, { value: 'GROUP_CHAT', label: 'Group chat' }]} />
+          )}
+        </>)}
+
+        {['setup_space', 'add_member', 'find_direct_message'].includes(op) && (
+          <TextField label={op === 'setup_space' ? 'Members' : 'Member email'} field="chatMemberEmail"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'setup_space' ? 'jane@acme.com, sam@acme.com' : 'jane@acme.com'} />
+        )}
+
+        {op === 'remove_member' && (
+          <TextField label="Membership" field="chatMembership" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="spaces/…/members/… from List Members" />
+        )}
+
+        {(op === 'list_spaces' || op === 'list_messages') && (
+          <TextField label="Filter (optional)" field="chatFilter" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'list_spaces' ? 'spaceType = "SPACE"' : 'createTime > "2026-08-01T00:00:00Z"'} />
+        )}
+
+        {['list_spaces', 'list_messages', 'list_members'].includes(op) && (
+          <NumField label="Limit" field="chatLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleKeepConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'create_note'
+  return (
+      <IntegrationSection
+        provider="googlekeep" label="Google Keep" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="create_note"
+        ops={[
+          { value: 'create_note', label: 'Create Note' },
+          { value: 'get_note', label: 'Get Note' },
+          { value: 'list_notes', label: 'List Notes' },
+          { value: 'delete_note', label: 'Delete Note' },
+          { value: 'share_note', label: 'Share Note' },
+          { value: 'unshare_note', label: 'Unshare Note' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {/* Keep is the one Google service a personal account cannot use at all,
+            so say it here rather than letting Connect fail without explanation. */}
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          The Keep API is <span className="text-[var(--color-muted)]">Google Workspace only</span> — a
+          personal @gmail.com account can't authorize it, and a Workspace admin has to enable it for
+          the domain first.
+        </p>
+
+        {op !== 'create_note' && op !== 'list_notes' && (
+          <TextField label="Note" field="keepNoteName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="notes/… from List Notes" />
+        )}
+
+        {op === 'create_note' && (<>
+          <TextField label="Title" field="keepTitle" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Text" field="keepText" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Checklist (optional)" field="keepListItems" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="One item per line — replaces the text body" />
+        </>)}
+
+        {(op === 'share_note' || op === 'unshare_note') && (
+          <TextField label={op === 'share_note' ? 'Share with' : 'Permissions to remove'} field="keepEmail"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'share_note' ? 'jane@acme.com, sam@acme.com' : 'permission names from Get Note'} />
+        )}
+
+        {op === 'list_notes' && (<>
+          <TextField label="Filter (optional)" field="keepFilter" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="trashed = false" />
+          <NumField label="Limit" field="keepLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
       </IntegrationSection>
   )
 }

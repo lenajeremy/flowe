@@ -83,6 +83,18 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'gmail', label: 'Gmail', integrationOp: 'send_email', gmailTo: '', gmailSubject: '', gmailBody: '', gmailLimit: 10 }
     case 'stripe':
       return { nodeType: 'stripe', label: 'Stripe', integrationOp: 'list_customers', stripeLimit: 10, stripeQuantity: 1 }
+    case 'googlemeet':
+      return { nodeType: 'googlemeet', label: 'Google Meet', integrationOp: 'create_space', meetAccessType: 'TRUSTED', meetLimit: 25 }
+    case 'googleslides':
+      return { nodeType: 'googleslides', label: 'Google Slides', integrationOp: 'create_presentation', slidesLayout: 'TITLE_AND_BODY' }
+    case 'googleforms':
+      return { nodeType: 'googleforms', label: 'Google Forms', integrationOp: 'create_form', formsQuestionType: 'TEXT', formsLimit: 25 }
+    case 'googletasks':
+      return { nodeType: 'googletasks', label: 'Google Tasks', integrationOp: 'list_tasks', tasksLimit: 25 }
+    case 'googlechat':
+      return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
+    case 'googlekeep':
+      return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
     case 'jira':
       return { nodeType: 'jira', label: 'Jira', integrationOp: 'search_issues', jiraIssueType: 'Task', jiraLimit: 25 }
     case 'confluence':
