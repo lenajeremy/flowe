@@ -547,6 +547,24 @@ function Integrations() {
           </Reveal>
         ))}
       </div>
+
+      {/* Why each connection exists, in the reviewer's terms. Google's OAuth
+          verification wants the link between the app and the data it asks for
+          stated on the homepage, not only in the consent screen or the policy. */}
+      <Reveal y={16}>
+        <p className="mt-10 max-w-3xl text-[13.5px] leading-relaxed text-white/40">
+          <strong className="font-medium text-white/60">How Fernary uses your data.</strong>{' '}
+          A workflow only ever touches an account you have connected, and only to carry out
+          the steps you built. Gmail: read and label the messages a workflow acts on, and
+          send or draft the replies it produces. Google Calendar: read the events it reacts
+          to, create the ones it schedules. Drive, Docs and Sheets: read the files it uses as
+          input, write the documents and rows it generates. Access is revocable per account
+          at any time, and your data is never used to train AI models.{' '}
+          <a href="/privacy" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white">
+            Read the privacy policy
+          </a>.
+        </p>
+      </Reveal>
     </section>
   )
 }
@@ -756,10 +774,17 @@ function Nav({ onOpen }: { onOpen: () => void }) {
   return (
     <header style={{ position:'sticky', top:0, zIndex:50, backdropFilter:'blur(20px) saturate(160%)', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(5,5,8,0.72)' }}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2.5 text-white">
-          <FloweIcon size={22} />
-          <span className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>Fernary</span>
-        </button>
+        {/* The app name is the page's h1. Google's OAuth homepage review matches
+            the consent-screen app name against the homepage, and a slogan in the
+            h1 with the name only in a nav <span> reads as a mismatch. Styling is
+            by class, so promoting the tag changes nothing visually — the hero
+            headline below is an h2 for the same reason. */}
+        <h1 className="m-0 text-[15px] font-semibold leading-none">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2.5 text-white">
+            <FloweIcon size={22} />
+            <span style={{ letterSpacing:'-0.01em' }}>Fernary</span>
+          </button>
+        </h1>
         <button onClick={onOpen}
           className="pressable rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:opacity-90">
           Open app
@@ -903,7 +928,8 @@ export function LandingPage() {
         <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-24 lg:pb-20 lg:pt-36">
           {/* Each word rises out of a blur, left to right — one gesture,
               then the sub, buttons and shot follow through. */}
-          <h1 className="max-w-4xl text-[2.9rem] font-bold sm:text-[4rem] lg:text-[4.6rem]"
+          {/* h2, not h1 — the app name in the nav holds the page h1. See Nav. */}
+          <h2 className="max-w-4xl text-[2.9rem] font-bold sm:text-[4rem] lg:text-[4.6rem]"
             style={{ lineHeight:1.02, letterSpacing:'-0.035em' }}>
             {[['Automation', 'for', 'people,'], ['not', 'just', 'developers']].map((line, li) => (
               <span key={li} className="block">
@@ -916,10 +942,14 @@ export function LandingPage() {
                 ))}
               </span>
             ))}
-          </h1>
+          </h2>
           <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
+            {/* States what the app *is*, not only what you do with it. Google's
+                homepage review wants the purpose legible without inference. */}
             <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
-              Describe what you want in plain English. Fernary builds the workflow and runs it on your schedule.
+              <strong className="font-medium text-white/80">Fernary is a workflow automation app for business.</strong>{' '}
+              Describe what you want in plain English — it builds the workflow, connects your
+              tools, and runs it on a schedule while you&rsquo;re away.
             </p>
             <div className="rise-in flex items-center gap-3" style={{ animationDelay:'600ms' }}>
               <button onClick={handleCreate} disabled={creating}
