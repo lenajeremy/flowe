@@ -64,17 +64,29 @@ for (const page of PAGES) {
     React.createElement(Markdown, { remarkPlugins: [remarkGfm] }, md),
   );
 
-  let html = shell
-    // .legal-prose is the same class the React page uses, so the prerendered
-    // markup picks up the identical stylesheet already in the bundle.
-    .replace(ROOT_RE, (_m, open, _old, close) =>
-      `${open}<main class="legal-prose boot-legal">${body}</main>${close}`)
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${page.title}</title>`)
-    .replace(/(<meta name="description" content=")[\s\S]*?(" \/>)/, `$1${page.description}$2`)
-    .replace(/(<link rel="canonical" href="https:\/\/fernary\.com)\/(" \/>)/, `$1/${page.route}$2`)
-    .replace(/(<meta property="og:url" content="https:\/\/fernary\.com)\/(" \/>)/, `$1/${page.route}$2`)
-    .replace(/(<meta property="og:title" content=")[\s\S]*?(" \/>)/, `$1${page.title}$2`)
-    .replace(/(<meta name="twitter:title" content=")[\s\S]*?(" \/>)/, `$1${page.title}$2`);
+  // Every rewrite must actually fire. Reformatting index.html once moved
+  // `content="` onto its own line, which silently defeated the description
+  // regex and left the homepage blurb on both legal pages.
+  const rewrite = (src, label, re, to) => {
+    const out = src.replace(re, to);
+    if (out === src) {
+      console.error(`prerender-legal: /${page.route} — "${label}" did not match. ` +
+        `index.html markup changed; update the pattern.`);
+      process.exit(1);
+    }
+    return out;
+  };
+
+  // \s* between attributes so a formatter wrapping a line can't break these.
+  let html = shell.replace(/\n\s*<div id="static-summary"[\s\S]*?<\/div>\n/, '\n');
+  html = rewrite(html, 'body', ROOT_RE, (_m, open, _old, close) =>
+    `${open}<main class="legal-prose boot-legal">${body}</main>${close}`);
+  html = rewrite(html, 'title', /<title>[\s\S]*?<\/title>/, `<title>${page.title}</title>`);
+  html = rewrite(html, 'description', /(<meta name="description"\s+content=")[\s\S]*?(")/, `$1${page.description}$2`);
+  html = rewrite(html, 'canonical', /(<link rel="canonical"\s+href="https:\/\/fernary\.com)\/(")/, `$1/${page.route}$2`);
+  html = rewrite(html, 'og:url', /(<meta property="og:url"\s+content="https:\/\/fernary\.com)\/(")/, `$1/${page.route}$2`);
+  html = rewrite(html, 'og:title', /(<meta property="og:title"\s+content=")[\s\S]*?(")/, `$1${page.title}$2`);
+  html = rewrite(html, 'twitter:title', /(<meta name="twitter:title"\s+content=")[\s\S]*?(")/, `$1${page.title}$2`);
 
   // Give the prerendered prose a readable measure before the bundle's CSS
   // arrives, matching what .legal-prose does once it does.
