@@ -84,4 +84,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   resend:           logo('resend'),
   sendgrid:         logo('sendgrid'),
   kit:              logo('kit'),
+  airtable:         logo('airtable'),
 }

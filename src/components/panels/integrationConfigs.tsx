@@ -88,8 +88,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist'
+type ResourceProvider = 'airtable' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -2977,6 +2977,180 @@ export function KitConfig({ data, nodeId, updateNodeData }: ProviderConfigProps)
 
         {isList && (
           <NumField label="Limit" field="kitLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function AirtableConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_records'
+  // Everything except account and base-level schema work needs a table.
+  const tableOps = !['list_bases', 'get_base_schema', 'create_base', 'whoami',
+    'list_webhooks', 'create_webhook', 'delete_webhook', 'refresh_webhook',
+    'list_webhook_payloads', 'create_table', 'update_table', 'create_field', 'update_field'].includes(op)
+  const needsRecord = ['get_record', 'update_record', 'delete_record', 'delete_records',
+    'list_comments', 'create_comment', 'update_comment', 'delete_comment'].includes(op)
+  const singleFields = op === 'create_record' || op === 'update_record'
+  const batchRecords = ['create_records', 'update_records', 'upsert_records'].includes(op)
+  const isWrite = singleFields || batchRecords
+  const needsWebhook = ['delete_webhook', 'refresh_webhook', 'list_webhook_payloads'].includes(op)
+  const schemaTable = ['update_table', 'create_field', 'update_field'].includes(op)
+  return (
+      <IntegrationSection
+        provider="airtable" label="Airtable" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_records"
+        ops={[
+          { value: 'list_records', label: 'List Records' },
+          { value: 'get_record', label: 'Get Record' },
+          { value: 'create_record', label: 'Create Record' },
+          { value: 'create_records', label: 'Create Records (batch)' },
+          { value: 'update_record', label: 'Update Record' },
+          { value: 'update_records', label: 'Update Records (batch)' },
+          { value: 'upsert_records', label: 'Upsert Records' },
+          { value: 'delete_record', label: 'Delete Record' },
+          { value: 'delete_records', label: 'Delete Records (batch)' },
+          { value: 'list_comments', label: 'List Comments' },
+          { value: 'create_comment', label: 'Add Comment' },
+          { value: 'update_comment', label: 'Update Comment' },
+          { value: 'delete_comment', label: 'Delete Comment' },
+          { value: 'list_bases', label: 'List Bases' },
+          { value: 'get_base_schema', label: 'Get Base Schema' },
+          { value: 'create_base', label: 'Create Base' },
+          { value: 'create_table', label: 'Create Table' },
+          { value: 'update_table', label: 'Update Table' },
+          { value: 'create_field', label: 'Create Field' },
+          { value: 'update_field', label: 'Update Field' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'refresh_webhook', label: 'Refresh Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'list_webhook_payloads', label: 'Webhook Payloads' },
+          { value: 'whoami', label: 'Who Am I' },
+        ]}
+        tokenPlaceholder="Airtable token"
+        hideManual
+      >
+        {op !== 'list_bases' && op !== 'whoami' && op !== 'create_base' && (
+          <ResourceField label="Base" provider="airtable" kind="base" field="airtableBaseId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="app…" />
+        )}
+
+        {tableOps && (
+          <TextField label="Table" field="airtableTable" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Tasks — the name exactly as in Airtable, or its table ID" />
+        )}
+        {schemaTable && (
+          <TextField label="Table ID" field="airtableTableId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="tbl… — schema changes need the ID, not the name" />
+        )}
+
+        {needsRecord && (
+          <TextField label={op === 'delete_records' ? 'Record IDs' : 'Record ID'} field="airtableRecordId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'delete_records' ? 'rec1, rec2 — max 10' : 'rec…'} />
+        )}
+
+        {op === 'list_records' && (<>
+          <TextField label="Filter formula (optional)" field="airtableFormula" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder={'{Status}="Active"'} />
+          <TextField label="View (optional)" field="airtableView" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Grid view" />
+          <TextField label="Fields (optional)" field="airtableFieldNames" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Name, Status — comma-separated" />
+          <TextField label="Sort by (optional)" field="airtableSortField" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Created" />
+          <SelectField label="Direction" field="airtableSortDirection" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="asc"
+            options={[{ value: 'asc', label: 'Ascending' }, { value: 'desc', label: 'Descending' }]} />
+          <TextField label="Offset (optional)" field="airtableOffset" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from a previous run's response" />
+          <NumField label="Max records" field="airtableLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
+
+        {singleFields && (
+          <AreaField label="Fields" field="airtableFields" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"Name": "Acme", "Status": "Active"}' />
+        )}
+        {batchRecords && (<>
+          <AreaField label="Records" field="airtableRecords" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'create_records'
+              ? '[{"fields": {"Name": "Acme"}}]'
+              : '[{"id": "rec…", "fields": {"Status": "Done"}}]'} />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Airtable takes at most 10 records per request — use a Loop node for more.
+          </p>
+        </>)}
+        {op === 'upsert_records' && (
+          <TextField label="Match on" field="airtableMergeOn" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Email — the field that decides update vs insert" />
+        )}
+        {isWrite && (
+          <SelectField label="Coerce values" field="airtableTypecast" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="true"
+            options={[
+              { value: 'true', label: 'Yes — convert text to numbers, dates and select options' },
+              { value: 'false', label: 'No — reject a value that is not already the right type' },
+            ]} />
+        )}
+
+        {(op === 'create_comment' || op === 'update_comment') && (
+          <AreaField label="Comment" field="airtableComment" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+        )}
+        {(op === 'update_comment' || op === 'delete_comment') && (
+          <TextField label="Comment ID" field="airtableCommentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Comments" />
+        )}
+
+        {['create_base', 'create_table', 'update_table', 'create_field', 'update_field'].includes(op) && (
+          <TextField label={['update_table', 'update_field'].includes(op) ? 'Name (optional)' : 'Name'}
+            field="airtableName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Tasks" />
+        )}
+        {['create_table', 'update_table', 'update_field'].includes(op) && (
+          <TextField label="Description (optional)" field="airtableDescription" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="" />
+        )}
+        {op === 'create_base' && (<>
+          <TextField label="Workspace ID" field="airtableWorkspaceId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="wsp…" />
+          <AreaField label="Tables" field="airtableTables" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='[{"name": "Tasks", "fields": [{"name": "Name", "type": "singleLineText"}]}]' />
+        </>)}
+        {op === 'create_table' && (
+          <AreaField label="Fields" field="airtableTableFields" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='[{"name": "Name", "type": "singleLineText"}]' />
+        )}
+        {op === 'create_field' && (<>
+          <TextField label="Field type" field="airtableFieldType" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="singleLineText, number, singleSelect, date…" />
+          <AreaField label="Options (optional)" field="airtableFieldOptions" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"choices": [{"name": "Active"}]} — shape depends on the type' />
+        </>)}
+        {op === 'update_field' && (
+          <TextField label="Field ID" field="airtableFieldId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="fld…" />
+        )}
+
+        {op === 'create_webhook' && (
+          <TextField label="Notification URL" field="airtableUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/airtable" />
+        )}
+        {needsWebhook && (
+          <TextField label="Webhook ID" field="airtableWebhookId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Webhooks" />
+        )}
+        {op === 'list_webhook_payloads' && (
+          <TextField label="Cursor (optional)" field="airtableCursor" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from a previous run" />
+        )}
+        {op === 'create_webhook' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Airtable webhooks expire after 7 days. Schedule a Refresh Webhook run to keep one alive.
+          </p>
+        )}
+
+        {op === 'list_comments' && (
+          <NumField label="Limit" field="airtableLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
   )

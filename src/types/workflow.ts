@@ -39,6 +39,7 @@ export type NodeType =
   | 'resend'
   | 'sendgrid'
   | 'kit'
+  | 'airtable'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -564,6 +565,36 @@ export type FlowNodeData = {
   kitDescription?: string
   kitSendAt?: string
   kitLimit?: number
+
+  // airtable
+  airtableBaseId?: string
+  airtableTable?: string
+  airtableTableId?: string
+  airtableRecordId?: string
+  airtableFields?: string
+  airtableRecords?: string
+  airtableTypecast?: string
+  airtableFormula?: string
+  airtableView?: string
+  airtableFieldNames?: string
+  airtableSortField?: string
+  airtableSortDirection?: string
+  airtableOffset?: string
+  airtableMergeOn?: string
+  airtableComment?: string
+  airtableCommentId?: string
+  airtableName?: string
+  airtableDescription?: string
+  airtableWorkspaceId?: string
+  airtableTables?: string
+  airtableTableFields?: string
+  airtableFieldType?: string
+  airtableFieldOptions?: string
+  airtableFieldId?: string
+  airtableUrl?: string
+  airtableWebhookId?: string
+  airtableCursor?: string
+  airtableLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

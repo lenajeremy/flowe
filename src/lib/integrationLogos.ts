@@ -49,6 +49,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   resend:    'resend.com',
   sendgrid:  'sendgrid.com',
   kit:       'kit.com',
+  airtable:  'airtable.com',
 }
 
 /**

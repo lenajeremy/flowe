@@ -35,6 +35,7 @@ import { GranolaNode }          from './GranolaNode'
 import { ResendNode }           from './ResendNode'
 import { SendGridNode }         from './SendGridNode'
 import { KitNode }              from './KitNode'
+import { AirtableNode }         from './AirtableNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -76,5 +77,6 @@ export const nodeTypes = {
   resend:           ResendNode,
   sendgrid:         SendGridNode,
   kit:              KitNode,
+  airtable:         AirtableNode,
   data:             DataNode,
 }

@@ -225,6 +225,7 @@
   --na-resend:           #e5e4e5;
   --na-sendgrid:         #3368fa;
   --na-kit:              #ff6154;
+  --na-airtable:         #ffb340;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -372,6 +373,7 @@
   --na-resend:           #565664;
   --na-sendgrid:         #1f4fd0;
   --na-kit:              #d63b2c;
+  --na-airtable:         #b8760a;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;
