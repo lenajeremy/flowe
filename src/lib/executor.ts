@@ -382,6 +382,7 @@ async function executeNode(
     case 'typeform':
     case 'calendly':
     case 'dropbox':
+    case 'netlify':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this

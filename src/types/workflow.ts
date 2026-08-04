@@ -44,6 +44,7 @@ export type NodeType =
   | 'typeform'
   | 'calendly'
   | 'dropbox'
+  | 'netlify'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -697,6 +698,57 @@ export type FlowNodeData = {
   dropboxMessage?: string
   dropboxTitle?: string
   dropboxLimit?: number
+
+  // netlify
+  netlifySiteId?: string
+  netlifyAccountId?: string    // team ID; env var writes need it
+  netlifyAccountSlug?: string    // team URL name; NOT the ID
+  netlifyDeployId?: string
+  netlifyBuildId?: string
+  netlifyFormId?: string
+  netlifySubmissionId?: string
+  netlifyZoneId?: string
+  netlifyRecordId?: string
+  netlifyHookId?: string
+  netlifyBuildHookId?: string
+  netlifyKeyId?: string
+  netlifyName?: string
+  netlifyTitle?: string
+  netlifyCustomDomain?: string
+  netlifySiteConfig?: string    // raw JSON site body
+  netlifyRepo?: string    // raw JSON repo settings
+  netlifyConfigureDns?: string    // "true" | "false"
+  netlifyBranch?: string
+  netlifyClearCache?: string    // "true" | "false"
+  netlifyDraft?: string    // "true" | "false"
+  netlifyDeployFiles?: string    // JSON path → SHA1 manifest
+  netlifyReason?: string    // required by disable_site
+  netlifyEnvKey?: string
+  netlifyEnvValue?: string
+  netlifyEnvValueId?: string
+  netlifyEnvContext?: string    // all|dev|dev-server|branch-deploy|deploy-preview|production|branch
+  netlifyEnvContextParameter?: string    // branch name when context=branch
+  netlifyEnvScopes?: string    // CSV: builds,functions,runtime,post-processing
+  netlifyEnvIsSecret?: string    // "true" | "false"
+  netlifyEnvVarsJson?: string    // raw JSON array of variables
+  netlifyRecordType?: string
+  netlifyHostname?: string
+  netlifyRecordValue?: string
+  netlifyTtl?: string
+  netlifyPriority?: string    // MX
+  netlifyWeight?: string    // SRV
+  netlifyPort?: string    // SRV
+  netlifyFlag?: string    // CAA
+  netlifyTag?: string    // CAA
+  netlifyHookType?: string    // defaults to "url"
+  netlifyHookEvent?: string    // deploy_created, submission_created, …
+  netlifyHookData?: string    // raw JSON data object
+  netlifyUrl?: string    // convenience for a url hook
+  netlifyFilter?: string    // all|owner|guest
+  netlifyQuery?: string
+  netlifyLogType?: string
+  netlifyPage?: number    // 1-based
+  netlifyPerPage?: number    // capped at 100
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

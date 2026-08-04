@@ -89,4 +89,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   typeform:         logo('typeform'),
   calendly:         logo('calendly'),
   dropbox:          logo('dropbox'),
+  netlify:          logo('netlify'),
 }

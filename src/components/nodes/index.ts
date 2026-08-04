@@ -40,6 +40,7 @@ import { ClickUpNode }          from './ClickUpNode'
 import { TypeformNode }         from './TypeformNode'
 import { CalendlyNode }         from './CalendlyNode'
 import { DropboxNode }          from './DropboxNode'
+import { NetlifyNode }          from './NetlifyNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -86,5 +87,6 @@ export const nodeTypes = {
   typeform:         TypeformNode,
   calendly:         CalendlyNode,
   dropbox:          DropboxNode,
+  netlify:          NetlifyNode,
   data:             DataNode,
 }

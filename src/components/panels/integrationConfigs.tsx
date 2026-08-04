@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -3795,6 +3795,218 @@ export function DropboxConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
           'list_folder_continue'].includes(op) && (
           <NumField label="Limit" field="dropboxLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={100} />
         )}
+      </IntegrationSection>
+  )
+}
+
+export function NetlifyConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_sites'
+  const siteOps = op.includes('site') || op.includes('deploy') || op.includes('build') ||
+    op.includes('form') || op.includes('hook') || op.includes('env') || op.includes('key') ||
+    op.includes('dns') && op.includes('site')
+  const envOp = op.includes('env_var')
+  const accountSlugOp = ['list_account_sites', 'list_members', 'get_member'].includes(op)
+  const deployOp = ['get_deploy', 'cancel_deploy', 'lock_deploy', 'unlock_deploy',
+    'restore_deploy', 'publish_deploy'].includes(op)
+  return (
+      <IntegrationSection
+        provider="netlify" label="Netlify" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_sites"
+        ops={[
+          { value: 'list_sites', label: 'List Sites' },
+          { value: 'list_account_sites', label: 'List Account Sites' },
+          { value: 'get_site', label: 'Get Site' },
+          { value: 'create_site', label: 'Create Site' },
+          { value: 'update_site', label: 'Update Site' },
+          { value: 'delete_site', label: 'Delete Site' },
+          { value: 'enable_site', label: 'Enable Site' },
+          { value: 'disable_site', label: 'Disable Site' },
+          { value: 'list_deploys', label: 'List Deploys' },
+          { value: 'get_deploy', label: 'Get Deploy' },
+          { value: 'create_deploy', label: 'Create Deploy' },
+          { value: 'cancel_deploy', label: 'Cancel Deploy' },
+          { value: 'restore_deploy', label: 'Restore Deploy' },
+          { value: 'rollback_site', label: 'Rollback Site' },
+          { value: 'lock_deploy', label: 'Lock Deploy' },
+          { value: 'unlock_deploy', label: 'Unlock Deploy' },
+          { value: 'delete_deploy', label: 'Delete Deploy' },
+          { value: 'list_builds', label: 'List Builds' },
+          { value: 'get_build', label: 'Get Build' },
+          { value: 'start_build', label: 'Start Build' },
+          { value: 'get_account_build_status', label: 'Get Account Build Status' },
+          { value: 'list_env_vars', label: 'List Env Vars' },
+          { value: 'list_site_env_vars', label: 'List Site Env Vars' },
+          { value: 'get_env_var', label: 'Get Env Var' },
+          { value: 'create_env_vars', label: 'Create Env Vars' },
+          { value: 'update_env_var', label: 'Update Env Var' },
+          { value: 'set_env_var_value', label: 'Set Env Var Value' },
+          { value: 'delete_env_var', label: 'Delete Env Var' },
+          { value: 'delete_env_var_value', label: 'Delete Env Var Value' },
+          { value: 'list_forms', label: 'List Forms' },
+          { value: 'delete_form', label: 'Delete Form' },
+          { value: 'list_site_submissions', label: 'List Site Submissions' },
+          { value: 'list_form_submissions', label: 'List Form Submissions' },
+          { value: 'get_submission', label: 'Get Submission' },
+          { value: 'delete_submission', label: 'Delete Submission' },
+          { value: 'list_dns_zones', label: 'List DNS Zones' },
+          { value: 'get_dns_zone', label: 'Get DNS Zone' },
+          { value: 'create_dns_zone', label: 'Create DNS Zone' },
+          { value: 'delete_dns_zone', label: 'Delete DNS Zone' },
+          { value: 'list_dns_records', label: 'List DNS Records' },
+          { value: 'get_dns_record', label: 'Get DNS Record' },
+          { value: 'create_dns_record', label: 'Create DNS Record' },
+          { value: 'delete_dns_record', label: 'Delete DNS Record' },
+          { value: 'get_site_dns', label: 'Get Site DNS' },
+          { value: 'configure_site_dns', label: 'Configure Site DNS' },
+          { value: 'list_build_hooks', label: 'List Build Hooks' },
+          { value: 'get_build_hook', label: 'Get Build Hook' },
+          { value: 'create_build_hook', label: 'Create Build Hook' },
+          { value: 'update_build_hook', label: 'Update Build Hook' },
+          { value: 'delete_build_hook', label: 'Delete Build Hook' },
+          { value: 'list_hooks', label: 'List Hooks' },
+          { value: 'get_hook', label: 'Get Hook' },
+          { value: 'create_hook', label: 'Create Hook' },
+          { value: 'update_hook', label: 'Update Hook' },
+          { value: 'delete_hook', label: 'Delete Hook' },
+          { value: 'enable_hook', label: 'Enable Hook' },
+          { value: 'list_hook_types', label: 'List Hook Types' },
+          { value: 'list_deploy_keys', label: 'List Deploy Keys' },
+          { value: 'get_deploy_key', label: 'Get Deploy Key' },
+          { value: 'create_deploy_key', label: 'Create Deploy Key' },
+          { value: 'delete_deploy_key', label: 'Delete Deploy Key' },
+          { value: 'get_current_user', label: 'Get Current User' },
+          { value: 'list_accounts', label: 'List Accounts' },
+          { value: 'get_account', label: 'Get Account' },
+          { value: 'list_account_members', label: 'List Account Members' },
+          { value: 'list_audit_events', label: 'List Audit Events' },
+        ]}
+        tokenPlaceholder="Netlify token"
+        hideManual
+      >
+        {siteOps && !accountSlugOp && (
+          <TextField label="Site ID" field="netlifySiteId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Sites" />
+        )}
+        {accountSlugOp && (
+          <TextField label="Account slug" field="netlifyAccountSlug" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="the team's URL name — not its ID" />
+        )}
+        {envOp && (
+          <TextField label="Account ID (optional)" field="netlifyAccountId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="resolved from the site when left blank" />
+        )}
+        {envOp && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Environment variables are stored on the team. With a Site ID set, the variable belongs to
+            that site; leave it blank and it becomes a{' '}
+            <span className="text-[var(--color-muted)]">team-wide</span> variable instead — Netlify
+            won't warn you.
+          </p>
+        )}
+
+        {deployOp && (
+          <TextField label="Deploy ID" field="netlifyDeployId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Deploys" />
+        )}
+        {op === 'rollback_site' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Rolls back to the previous deploy. Netlify chooses which one — this takes no deploy ID.
+          </p>
+        )}
+
+        {envOp && (<>
+          <TextField label="Variable name" field="netlifyEnvKey" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="API_URL" />
+          <TextField label="Value" field="netlifyEnvValue" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{prev-node.output}}" />
+          <SelectField label="Context" field="netlifyEnvContext" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="all"
+            options={[
+              { value: 'all', label: 'All contexts' },
+              { value: 'production', label: 'Production' },
+              { value: 'deploy-preview', label: 'Deploy previews' },
+              { value: 'branch-deploy', label: 'Branch deploys' },
+              { value: 'dev', label: 'Local dev' },
+            ]} />
+        </>)}
+        {op === 'update_env_var' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            This replaces every context for the variable. Any context you don't include is removed —
+            use Set Env Var Value to change just one.
+          </p>
+        )}
+
+        {op === 'create_deploy' && (<>
+          <AreaField label="Files manifest" field="netlifyDeployFiles" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"/index.html": "<sha1 of the file>"}' />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            Netlify publishes exactly what this lists, so an incomplete manifest deletes the rest of
+            the site. Unless you're generating SHA1s yourself, use Start Build instead.
+          </p>
+        </>)}
+        {op === 'start_build' && (
+          <TextField label="Branch (optional)" field="netlifyBranch" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="main" />
+        )}
+        {(op === 'create_deploy' || op === 'start_build') && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Deploys are limited to 3 a minute and 100 a day — don't loop this over many sites.
+          </p>
+        )}
+
+        {(op === 'create_site' || op === 'update_site') && (<>
+          <TextField label="Name" field="netlifyName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="my-site" />
+          <TextField label="Custom domain (optional)" field="netlifyCustomDomain" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="www.example.com" />
+          <AreaField label="Extra settings (optional)" field="netlifySiteConfig" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"processing_settings": {"skip": true}}' />
+        </>)}
+
+        {op.includes('form') && op !== 'list_forms' && (
+          <TextField label="Form ID" field="netlifyFormId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Forms" />
+        )}
+        {op.includes('submission') && !op.startsWith('list') && (
+          <TextField label="Submission ID" field="netlifySubmissionId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="" />
+        )}
+
+        {op.includes('dns_record') && (<>
+          <TextField label="Zone ID" field="netlifyZoneId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List DNS Zones" />
+          {op === 'create_dns_record' && (<>
+            <TextField label="Hostname" field="netlifyName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+              placeholder="www.example.com" />
+            <TextField label="Type" field="netlifyRecordType" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+              placeholder="A, CNAME, TXT, MX" />
+            <TextField label="Value" field="netlifyRecordValue" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+              placeholder="" />
+            <NumField label="TTL (optional)" field="netlifyTtl" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={3600} />
+          </>)}
+          {op === 'delete_dns_record' && (
+            <TextField label="Record ID" field="netlifyRecordId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+              placeholder="from List DNS Records" />
+          )}
+        </>)}
+
+        {op === 'create_hook' && (<>
+          <TextField label="Event" field="netlifyEvent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="deploy_succeeded" />
+          <TextField label="Type" field="netlifyHookType" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="email, slack, url" />
+          <AreaField label="Hook data" field="netlifyHookData" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"url": "https://example.com/hook"}' />
+        </>)}
+        {(op === 'get_hook' || op === 'delete_hook' || op === 'update_hook') && (
+          <TextField label="Hook ID" field="netlifyHookId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Hooks" />
+        )}
+
+        {op.startsWith('list') && (<>
+          <NumField label="Page (optional)" field="netlifyPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
+          <NumField label="Per page (optional)" field="netlifyPerPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={50} />
+        </>)}
       </IntegrationSection>
   )
 }

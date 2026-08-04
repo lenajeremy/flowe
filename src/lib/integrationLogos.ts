@@ -54,6 +54,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   typeform:  'typeform.com',
   calendly:  'calendly.com',
   dropbox:   'dropbox.com',
+  netlify:   'netlify.com',
 }
 
 /**
