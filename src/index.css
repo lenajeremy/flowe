@@ -233,6 +233,8 @@
   --na-netlify:          #32e6e2;
   --na-supabase:         #3ecf8e;
   --na-gumroad:          #ff90e8;
+  --na-googlesearchconsole: #4c9aff;
+  --na-googlecontacts:   #4c9aff;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -388,6 +390,8 @@
   --na-netlify:          #0d8a86;
   --na-supabase:         #1a8f5f;
   --na-gumroad:          #c0399f;
+  --na-googlesearchconsole: #1a73e8;
+  --na-googlecontacts:   #1a73e8;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

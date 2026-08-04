@@ -50,6 +50,8 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   netlify:          'var(--na-netlify)',
   supabase:         'var(--na-supabase)',
   gumroad:          'var(--na-gumroad)',
+  googlesearchconsole: 'var(--na-googlesearchconsole)',
+  googlecontacts:   'var(--na-googlecontacts)',
   data:             'var(--na-data)',
 }
 
@@ -102,6 +104,8 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   netlify:          'M8 2l5.5 6L8 14 2.5 8z',
   supabase:         'M8.5 2L4 9h4l-.5 5L12 7H8z',
   gumroad:          'M11 6a3 3 0 10-3 5h3V8.5H9.5',
+  googlesearchconsole: 'M7 3a4 4 0 104 4M10 10l3.5 3.5M2.5 13.5h5',
+  googlecontacts:   'M8 3a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM3.5 13.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -151,6 +155,8 @@ export const NODE_LABELS: Record<NodeType, string> = {
   netlify:          'Netlify',
   supabase:         'Supabase',
   gumroad:          'Gumroad',
+  googlesearchconsole: 'Search Console',
+  googlecontacts:   'Google Contacts',
   data:             'Data Store',
 }
 
@@ -200,5 +206,7 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   netlify:          'Sites & deploys',
   supabase:         'Projects & database',
   gumroad:          'Products & sales',
+  googlesearchconsole: 'Search performance',
+  googlecontacts:   'Contacts & groups',
   data:             'Persist & recall data',
 }

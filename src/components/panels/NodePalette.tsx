@@ -16,7 +16,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   { category: 'Integrations', items: [
     'gmail', 'googlecalendar', 'googledrive', 'googledocs', 'googlesheets',
     'googleslides', 'googleforms', 'googlemeet', 'googlechat', 'googletasks',
-    'googlekeep', 'outlook', 'slack', 'notion', 'linear',
+    'googlekeep', 'googlesearchconsole', 'googlecontacts', 'outlook', 'slack', 'notion', 'linear',
     'github', 'gitlab', 'jira', 'confluence', 'bitbucket',
     'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly', 'dropbox', 'netlify', 'supabase', 'gumroad'] },
 ]

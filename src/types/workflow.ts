@@ -47,6 +47,8 @@ export type NodeType =
   | 'netlify'
   | 'supabase'
   | 'gumroad'
+  | 'googlesearchconsole'
+  | 'googlecontacts'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -828,6 +830,41 @@ export type FlowNodeData = {
   gumroadTrackingUrl?: string
   gumroadUrl?: string
   gumroadWebhookId?: string
+
+  // googlesearchconsole
+  gscSiteUrl?: string    // https://example.com/ or sc-domain:example.com
+  gscFeedPath?: string    // full sitemap URL
+  gscStartDate?: string    // YYYY-MM-DD, Pacific time
+  gscEndDate?: string
+  gscDimensions?: string    // query, page, country, device, date
+  gscSearchType?: string    // web | image | video | news | discover
+  gscDataState?: string    // final (default) | all
+  gscFilterExpression?: string    // one "dimension operator value" per line
+  gscRowLimit?: number
+  gscStartRow?: number
+  gscInspectionUrl?: string
+  gscLanguageCode?: string
+
+  // googlecontacts
+  contactsResourceName?: string    // people/c123; comma-separated for batch delete
+  contactsFields?: string    // personFields mask; a sensible default applies
+  contactsQuery?: string
+  contactsPageToken?: string
+  contactsSortOrder?: string
+  contactsGivenName?: string
+  contactsFamilyName?: string
+  contactsEmail?: string    // comma-separated
+  contactsPhone?: string    // comma-separated
+  contactsOrganization?: string
+  contactsJobTitle?: string
+  contactsAddress?: string
+  contactsNotes?: string
+  contactsRawPerson?: string    // extra People-API fields as JSON
+  contactsGroupId?: string
+  contactsGroupName?: string
+  contactsAddMembers?: string    // comma-separated resource names
+  contactsRemoveMembers?: string
+  contactsLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

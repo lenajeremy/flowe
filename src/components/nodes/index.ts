@@ -43,6 +43,8 @@ import { DropboxNode }          from './DropboxNode'
 import { NetlifyNode }          from './NetlifyNode'
 import { SupabaseNode }         from './SupabaseNode'
 import { GumroadNode }          from './GumroadNode'
+import { GoogleSearchConsoleNode } from './GoogleSearchConsoleNode'
+import { GoogleContactsNode }   from './GoogleContactsNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -92,5 +94,7 @@ export const nodeTypes = {
   netlify:          NetlifyNode,
   supabase:         SupabaseNode,
   gumroad:          GumroadNode,
+  googlesearchconsole: GoogleSearchConsoleNode,
+  googlecontacts:   GoogleContactsNode,
   data:             DataNode,
 }

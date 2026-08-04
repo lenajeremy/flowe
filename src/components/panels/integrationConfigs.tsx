@@ -88,8 +88,8 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'airtable' | 'clickup' | 'supabase' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace'
+type ResourceProvider = 'airtable' | 'clickup' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property'
 
 function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
   return (
@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -4360,6 +4360,203 @@ export function GumroadConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
           <TextField label="Webhook ID" field="gumroadWebhookId" data={data} nodeId={nodeId}
             updateNodeData={updateNodeData} placeholder="from List Webhooks" />
         )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleSearchConsoleConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'query_search_analytics'
+  const sitemapOp = op.includes('sitemap')
+  return (
+      <IntegrationSection
+        provider="googlesearchconsole" label="Search Console" data={data} nodeId={nodeId}
+        updateNodeData={updateNodeData} defaultOp="query_search_analytics"
+        ops={[
+          { value: 'list_sites', label: 'List Sites' },
+          { value: 'get_site', label: 'Get Site' },
+          { value: 'add_site', label: 'Add Site' },
+          { value: 'delete_site', label: 'Delete Site' },
+          { value: 'list_sitemaps', label: 'List Sitemaps' },
+          { value: 'get_sitemap', label: 'Get Sitemap' },
+          { value: 'submit_sitemap', label: 'Submit Sitemap' },
+          { value: 'delete_sitemap', label: 'Delete Sitemap' },
+          { value: 'query_search_analytics', label: 'Query Search Analytics' },
+          { value: 'inspect_url', label: 'Inspect URL' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {op !== 'list_sites' && (
+          <ResourceField label="Property" provider="googlesearchconsole" kind="property"
+            field="gscSiteUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/ or sc-domain:example.com" />
+        )}
+
+        {op === 'query_search_analytics' && (<>
+          <TextField label="Start date" field="gscStartDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="2026-07-01" />
+          <TextField label="End date" field="gscEndDate" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="2026-07-31" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Dates are Pacific time and the data lags about two days, so a range ending yesterday will
+            usually come back empty.
+          </p>
+          <TextField label="Group by" field="gscDimensions" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="query, page, country, device, date" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Leave this blank and you get one totals row rather than a breakdown.
+          </p>
+          <SelectField label="Search type" field="gscSearchType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'All types' },
+              { value: 'web', label: 'Web' },
+              { value: 'image', label: 'Image' },
+              { value: 'video', label: 'Video' },
+              { value: 'news', label: 'News' },
+              { value: 'discover', label: 'Discover' },
+            ]} />
+          <AreaField label="Filters (optional)" field="gscFilterExpression" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder={'query contains pricing\ncountry equals gbr'} />
+          <SelectField label="Data freshness" field="gscDataState" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Final data only' },
+              { value: 'all', label: 'Include fresh but incomplete data' },
+            ]} />
+          <NumField label="Rows" field="gscRowLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={100} />
+          <NumField label="Start row (optional)" field="gscStartRow" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={0} />
+        </>)}
+
+        {sitemapOp && op !== 'list_sitemaps' && (
+          <TextField label="Sitemap URL" field="gscFeedPath" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="https://example.com/sitemap.xml" />
+        )}
+
+        {op === 'inspect_url' && (<>
+          <TextField label="Page to inspect" field="gscInspectionUrl" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="https://example.com/pricing" />
+          <TextField label="Language (optional)" field="gscLanguageCode" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="en-GB" />
+        </>)}
+
+        {op === 'add_site' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Adding a property doesn't verify it. Until it's verified in Search Console it returns no data.
+          </p>
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function GoogleContactsConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_contacts'
+  const needsPerson = ['get_contact', 'update_contact', 'delete_contact', 'batch_delete_contacts',
+    'copy_other_contact'].includes(op)
+  const writesPerson = op === 'create_contact' || op === 'update_contact'
+  const groupOp = op.includes('group')
+  const searches = op === 'search_contacts' || op === 'search_other_contacts'
+  return (
+      <IntegrationSection
+        provider="googlecontacts" label="Google Contacts" data={data} nodeId={nodeId}
+        updateNodeData={updateNodeData} defaultOp="list_contacts"
+        ops={[
+          { value: 'get_my_profile', label: 'Get My Profile' },
+          { value: 'list_contacts', label: 'List Contacts' },
+          { value: 'get_contact', label: 'Get Contact' },
+          { value: 'search_contacts', label: 'Search Contacts' },
+          { value: 'list_other_contacts', label: 'List Other Contacts' },
+          { value: 'search_other_contacts', label: 'Search Other Contacts' },
+          { value: 'create_contact', label: 'Create Contact' },
+          { value: 'update_contact', label: 'Update Contact' },
+          { value: 'delete_contact', label: 'Delete Contact' },
+          { value: 'batch_delete_contacts', label: 'Batch Delete Contacts' },
+          { value: 'copy_other_contact', label: 'Copy Other Contact' },
+          { value: 'list_contact_groups', label: 'List Contact Groups' },
+          { value: 'get_contact_group', label: 'Get Contact Group' },
+          { value: 'create_contact_group', label: 'Create Contact Group' },
+          { value: 'update_contact_group', label: 'Update Contact Group' },
+          { value: 'delete_contact_group', label: 'Delete Contact Group' },
+          { value: 'modify_group_members', label: 'Modify Group Members' },
+        ]}
+        tokenPlaceholder="Google access token"
+        hideManual
+      >
+        {needsPerson && (
+          <TextField label={op === 'batch_delete_contacts' ? 'Contacts' : 'Contact'}
+            field="contactsResourceName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'batch_delete_contacts' ? 'people/c1, people/c2' : 'people/c123'} />
+        )}
+
+        {writesPerson && (<>
+          <TextField label="First name" field="contactsGivenName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Jane" />
+          <TextField label="Last name" field="contactsFamilyName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Doe" />
+          <TextField label="Email" field="contactsEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com — comma-separated for several" />
+          <TextField label="Phone" field="contactsPhone" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="+353…" />
+          <TextField label="Company (optional)" field="contactsOrganization" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Acme" />
+          <TextField label="Job title (optional)" field="contactsJobTitle" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Head of Ops" />
+          <TextField label="Address (optional)" field="contactsAddress" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="" />
+          <AreaField label="Notes (optional)" field="contactsNotes" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        </>)}
+        {op === 'update_contact' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Only the fields you fill in are changed; anything left blank is untouched. If someone else
+            edited this contact since, Google rejects the write rather than overwriting them.
+          </p>
+        )}
+
+        {searches && (
+          <TextField label="Query" field="contactsQuery" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane" />
+        )}
+        {op === 'search_contacts' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            A contact created moments ago may not be searchable yet — Google indexes it asynchronously.
+          </p>
+        )}
+
+        {groupOp && op !== 'list_contact_groups' && op !== 'create_contact_group' && (
+          <TextField label="Group" field="contactsGroupId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="contactGroups/… from List Contact Groups" />
+        )}
+        {(op === 'create_contact_group' || op === 'update_contact_group') && (
+          <TextField label="Group name" field="contactsGroupName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Customers" />
+        )}
+        {op === 'modify_group_members' && (<>
+          <TextField label="Add contacts" field="contactsAddMembers" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="people/c1, people/c2" />
+          <TextField label="Remove contacts" field="contactsRemoveMembers" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="people/c3" />
+        </>)}
+
+        {['list_contacts', 'get_contact', 'get_my_profile'].includes(op) && (
+          <TextField label="Fields (optional)" field="contactsFields" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="names,emailAddresses,phoneNumbers — a sensible default applies" />
+        )}
+        {op === 'list_contacts' && (<>
+          <SelectField label="Sort by" field="contactsSortOrder" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: "Google's default order" },
+              { value: 'LAST_MODIFIED_DESCENDING', label: 'Recently changed first' },
+              { value: 'FIRST_NAME_ASCENDING', label: 'First name A–Z' },
+              { value: 'LAST_NAME_ASCENDING', label: 'Last name A–Z' },
+            ]} />
+          <TextField label="Page token (optional)" field="contactsPageToken" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from a previous run" />
+        </>)}
+        {op.startsWith('list') || searches ? (
+          <NumField label="Limit" field="contactsLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={50} />
+        ) : null}
       </IntegrationSection>
   )
 }

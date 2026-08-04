@@ -92,4 +92,9 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   netlify:          logo('netlify'),
   supabase:         logo('supabase'),
   gumroad:          logo('gumroad'),
+  // No distinct brand mark exists for these two: gstatic has no product logo and
+  // logo.dev returns the same generic Google G for both, so they keep the drawn
+  // glyph rather than rendering as indistinguishable duplicates.
+  googlesearchconsole: icon('googlesearchconsole'),
+  googlecontacts:   icon('googlecontacts'),
 }
