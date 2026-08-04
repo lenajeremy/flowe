@@ -4,8 +4,50 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fernary</title>
-    <style>body { background: #0a0a0f; margin: 0; }</style>
+
+    <!-- The app name, exactly as configured on the Google OAuth consent screen.
+         Google's homepage review reads the served HTML, and this is a
+         client-rendered SPA, so anything only React knows about is invisible to
+         it. That is why the title, the description, and the #root fallback below
+         all state the name and purpose in plain text. -->
+    <title>Fernary — AI workflow automation for business tools</title>
+    <meta name="description" content="Fernary builds and runs automated workflows for your business. Describe what you want in plain English and Fernary assembles it, then runs it on a schedule or a webhook — reading and writing your Gmail, Google Calendar, Drive, Docs, Sheets, Slack, Shopify, Stripe and more, pausing for your approval before anything important happens." />
+    <link rel="canonical" href="https://fernary.com/" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fernary" />
+    <meta property="og:title" content="Fernary — AI workflow automation for business tools" />
+    <meta property="og:description" content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running — pausing for your approval before anything important happens." />
+    <meta property="og:url" content="https://fernary.com/" />
+    <meta property="og:image" content="https://fernary.com/fernary-og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="The Fernary wordmark on a dark photograph of unfurling fern fronds." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@fernaryai" />
+    <meta name="twitter:title" content="Fernary — AI workflow automation for business tools" />
+    <meta name="twitter:description" content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running." />
+    <meta name="twitter:image" content="https://fernary.com/fernary-og.jpg" />
+
+    <style>
+      body { background: #0a0a0f; margin: 0; }
+      /* Styling for the pre-hydration fallback below. React replaces #root on
+         mount, so this is what crawlers, no-JS visitors, and anyone on a slow
+         connection see. It says the same things the rendered page says. */
+      .boot {
+        max-width: 44rem; margin: 0 auto; padding: 4rem 1.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        color: #c7d2cd; line-height: 1.65;
+      }
+      .boot h1 { color: #fff; font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 .35rem; }
+      .boot h2 { color: #fff; font-size: 1.05rem; margin: 2rem 0 .5rem; }
+      .boot .tag { color: #8a9a94; margin: 0 0 1.75rem; }
+      .boot a { color: #3dd68c; }
+      .boot ul { padding-left: 1.2rem; }
+      .boot li { margin: .3rem 0; }
+    </style>
     <!-- No font CDN, deliberately. Google Sans and Google Sans Code are bundled
          via @fontsource (see src/index.css), so nothing here reaches out — which
          also avoids handing visitor IPs to a third party before the app loads,
@@ -14,7 +56,58 @@
          referenced that family. -->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-hydration content. Not a marketing page — a plain statement of
+           what this app is, who runs it, what it does with a user's data, and
+           where the policies are. Kept factually identical to the rendered site;
+           if the product changes, this changes with it. -->
+      <main class="boot">
+        <h1>Fernary</h1>
+        <p class="tag">The automation system for AI you can actually leave running.</p>
+
+        <p>
+          <strong>Fernary is a web application that builds and runs automated
+          workflows for small businesses.</strong> You describe what you want in
+          plain English — for example, &ldquo;every weekday at 8am, find orders
+          that haven't shipped in three days and draft me an update email for
+          each&rdquo; — and Fernary assembles the workflow for you. It then runs
+          on a schedule or from a webhook, without you present, and pauses for
+          your approval before anything consequential happens.
+        </p>
+
+        <h2>What it connects to, and why</h2>
+        <p>
+          A workflow is only useful if it can reach the tools a business already
+          runs on. Fernary connects to those accounts with your permission, and
+          uses them only to carry out the steps in the workflows you build:
+        </p>
+        <ul>
+          <li><strong>Gmail</strong> — read and label messages a workflow needs to act on, and send or draft the replies it produces on your behalf.</li>
+          <li><strong>Google Calendar</strong> — read events a workflow reacts to, and create or update the ones it schedules.</li>
+          <li><strong>Google Drive, Docs and Sheets</strong> — read source files a workflow uses as input, and write the documents, rows and reports it generates.</li>
+          <li><strong>Slack, Notion, Linear, GitHub, GitLab, Outlook, Stripe and Shopify</strong> — the same pattern: read what a step needs, write what it produces.</li>
+        </ul>
+        <p>
+          Access is per-account and revocable at any time. Fernary never uses
+          your data to train AI models, and does not permit its model providers
+          to either.
+        </p>
+
+        <h2>Who runs it</h2>
+        <p>
+          Fernary is operated by Jeremiah Lena, trading as Fernary, based in
+          Dublin, Ireland. Contact <a href="mailto:contact@fernary.com">contact@fernary.com</a>.
+        </p>
+
+        <p>
+          <a href="/privacy">Privacy Policy</a> &middot;
+          <a href="/terms">Terms of Service</a> &middot;
+          <a href="/login">Sign in</a>
+        </p>
+
+        <p class="tag">Loading the application…</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
