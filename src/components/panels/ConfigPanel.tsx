@@ -16,7 +16,7 @@ import {
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
   JiraConfig, ConfluenceConfig, BitbucketConfig,
   GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
-  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig,
+  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig,
 } from '@/components/panels/integrationConfigs'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
@@ -967,6 +967,7 @@ export function ConfigPanel() {
         {nodeType === 'googlechat' && <GoogleChatConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'googlekeep' && <GoogleKeepConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'granola' && <GranolaConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'resend' && <ResendConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (

@@ -32,6 +32,7 @@ import { GoogleTasksNode }      from './GoogleTasksNode'
 import { GoogleChatNode }       from './GoogleChatNode'
 import { GoogleKeepNode }       from './GoogleKeepNode'
 import { GranolaNode }          from './GranolaNode'
+import { ResendNode }           from './ResendNode'
 import { DataNode }             from './DataNode'
 
 // Must be defined at module scope — never inside a component body
@@ -70,5 +71,6 @@ export const nodeTypes = {
   googlechat:       GoogleChatNode,
   googlekeep:       GoogleKeepNode,
   granola:          GranolaNode,
+  resend:           ResendNode,
   data:             DataNode,
 }

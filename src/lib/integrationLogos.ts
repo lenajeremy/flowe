@@ -46,6 +46,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   shopify: 'shopify.com',
   bitbucket: 'bitbucket.com',
   granola:   'granola.ai',
+  resend:    'resend.com',
 }
 
 /**
@@ -78,11 +79,11 @@ export const INLINE_LOGOS: Partial<Record<NodeType, InlineLogo>> = {
 }
 
 /**
- * GitHub's mark is solid near-black on transparent (measured: 23/255 mean
- * luminance, no background of its own), so it disappears on the dark canvas.
- * Inverting it yields the white mark GitHub's own brand guidelines prescribe
- * for dark backgrounds. Every other logo either carries its own background
- * tile or is coloured brightly enough to read on both themes.
+ * Marks that are solid near-black on transparent, with no background tile of
+ * their own, so they disappear on the dark canvas. Inverting yields the white
+ * mark each brand prescribes for dark backgrounds. Measured mean luminance over
+ * opaque pixels: github 23/255, resend 22/255. Every other logo either carries
+ * its own tile or is coloured brightly enough to read on both themes.
  */
 export const INVERT_ON_DARK: ReadonlySet<NodeType> = new Set<NodeType>(['github'])
 

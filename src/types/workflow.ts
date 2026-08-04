@@ -36,6 +36,7 @@ export type NodeType =
   | 'googlechat'
   | 'googlekeep'
   | 'granola'
+  | 'resend'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -475,6 +476,39 @@ export type FlowNodeData = {
   granolaCreatedAfter?: string
   granolaCursor?: string
   granolaLimit?: number
+
+  // resend
+  resendFrom?: string
+  resendTo?: string
+  resendCc?: string
+  resendBcc?: string
+  resendReplyTo?: string
+  resendSubject?: string
+  resendHtml?: string
+  resendText?: string
+  resendScheduledAt?: string
+  resendHeaders?: string
+  resendTags?: string
+  resendBatch?: string
+  resendEmailId?: string
+  resendDomain?: string
+  resendDomainId?: string
+  resendRegion?: string
+  resendEmail?: string
+  resendContactId?: string
+  resendFirstName?: string
+  resendLastName?: string
+  resendUnsubscribed?: string
+  resendProperties?: string
+  resendSegmentId?: string
+  resendName?: string
+  resendBroadcastId?: string
+  resendTemplateId?: string
+  resendTemplateVars?: string
+  resendUrl?: string
+  resendEvents?: string
+  resendWebhookId?: string
+  resendLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

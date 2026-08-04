@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -2448,6 +2448,200 @@ export function GranolaConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
             updateNodeData={updateNodeData} placeholder="from a previous run's response" />
           <NumField label="Limit" field="granolaLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         </>)}
+      </IntegrationSection>
+  )
+}
+
+export function ResendConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'send_email'
+  const needsEmailId = ['get_email', 'reschedule_email', 'cancel_email', 'get_received_email'].includes(op)
+  const needsDomainId = ['get_domain', 'verify_domain', 'delete_domain'].includes(op)
+  const needsContact = ['get_contact', 'update_contact', 'delete_contact', 'list_contact_segments',
+    'add_contact_to_segment', 'remove_contact_from_segment'].includes(op)
+  const needsSegmentId = ['get_segment', 'delete_segment', 'list_segment_contacts', 'create_broadcast',
+    'add_contact_to_segment', 'remove_contact_from_segment'].includes(op)
+  const needsBroadcastId = ['get_broadcast', 'send_broadcast', 'delete_broadcast', 'get_broadcast_metrics'].includes(op)
+  const needsTemplateId = ['get_template', 'publish_template', 'delete_template'].includes(op)
+  const isList = ['list_sent_emails', 'list_received_emails', 'list_contacts', 'list_segment_contacts',
+    'list_suppressions', 'list_logs'].includes(op)
+  return (
+      <IntegrationSection
+        provider="resend" label="Resend" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="send_email"
+        ops={[
+          { value: 'send_email', label: 'Send Email' },
+          { value: 'send_batch', label: 'Send Batch' },
+          { value: 'get_email', label: 'Get Email' },
+          { value: 'list_sent_emails', label: 'List Sent Emails' },
+          { value: 'list_received_emails', label: 'List Received Emails' },
+          { value: 'get_received_email', label: 'Get Received Email' },
+          { value: 'reschedule_email', label: 'Reschedule Email' },
+          { value: 'cancel_email', label: 'Cancel Scheduled Email' },
+          { value: 'list_domains', label: 'List Domains' },
+          { value: 'get_domain', label: 'Get Domain' },
+          { value: 'create_domain', label: 'Add Domain' },
+          { value: 'verify_domain', label: 'Verify Domain' },
+          { value: 'delete_domain', label: 'Delete Domain' },
+          { value: 'create_contact', label: 'Create Contact' },
+          { value: 'get_contact', label: 'Get Contact' },
+          { value: 'update_contact', label: 'Update Contact' },
+          { value: 'list_contacts', label: 'List Contacts' },
+          { value: 'delete_contact', label: 'Delete Contact' },
+          { value: 'add_contact_to_segment', label: 'Add Contact to Segment' },
+          { value: 'remove_contact_from_segment', label: 'Remove Contact from Segment' },
+          { value: 'list_contact_segments', label: "List a Contact's Segments" },
+          { value: 'create_segment', label: 'Create Segment' },
+          { value: 'list_segments', label: 'List Segments' },
+          { value: 'get_segment', label: 'Get Segment' },
+          { value: 'delete_segment', label: 'Delete Segment' },
+          { value: 'list_segment_contacts', label: 'List Segment Contacts' },
+          { value: 'create_broadcast', label: 'Create Broadcast' },
+          { value: 'list_broadcasts', label: 'List Broadcasts' },
+          { value: 'get_broadcast', label: 'Get Broadcast' },
+          { value: 'send_broadcast', label: 'Send Broadcast' },
+          { value: 'delete_broadcast', label: 'Delete Broadcast' },
+          { value: 'get_broadcast_metrics', label: 'Broadcast Metrics' },
+          { value: 'create_template', label: 'Create Template' },
+          { value: 'list_templates', label: 'List Templates' },
+          { value: 'get_template', label: 'Get Template' },
+          { value: 'publish_template', label: 'Publish Template' },
+          { value: 'delete_template', label: 'Delete Template' },
+          { value: 'add_suppression', label: 'Add Suppression' },
+          { value: 'list_suppressions', label: 'List Suppressions' },
+          { value: 'remove_suppression', label: 'Remove Suppression' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'list_logs', label: 'List Logs' },
+          { value: 'list_api_keys', label: 'List API Keys' },
+        ]}
+        tokenPlaceholder="re_..."
+        hideManual
+      >
+        {op === 'send_email' && (<>
+          <TextField label="From" field="resendFrom" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Fernary <hello@yourdomain.com>" />
+          <TextField label="To" field="resendTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com, sam@acme.com" />
+          <TextField label="Subject" field="resendSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="HTML body" field="resendHtml" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="Plain-text body (optional)" field="resendText" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Generated from the HTML if left blank" />
+          <TextField label="Cc (optional)" field="resendCc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Bcc (optional)" field="resendBcc" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Reply-to (optional)" field="resendReplyTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <TextField label="Send at (optional)" field="resendScheduledAt" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="in 1 hour — or an ISO 8601 timestamp" />
+          <TextField label="Template ID (optional)" field="resendTemplateId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="replaces the bodies above" />
+          <TextField label="Template variables (optional)" field="resendTemplateVars" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"name": "Jane"}' />
+          <TextField label="Tags (optional)" field="resendTags" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"campaign": "launch"}' />
+          <TextField label="Headers (optional)" field="resendHeaders" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"X-Entity-Ref-ID": "123"}' />
+        </>)}
+
+        {op === 'send_batch' && (
+          <AreaField label="Emails (JSON array)" field="resendBatch" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='[{"from":"a@b.com","to":"c@d.com","subject":"Hi","html":"<p>Hi</p>"}]' />
+        )}
+
+        {needsEmailId && (
+          <TextField label="Email ID" field="resendEmailId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{prev-node.output}}" />
+        )}
+        {op === 'reschedule_email' && (
+          <TextField label="New send time" field="resendScheduledAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="in 3 hours — or an ISO 8601 timestamp" />
+        )}
+
+        {op === 'create_domain' && (<>
+          <TextField label="Domain" field="resendDomain" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="mail.yourdomain.com" />
+          <TextField label="Region (optional)" field="resendRegion" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="us-east-1" />
+        </>)}
+        {needsDomainId && (
+          <TextField label="Domain ID" field="resendDomainId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Domains" />
+        )}
+
+        {(op === 'create_contact' || op === 'update_contact' || needsContact) && (
+          <TextField label={op === 'create_contact' ? 'Email' : 'Contact (email or ID)'} field="resendEmail"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+        )}
+        {(op === 'create_contact' || op === 'update_contact') && (<>
+          <TextField label="First name (optional)" field="resendFirstName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Jane" />
+          <TextField label="Last name (optional)" field="resendLastName" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Doe" />
+          <SelectField label="Subscription" field="resendUnsubscribed" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Leave unchanged' },
+              { value: 'false', label: 'Subscribed' },
+              { value: 'true', label: 'Unsubscribed' },
+            ]} />
+          <TextField label="Properties (optional)" field="resendProperties" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"plan": "pro"}' />
+        </>)}
+
+        {needsSegmentId && (
+          <TextField label="Segment ID" field="resendSegmentId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Segments" />
+        )}
+        {(op === 'create_segment' || op === 'create_template' || op === 'create_broadcast') && (
+          <TextField label="Name" field="resendName" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="August newsletter" />
+        )}
+
+        {op === 'create_broadcast' && (<>
+          <TextField label="From" field="resendFrom" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Fernary <hello@yourdomain.com>" />
+          <TextField label="Subject" field="resendSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <AreaField label="HTML body" field="resendHtml" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="{{llm-1.output}}" />
+          <TextField label="Reply-to (optional)" field="resendReplyTo" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+        </>)}
+        {needsBroadcastId && (
+          <TextField label="Broadcast ID" field="resendBroadcastId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Broadcasts" />
+        )}
+        {op === 'send_broadcast' && (
+          <TextField label="Send at (optional)" field="resendScheduledAt" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="leave blank to send now" />
+        )}
+
+        {op === 'create_template' && (<>
+          <TextField label="Subject (optional)" field="resendSubject" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="" />
+          <AreaField label="HTML" field="resendHtml" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="<p>Hello {{name}}</p>" />
+        </>)}
+        {needsTemplateId && (
+          <TextField label="Template ID" field="resendTemplateId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Templates" />
+        )}
+
+        {(op === 'add_suppression' || op === 'remove_suppression') && (
+          <TextField label="Email" field="resendEmail" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="jane@acme.com" />
+        )}
+
+        {op === 'create_webhook' && (<>
+          <TextField label="Endpoint URL" field="resendUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/resend" />
+          <TextField label="Events (optional)" field="resendEvents" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="email.delivered, email.bounced" />
+        </>)}
+        {op === 'delete_webhook' && (
+          <TextField label="Webhook ID" field="resendWebhookId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Webhooks" />
+        )}
+
+        {isList && (
+          <NumField label="Limit" field="resendLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        )}
       </IntegrationSection>
   )
 }
