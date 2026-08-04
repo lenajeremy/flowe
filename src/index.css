@@ -227,6 +227,8 @@
   --na-kit:              #ff6154;
   --na-airtable:         #ffb340;
   --na-clickup:          #b388ff;
+  --na-typeform:         #e5e4e5;
+  --na-calendly:         #4c9aff;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -376,6 +378,8 @@
   --na-kit:              #d63b2c;
   --na-airtable:         #b8760a;
   --na-clickup:          #6d3bd4;
+  --na-typeform:         #565664;
+  --na-calendly:         #0b5ed9;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

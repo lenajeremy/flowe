@@ -41,6 +41,8 @@ export type NodeType =
   | 'kit'
   | 'airtable'
   | 'clickup'
+  | 'typeform'
+  | 'calendly'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -634,6 +636,49 @@ export type FlowNodeData = {
   clickupEvents?: string
   clickupWebhookId?: string
   clickupLimit?: number
+
+  // typeform
+  typeformFormId?: string
+  typeformTitle?: string
+  typeformDefinition?: string
+  typeformWorkspaceId?: string
+  typeformThemeId?: string
+  typeformSearch?: string
+  typeformSince?: string
+  typeformUntil?: string
+  typeformAfter?: string
+  typeformCompleted?: string
+  typeformQuery?: string
+  typeformResponseIds?: string
+  typeformUrl?: string
+  typeformTag?: string
+  typeformSecret?: string
+  typeformLimit?: number
+
+  // calendly
+  calendlyUser?: string
+  calendlyOrganization?: string
+  calendlyScope?: string
+  calendlyEventType?: string
+  calendlyEvent?: string
+  calendlyInvitee?: string
+  calendlyNoShow?: string
+  calendlyMembership?: string
+  calendlyRoutingForm?: string
+  calendlyStatus?: string
+  calendlyStartTime?: string
+  calendlyEndTime?: string
+  calendlyEmail?: string
+  calendlyReason?: string
+  calendlyInviteeName?: string
+  calendlyInviteeEmail?: string
+  calendlyTimezone?: string
+  calendlyGuests?: string
+  calendlyAnswers?: string
+  calendlyUrl?: string
+  calendlyEvents?: string
+  calendlyWebhookId?: string
+  calendlyLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

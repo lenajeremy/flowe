@@ -44,6 +44,8 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   kit:              'var(--na-kit)',
   airtable:         'var(--na-airtable)',
   clickup:          'var(--na-clickup)',
+  typeform:         'var(--na-typeform)',
+  calendly:         'var(--na-calendly)',
   data:             'var(--na-data)',
 }
 
@@ -90,6 +92,8 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   kit:              'M4 13V3l4 5 4-5v10',
   airtable:         'M2 5.5l6-2.5 6 2.5-6 2.5zM2 8l6 2.5L14 8M2 10.5l6 2.5 6-2.5',
   clickup:          'M3 10.5l5-5 5 5M5.5 13l2.5-2.5L10.5 13',
+  typeform:         'M3 4h10M8 4v9',
+  calendly:         'M11.5 4.5A4 4 0 108 12.5',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -133,6 +137,8 @@ export const NODE_LABELS: Record<NodeType, string> = {
   kit:              'Kit',
   airtable:         'Airtable',
   clickup:          'ClickUp',
+  typeform:         'Typeform',
+  calendly:         'Calendly',
   data:             'Data Store',
 }
 
@@ -176,5 +182,7 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   kit:              'Creator newsletters',
   airtable:         'Bases & records',
   clickup:          'Tasks & time',
+  typeform:         'Forms & responses',
+  calendly:         'Scheduling & bookings',
   data:             'Persist & recall data',
 }

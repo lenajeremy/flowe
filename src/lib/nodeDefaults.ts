@@ -95,6 +95,10 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'typeform':
+      return { nodeType: 'typeform', label: 'Typeform', integrationOp: 'list_responses', typeformLimit: 25 }
+    case 'calendly':
+      return { nodeType: 'calendly', label: 'Calendly', integrationOp: 'list_scheduled_events', calendlyScope: 'user', calendlyLimit: 25 }
     case 'clickup':
       return { nodeType: 'clickup', label: 'ClickUp', integrationOp: 'list_tasks', clickupLimit: 25 }
     case 'airtable':

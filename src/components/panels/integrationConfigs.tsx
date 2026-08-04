@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -3390,6 +3390,281 @@ export function ClickUpConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
               { value: 'false', label: "ClickUp's own task ID" },
               { value: 'true', label: 'A custom task ID (needs the workspace above)' },
             ]} />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function TypeformConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_responses'
+  const needsForm = !['list_forms', 'list_workspaces', 'get_workspace', 'create_workspace',
+    'delete_workspace', 'list_themes', 'get_theme', 'delete_theme', 'list_images',
+    'get_current_user'].includes(op)
+  const responseFilters = ['list_responses', 'get_response_text'].includes(op)
+  return (
+      <IntegrationSection
+        provider="typeform" label="Typeform" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_responses"
+        ops={[
+          { value: 'list_responses', label: 'List Responses (raw)' },
+          { value: 'get_response_text', label: 'Read Responses as Q&A' },
+          { value: 'delete_responses', label: 'Delete Responses' },
+          { value: 'get_insights', label: 'Form Insights' },
+          { value: 'list_forms', label: 'List Forms' },
+          { value: 'get_form', label: 'Get Form' },
+          { value: 'create_form', label: 'Create Form' },
+          { value: 'update_form', label: 'Replace Form' },
+          { value: 'delete_form', label: 'Delete Form' },
+          { value: 'get_form_messages', label: 'Form Messages' },
+          { value: 'list_workspaces', label: 'List Workspaces' },
+          { value: 'get_workspace', label: 'Get Workspace' },
+          { value: 'create_workspace', label: 'Create Workspace' },
+          { value: 'delete_workspace', label: 'Delete Workspace' },
+          { value: 'list_themes', label: 'List Themes' },
+          { value: 'get_theme', label: 'Get Theme' },
+          { value: 'delete_theme', label: 'Delete Theme' },
+          { value: 'list_images', label: 'List Images' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'get_current_user', label: 'Current User' },
+        ]}
+        tokenPlaceholder="Typeform token"
+        hideManual
+      >
+        {needsForm && (
+          <TextField label="Form ID" field="typeformFormId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Forms" />
+        )}
+
+        {op === 'get_response_text' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Returns readable "question: answer" lines. Raw responses reference questions by field ID,
+            so use this when the point is to summarise or route on what someone said.
+          </p>
+        )}
+
+        {responseFilters && (<>
+          <DateTimeField label="Since (optional)" field="typeformSince" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label="Until (optional)" field="typeformUntil" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <TextField label="After token (optional)" field="typeformAfter" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="cursor — pick up where the last run stopped" />
+          <SelectField label="Completed only" field="typeformCompleted" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'All responses' },
+              { value: 'true', label: 'Completed only' },
+              { value: 'false', label: 'Partial only' },
+            ]} />
+          <TextField label="Search answers (optional)" field="typeformQuery" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="free text" />
+          <NumField label="Limit" field="typeformLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
+
+        {op === 'delete_responses' && (
+          <TextField label="Response tokens" field="typeformResponseIds" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="comma-separated" />
+        )}
+
+        {(op === 'create_form' || op === 'create_workspace') && (
+          <TextField label={op === 'create_workspace' ? 'Workspace name' : 'Title'} field="typeformTitle"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="Customer feedback" />
+        )}
+        {(op === 'create_form' || op === 'update_form') && (
+          <AreaField label={op === 'update_form' ? 'Form definition (required)' : 'Form definition (optional)'}
+            field="typeformDefinition" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder='{"title":"Feedback","fields":[{"title":"How did we do?","type":"rating"}]}' />
+        )}
+        {op === 'update_form' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            This replaces the whole form. Fetch it with Get Form first, change what you need, and send
+            the full definition back — anything omitted is removed.
+          </p>
+        )}
+
+        {(op === 'list_forms' || op === 'get_workspace' || op === 'delete_workspace') && (
+          <TextField label={op === 'list_forms' ? 'Workspace ID (optional)' : 'Workspace ID'}
+            field="typeformWorkspaceId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Workspaces" />
+        )}
+        {op === 'list_forms' && (<>
+          <TextField label="Search (optional)" field="typeformSearch" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="filter by form name" />
+          <NumField label="Limit" field="typeformLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
+        {(op === 'get_theme' || op === 'delete_theme') && (
+          <TextField label="Theme ID" field="typeformThemeId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Themes" />
+        )}
+
+        {op === 'create_webhook' && (<>
+          <TextField label="Webhook URL" field="typeformUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/typeform" />
+          <TextField label="Signing secret (optional)" field="typeformSecret" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="lets the receiver verify the payload" />
+        </>)}
+        {(op === 'create_webhook' || op === 'delete_webhook') && (
+          <TextField label="Tag (optional)" field="typeformTag" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="fernary — reusing a tag replaces that webhook" />
+        )}
+      </IntegrationSection>
+  )
+}
+
+export function CalendlyConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_scheduled_events'
+  const scoped = ['list_event_types', 'list_scheduled_events', 'list_webhooks', 'create_webhook'].includes(op)
+  const needsEventType = ['get_event_type', 'list_available_times', 'create_booking',
+    'create_scheduling_link'].includes(op)
+  const needsEvent = ['get_scheduled_event', 'cancel_event', 'list_invitees', 'get_invitee'].includes(op)
+  const window = ['list_available_times', 'list_busy_times'].includes(op)
+  return (
+      <IntegrationSection
+        provider="calendly" label="Calendly" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_scheduled_events"
+        ops={[
+          { value: 'list_scheduled_events', label: 'List Scheduled Events' },
+          { value: 'get_scheduled_event', label: 'Get Scheduled Event' },
+          { value: 'cancel_event', label: 'Cancel Event' },
+          { value: 'list_event_types', label: 'List Event Types' },
+          { value: 'get_event_type', label: 'Get Event Type' },
+          { value: 'list_available_times', label: 'List Available Times' },
+          { value: 'create_booking', label: 'Book a Meeting' },
+          { value: 'create_scheduling_link', label: 'Create Single-Use Link' },
+          { value: 'list_invitees', label: 'List Invitees' },
+          { value: 'get_invitee', label: 'Get Invitee' },
+          { value: 'mark_no_show', label: 'Mark No-Show' },
+          { value: 'undo_no_show', label: 'Undo No-Show' },
+          { value: 'list_availability_schedules', label: 'Availability Schedules' },
+          { value: 'list_busy_times', label: 'Busy Times' },
+          { value: 'list_memberships', label: 'List Members' },
+          { value: 'invite_to_organization', label: 'Invite to Organization' },
+          { value: 'list_invitations', label: 'List Invitations' },
+          { value: 'remove_member', label: 'Remove Member' },
+          { value: 'list_routing_forms', label: 'List Routing Forms' },
+          { value: 'list_routing_form_submissions', label: 'Routing Form Submissions' },
+          { value: 'list_webhooks', label: 'List Webhooks' },
+          { value: 'create_webhook', label: 'Create Webhook' },
+          { value: 'delete_webhook', label: 'Delete Webhook' },
+          { value: 'delete_invitee_data', label: 'Delete Invitee Data (GDPR)' },
+          { value: 'get_current_user', label: 'Current User' },
+          { value: 'get_user', label: 'Get User' },
+        ]}
+        tokenPlaceholder="Calendly token"
+        hideManual
+      >
+        {scoped && (
+          <SelectField label="Whose records" field="calendlyScope" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="user"
+            options={[
+              { value: 'user', label: 'Just the connected account' },
+              { value: 'organization', label: 'The whole organization' },
+            ]} />
+        )}
+
+        {needsEventType && (
+          <TextField label="Event type URI" field="calendlyEventType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="https://api.calendly.com/event_types/…" />
+        )}
+        {needsEvent && (
+          <TextField label="Event URI" field="calendlyEvent" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://api.calendly.com/scheduled_events/…" />
+        )}
+
+        {op === 'create_booking' && (<>
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Books the meeting outright — no Calendly page for the invitee. Needs a{' '}
+            <span className="text-[var(--color-muted)]">paid Calendly plan</span>, and the start time must
+            be one that List Available Times returned.
+          </p>
+          <DateTimeField label="Start time" field="calendlyStartTime" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <TextField label="Invitee email" field="calendlyInviteeEmail" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+          <TextField label="Invitee name" field="calendlyInviteeName" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="Jane Doe" />
+          <TextField label="Timezone" field="calendlyTimezone" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="Europe/Dublin" />
+          <TextField label="Guests (optional)" field="calendlyGuests" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="comma-separated emails" />
+          <AreaField label="Question answers (optional)" field="calendlyAnswers" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='[{"question":"Company","answer":"Acme","position":0}]' />
+        </>)}
+
+        {window && (<>
+          <DateTimeField label="From" field="calendlyStartTime" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label="To" field="calendlyEndTime" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Calendly refuses a window longer than 7 days.
+          </p>
+        </>)}
+
+        {op === 'list_scheduled_events' && (<>
+          <SelectField label="Status (optional)" field="calendlyStatus" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Any' },
+              { value: 'active', label: 'Active' },
+              { value: 'canceled', label: 'Canceled' },
+            ]} />
+          <DateTimeField label="From (optional)" field="calendlyStartTime" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+          <DateTimeField label="To (optional)" field="calendlyEndTime" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+        </>)}
+
+        {op === 'cancel_event' && (
+          <TextField label="Reason (optional)" field="calendlyReason" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="shown to the invitee" />
+        )}
+
+        {(op === 'get_invitee' || op === 'mark_no_show') && (
+          <TextField label="Invitee URI" field="calendlyInvitee" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="from List Invitees" />
+        )}
+        {op === 'undo_no_show' && (
+          <TextField label="No-show URI" field="calendlyNoShow" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="returned by Mark No-Show" />
+        )}
+        {op === 'list_invitees' && (
+          <TextField label="Email filter (optional)" field="calendlyEmail" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="jane@acme.com" />
+        )}
+
+        {(op === 'invite_to_organization' || op === 'delete_invitee_data') && (
+          <TextField label={op === 'delete_invitee_data' ? 'Emails to erase' : 'Email'} field="calendlyEmail"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder={op === 'delete_invitee_data' ? 'comma-separated' : 'jane@acme.com'} />
+        )}
+        {op === 'delete_invitee_data' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            Irreversible. Calendly erases these invitees' data permanently.
+          </p>
+        )}
+        {op === 'remove_member' && (
+          <TextField label="Membership URI" field="calendlyMembership" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Members" />
+        )}
+        {op === 'list_routing_form_submissions' && (
+          <TextField label="Routing form URI" field="calendlyRoutingForm" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Routing Forms" />
+        )}
+        {op === 'get_user' && (
+          <TextField label="User URI" field="calendlyUser" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://api.calendly.com/users/…" />
+        )}
+
+        {op === 'create_webhook' && (<>
+          <TextField label="Callback URL" field="calendlyUrl" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            placeholder="https://example.com/hooks/calendly" />
+          <TextField label="Events (optional)" field="calendlyEvents" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="invitee.created, invitee.canceled" />
+        </>)}
+        {op === 'delete_webhook' && (
+          <TextField label="Webhook URI" field="calendlyWebhookId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Webhooks" />
+        )}
+
+        {['list_event_types', 'list_scheduled_events', 'list_invitees', 'list_memberships',
+          'list_routing_forms', 'list_routing_form_submissions', 'list_webhooks'].includes(op) && (
+          <NumField label="Limit" field="calendlyLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
   )

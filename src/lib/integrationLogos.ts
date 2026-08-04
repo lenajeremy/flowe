@@ -51,6 +51,8 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   kit:       'kit.com',
   airtable:  'airtable.com',
   clickup:   'clickup.com',
+  typeform:  'typeform.com',
+  calendly:  'calendly.com',
 }
 
 /**

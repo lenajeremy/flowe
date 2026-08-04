@@ -86,4 +86,6 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   kit:              logo('kit'),
   airtable:         logo('airtable'),
   clickup:          logo('clickup'),
+  typeform:         logo('typeform'),
+  calendly:         logo('calendly'),
 }

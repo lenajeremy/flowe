@@ -18,7 +18,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
     'googleslides', 'googleforms', 'googlemeet', 'googlechat', 'googletasks',
     'googlekeep', 'outlook', 'slack', 'notion', 'linear',
     'github', 'gitlab', 'jira', 'confluence', 'bitbucket',
-    'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup'] },
+    'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly'] },
 ]
 
 function PaletteItem({ type }: { type: NodeType }) {
