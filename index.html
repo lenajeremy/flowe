@@ -1,25 +1,19 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- The app name, exactly as configured on the Google OAuth consent screen.
-         Google's homepage review reads the served HTML, and this is a
-         client-rendered SPA, so anything only React knows about is invisible to
-         it. That is why the title, the description, and the #root fallback below
-         all state the name and purpose in plain text. -->
-    <title>Fernary — AI workflow automation for business tools</title>
-    <meta name="description" content="Fernary builds and runs automated workflows for your business. Describe what you want in plain English and Fernary assembles it, then runs it on a schedule or a webhook — reading and writing your Gmail, Google Calendar, Drive, Docs, Sheets, Slack, Shopify, Stripe and more, pausing for your approval before anything important happens." />
-    <link rel="canonical" href="https://fernary.com/" />
-    <meta name="robots" content="index, follow" />
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- The app name, machine-readable and unambiguous. An automated reviewer
-         comparing the OAuth consent-screen name against this page should not
-         have to infer it from a <title> that also carries a descriptor. -->
-    <meta name="application-name" content="Fernary" />
-    <script type="application/ld+json">
+  <title>Fernary</title>
+  <meta name="description"
+    content="Fernary builds and runs automated workflows for your business. Describe what you want in plain English and Fernary assembles it, then runs it on a schedule or a webhook — reading and writing your Gmail, Google Calendar, Drive, Docs, Sheets, Slack, Shopify, Stripe and more, pausing for your approval before anything important happens." />
+  <link rel="canonical" href="https://fernary.com/" />
+  <meta name="robots" content="index, follow" />
+
+  <meta name="application-name" content="Fernary" />
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -35,59 +29,90 @@
     }
     </script>
 
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Fernary" />
-    <meta property="og:title" content="Fernary — AI workflow automation for business tools" />
-    <meta property="og:description" content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running — pausing for your approval before anything important happens." />
-    <meta property="og:url" content="https://fernary.com/" />
-    <meta property="og:image" content="https://fernary.com/fernary-og.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:alt" content="The Fernary wordmark on a dark photograph of unfurling fern fronds." />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@fernaryai" />
-    <meta name="twitter:title" content="Fernary — AI workflow automation for business tools" />
-    <meta name="twitter:description" content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running." />
-    <meta name="twitter:image" content="https://fernary.com/fernary-og.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Fernary" />
+  <meta property="og:title" content="Fernary — AI workflow automation for business tools" />
+  <meta property="og:description"
+    content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running — pausing for your approval before anything important happens." />
+  <meta property="og:url" content="https://fernary.com/" />
+  <meta property="og:image" content="https://fernary.com/fernary-og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:alt" content="The Fernary wordmark on a dark photograph of unfurling fern fronds." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@fernaryai" />
+  <meta name="twitter:title" content="Fernary — AI workflow automation for business tools" />
+  <meta name="twitter:description"
+    content="Describe an automation in plain English. Fernary builds the workflow, connects your tools, and keeps it running." />
+  <meta name="twitter:image" content="https://fernary.com/fernary-og.jpg" />
 
-    <style>
-      body { background: #0a0a0f; margin: 0; }
-      /* Styling for the pre-hydration fallback below. React replaces #root on
+  <style>
+    body {
+      background: #0a0a0f;
+      margin: 0;
+    }
+
+    /* Styling for the pre-hydration fallback below. React replaces #root on
          mount, so this is what crawlers, no-JS visitors, and anyone on a slow
          connection see. It says the same things the rendered page says. */
-      .boot {
-        max-width: 44rem; margin: 0 auto; padding: 4rem 1.5rem;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        color: #c7d2cd; line-height: 1.65;
-      }
-      .boot h1 { color: #fff; font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 .35rem; }
-      .boot h2 { color: #fff; font-size: 1.05rem; margin: 2rem 0 .5rem; }
-      .boot .tag { color: #8a9a94; margin: 0 0 1.75rem; }
-      .boot a { color: #3dd68c; }
-      .boot ul { padding-left: 1.2rem; }
-      .boot li { margin: .3rem 0; }
-    </style>
-    <!-- No font CDN, deliberately. Google Sans and Google Sans Code are bundled
+    .boot {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #c7d2cd;
+      line-height: 1.65;
+    }
+
+    .boot h1 {
+      color: #fff;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+      margin: 0 0 .35rem;
+    }
+
+    .boot h2 {
+      color: #fff;
+      font-size: 1.05rem;
+      margin: 2rem 0 .5rem;
+    }
+
+    .boot .tag {
+      color: #8a9a94;
+      margin: 0 0 1.75rem;
+    }
+
+    .boot a {
+      color: #3dd68c;
+    }
+
+    .boot ul {
+      padding-left: 1.2rem;
+    }
+
+    .boot li {
+      margin: .3rem 0;
+    }
+  </style>
+  <!-- No font CDN, deliberately. Google Sans and Google Sans Code are bundled
          via @fontsource (see src/index.css), so nothing here reaches out — which
          also avoids handing visitor IPs to a third party before the app loads,
          the thing that makes hotlinked Google Fonts a GDPR problem in the EU.
          The JetBrains Mono link that used to live here was dead weight: nothing
          referenced that family. -->
-  </head>
-  <body>
-    <div id="root">
-      <!-- Pre-hydration content. Not a marketing page — a plain statement of
-           what this app is, who runs it, what it does with a user's data, and
-           where the policies are. Kept factually identical to the rendered site;
-           if the product changes, this changes with it. -->
+</head>
+
+<body>
+  <div id="root">
+    <noscript>
       <main class="boot">
         <h1>Fernary</h1>
         <p class="tag">The automation system for AI you can actually leave running.</p>
 
         <p>
           <strong>Fernary is a web application that builds and runs automated
-          workflows for small businesses.</strong> You describe what you want in
+            workflows for small businesses.</strong> You describe what you want in
           plain English — for example, &ldquo;every weekday at 8am, find orders
           that haven't shipped in three days and draft me an update email for
           each&rdquo; — and Fernary assembles the workflow for you. It then runs
@@ -95,22 +120,24 @@
           your approval before anything consequential happens.
         </p>
 
-        <h2>What it connects to, and why</h2>
+        <h2>Fernary and your Google account</h2>
         <p>
-          A workflow is only useful if it can reach the tools a business already
-          runs on. Fernary connects to those accounts with your permission, and
-          uses them only to carry out the steps in the workflows you build:
+          Fernary requests access to your Google account so the workflows you
+          build can carry out their steps on your behalf while you are away.
+          Nothing is accessed until you connect an account, and each connection
+          is used only for the steps you configured:
         </p>
         <ul>
-          <li><strong>Gmail</strong> — read and label messages a workflow needs to act on, and send or draft the replies it produces on your behalf.</li>
-          <li><strong>Google Calendar</strong> — read events a workflow reacts to, and create or update the ones it schedules.</li>
-          <li><strong>Google Drive, Docs and Sheets</strong> — read source files a workflow uses as input, and write the documents, rows and reports it generates.</li>
-          <li><strong>Slack, Notion, Linear, GitHub, GitLab, Outlook, Stripe and Shopify</strong> — the same pattern: read what a step needs, write what it produces.</li>
+          <li><strong>Gmail</strong> — Fernary reads and labels the messages a workflow acts on, and sends or drafts the replies that workflow produces, so you can automate a mailbox you would otherwise work through by hand.</li>
+          <li><strong>Google Calendar</strong> — Fernary reads the events a workflow reacts to and creates or updates the events it schedules, so an automation can book and reschedule work for you.</li>
+          <li><strong>Google Drive, Docs and Sheets</strong> — Fernary reads the files a workflow takes as input and writes the documents, rows and reports it generates, so results land in your own filing rather than inside Fernary.</li>
         </ul>
         <p>
-          Access is per-account and revocable at any time. Fernary never uses
-          your data to train AI models, and does not permit its model providers
-          to either.
+          You can disconnect any account at any time, which stops all further
+          access immediately. Fernary does not use your Google data to train AI
+          models and does not permit its model providers to do so. What is
+          collected, who processes it, and how long it is kept are set out in the
+          <a href="/privacy">Privacy Policy</a>.
         </p>
 
         <h2>Who runs it</h2>
@@ -127,7 +154,9 @@
 
         <p class="tag">Loading the application…</p>
       </main>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    </noscript>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

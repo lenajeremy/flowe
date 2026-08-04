@@ -548,23 +548,6 @@ function Integrations() {
         ))}
       </div>
 
-      {/* Why each connection exists, in the reviewer's terms. Google's OAuth
-          verification wants the link between the app and the data it asks for
-          stated on the homepage, not only in the consent screen or the policy. */}
-      <Reveal y={16}>
-        <p className="mt-10 max-w-3xl text-[13.5px] leading-relaxed text-white/40">
-          <strong className="font-medium text-white/60">How Fernary uses your data.</strong>{' '}
-          A workflow only ever touches an account you have connected, and only to carry out
-          the steps you built. Gmail: read and label the messages a workflow acts on, and
-          send or draft the replies it produces. Google Calendar: read the events it reacts
-          to, create the ones it schedules. Drive, Docs and Sheets: read the files it uses as
-          input, write the documents and rows it generates. Access is revocable per account
-          at any time, and your data is never used to train AI models.{' '}
-          <a href="/privacy" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white">
-            Read the privacy policy
-          </a>.
-        </p>
-      </Reveal>
     </section>
   )
 }
