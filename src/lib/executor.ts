@@ -373,6 +373,7 @@ async function executeNode(
     case 'googletasks':
     case 'googlechat':
     case 'googlekeep':
+    case 'granola':
     case 'data':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this

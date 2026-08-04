@@ -221,6 +221,7 @@
   --na-googletasks:      #4c9aff;
   --na-googlechat:       #34c98a;
   --na-googlekeep:       #ffd94d;
+  --na-granola:          #d6cbb8;
   --na-data:             #2dd4bf;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
@@ -364,6 +365,7 @@
   --na-googletasks:      #1f66d0;
   --na-googlechat:       #0f9257;
   --na-googlekeep:       #ae8d13;
+  --na-granola:          #8a7a5e;
   --na-data:             #0d9488;
 
   --node-glow-o: 0.16;

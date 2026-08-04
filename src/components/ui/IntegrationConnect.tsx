@@ -9,6 +9,9 @@ interface IntegrationStatus {
   connected: boolean
   available: boolean
   workspace_name?: string
+  /** 'api_key' providers have no OAuth flow — the user pastes a key instead. */
+  auth_style?: string
+  key_hint?: string
 }
 
 /**
@@ -19,7 +22,7 @@ interface IntegrationStatus {
  * server has no OAuth app configured, or behind a toggle as an override.
  */
 export function IntegrationConnect({ provider, label, hasManualToken, manualField }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   hasManualToken: boolean
   manualField: ReactNode
@@ -29,6 +32,9 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   const [loading, setLoading] = useState(true)
   const [showManual, setShowManual] = useState(hasManualToken)
   const [shop, setShop] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [savingKey, setSavingKey] = useState(false)
+  const [keyError, setKeyError] = useState('')
 
   const refresh = useCallback(() => {
     apiFetch(`${API}/api/integrations`)
@@ -78,6 +84,32 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
       .catch(() => win?.close())
   }
 
+  async function saveKey() {
+    const key = apiKey.trim()
+    if (!key) return
+    setSavingKey(true)
+    setKeyError('')
+    try {
+      const r = await apiFetch(`${API}/api/integrations/${provider}/key`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: key }),
+      })
+      if (!r.ok) {
+        // The server validates the key against the provider, so its message is
+        // the useful one — surface it rather than a generic failure.
+        const body = (await r.json().catch(() => ({}))) as { error?: string }
+        setKeyError(body.error ?? 'Could not save that key')
+        return
+      }
+      setApiKey('')
+      clearResourceCache(provider)
+      refresh()
+    } finally {
+      setSavingKey(false)
+    }
+  }
+
   async function disconnect() {
     await apiFetch(`${API}/api/integrations/${provider}`, { method: 'DELETE' }).catch(() => {})
     clearResourceCache(provider)
@@ -97,6 +129,68 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
   }
 
   const connected = status?.connected ?? false
+  const isApiKey = status?.auth_style === 'api_key'
+
+  if (!loading && isApiKey) {
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+              style={{ background: connected ? 'var(--color-ok)' : 'var(--color-dim)' }} />
+            <div className="min-w-0">
+              <p className="text-[12px] font-medium text-[var(--color-text)]">{label}</p>
+              <p className="truncate text-[10px] text-[var(--color-muted)]">
+                {connected ? 'API key saved' : `Add your ${label} API key`}
+              </p>
+            </div>
+          </div>
+          {connected && (
+            <button type="button" onClick={disconnect}
+              className="flex-shrink-0 text-[10px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-fail)]">
+              Remove key
+            </button>
+          )}
+        </div>
+
+        {!connected && (<>
+          <div className="flex items-center gap-2">
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => { setApiKey(e.target.value); setKeyError('') }}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveKey() }}
+              placeholder="Paste your API key"
+              className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-2.5 py-1.5 text-[11px] text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
+            />
+            <button
+              type="button"
+              onClick={saveKey}
+              disabled={savingKey || !apiKey.trim()}
+              className="pressable flex-shrink-0 rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:opacity-50"
+            >
+              {savingKey ? 'Checking…' : 'Save'}
+            </button>
+          </div>
+          {keyError && <p className="text-[10px] leading-relaxed text-[var(--color-fail)]">{keyError}</p>}
+          {status?.key_hint && !keyError && (
+            <p className="text-[10px] text-[var(--color-subtle)]">Find it at {status.key_hint}</p>
+          )}
+        </>)}
+
+        <p className="text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          The key is checked against {label} before it's saved, then stored{' '}
+          <span className="text-[var(--color-muted)]">encrypted at rest</span>. You can remove it at any
+          time, and{' '}
+          <a href="/connections"
+            onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+            className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]">
+            manage every connected account here
+          </a>.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-2">

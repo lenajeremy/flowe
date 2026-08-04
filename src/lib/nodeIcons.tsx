@@ -80,4 +80,5 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   googletasks:      logo('googletasks'),
   googlechat:       logo('googlechat'),
   googlekeep:       logo('googlekeep'),
+  granola:          logo('granola'),
 }

@@ -95,6 +95,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'googlechat', label: 'Google Chat', integrationOp: 'send_message', chatSpaceType: 'SPACE', chatLimit: 25 }
     case 'googlekeep':
       return { nodeType: 'googlekeep', label: 'Google Keep', integrationOp: 'create_note', keepLimit: 25 }
+    case 'granola':
+      return { nodeType: 'granola', label: 'Granola', integrationOp: 'list_notes', granolaLimit: 25 }
     case 'jira':
       return { nodeType: 'jira', label: 'Jira', integrationOp: 'search_issues', jiraIssueType: 'Task', jiraLimit: 25 }
     case 'confluence':

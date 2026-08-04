@@ -45,6 +45,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   stripe:  'stripe.com',
   shopify: 'shopify.com',
   bitbucket: 'bitbucket.com',
+  granola:   'granola.ai',
 }
 
 /**

@@ -214,7 +214,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -2410,6 +2410,43 @@ export function GoogleKeepConfig({ data, nodeId, updateNodeData }: ProviderConfi
           <TextField label="Filter (optional)" field="keepFilter" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="trashed = false" />
           <NumField label="Limit" field="keepLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
+        </>)}
+      </IntegrationSection>
+  )
+}
+
+export function GranolaConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_notes'
+  return (
+      <IntegrationSection
+        provider="granola" label="Granola" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_notes"
+        ops={[
+          { value: 'list_notes', label: 'List Notes' },
+          { value: 'get_note', label: 'Get Note' },
+          { value: 'get_transcript', label: 'Get Transcript' },
+        ]}
+        tokenPlaceholder="grn_..."
+        hideManual
+      >
+        {/* Granola's API is read-only, which is worth saying before someone
+            hunts for a "create note" operation that does not exist. */}
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          Read-only — Granola exposes notes, summaries and transcripts, with no way to create or edit
+          them. Only notes that already have an AI summary appear.
+        </p>
+
+        {(op === 'get_note' || op === 'get_transcript') && (
+          <TextField label="Note ID" field="granolaNoteId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+        )}
+
+        {op === 'list_notes' && (<>
+          <DateTimeField label="Created after (optional)" field="granolaCreatedAfter" data={data}
+            nodeId={nodeId} updateNodeData={updateNodeData} />
+          <TextField label="Cursor (optional)" field="granolaCursor" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from a previous run's response" />
+          <NumField label="Limit" field="granolaLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         </>)}
       </IntegrationSection>
   )

@@ -35,6 +35,7 @@ export type NodeType =
   | 'googletasks'
   | 'googlechat'
   | 'googlekeep'
+  | 'granola'
   | 'data'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
@@ -468,6 +469,12 @@ export type FlowNodeData = {
   keepEmail?: string
   keepFilter?: string
   keepLimit?: number
+
+  // granola
+  granolaNoteId?: string
+  granolaCreatedAfter?: string
+  granolaCursor?: string
+  granolaLimit?: number
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

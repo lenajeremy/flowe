@@ -38,6 +38,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   googletasks:      'var(--na-googletasks)',
   googlechat:       'var(--na-googlechat)',
   googlekeep:       'var(--na-googlekeep)',
+  granola:          'var(--na-granola)',
   data:             'var(--na-data)',
 }
 
@@ -78,6 +79,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   googletasks:      'M3 8.5l3 3 7-7M3 4h4M3 12.5h2',
   googlechat:       'M2.5 3.5h11v7h-6l-3 3v-3h-2z',
   googlekeep:       'M8 2a4 4 0 00-2.5 7.2V11h5V9.2A4 4 0 008 2zM6.5 13h3',
+  granola:          'M3 3h10v10H3zM5.5 6h5M5.5 8.5h5M5.5 11h3',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
 }
 
@@ -115,6 +117,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   googletasks:      'Google Tasks',
   googlechat:       'Google Chat',
   googlekeep:       'Google Keep',
+  granola:          'Granola',
   data:             'Data Store',
 }
 
@@ -152,5 +155,6 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   googletasks:      'To-dos & lists',
   googlechat:       'Spaces & messages',
   googlekeep:       'Notes & checklists',
+  granola:          'Meeting notes',
   data:             'Persist & recall data',
 }
