@@ -32,20 +32,10 @@ function App() {
 
   return (
     <>
-      {/* richColors gives success/warning/error their own palette, which is what
-          lets a plan limit read as amber guidance rather than a red failure.
-          Background, border and text colour are deliberately NOT set here: an
-          inline style lands on every toast and overrides the per-type colours,
-          which had richColors switched on and doing nothing. Only the shadow is
-          ours, since it carries no meaning. */}
-      <Toaster
-        richColors
-        theme={resolved}
-        position="top-right"
-        toastOptions={{
-          style: { boxShadow: 'var(--pop-shadow)' },
-        }}
-      />
+      {/* No toastOptions at all. Anything set there lands as an inline style on
+          every toast and overrides the per-type palette richColors exists to
+          provide — which is how richColors was switched on and doing nothing. */}
+      <Toaster richColors theme={resolved} position="top-right" />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
