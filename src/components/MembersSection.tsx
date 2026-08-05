@@ -30,8 +30,9 @@ interface Invite {
 interface MembersData {
   members: Member[]
   invites: Invite[]
-  seats: { paid: number; used: number; available: number; per_seat: boolean }
+  seats: { paid: number; used: number; available: number; over_cap: number; per_seat: boolean }
   plan: string
+  plan_name: string
   can_manage: boolean
   can_add: boolean
   unlimited: boolean
@@ -128,7 +129,23 @@ export function MembersSection({ onSeatsChanged }: { onSeatsChanged?: () => void
         )}
       </div>
 
-      {soloPlan ? (
+      {/* After a downgrade an org can hold more people than its plan includes. Nobody
+          is cut off automatically — revoking a colleague's access because the owner
+          changed plan would be worse than saying so — but it has to be visible, and
+          the owner is the only one who can decide who stays. */}
+      {data.seats.over_cap > 0 && (
+        <div className="mt-4 rounded-xl px-3.5 py-3 text-[13px] leading-relaxed"
+          style={{ border: '1px solid rgba(245,158,11,0.32)', background: 'rgba(245,158,11,0.08)' }}>
+          <strong className="text-[var(--color-text)]">
+            {data.seats.used} people, {data.seats.paid} included on {data.plan_name}.
+          </strong>{' '}
+          Everyone keeps working for now. To settle it, remove {data.seats.over_cap}{' '}
+          {data.seats.over_cap === 1 ? 'person' : 'people'} below, or add seats in the
+          billing portal.
+        </div>
+      )}
+
+      {soloPlan && data.seats.over_cap === 0 ? (
         <p className="mt-3 text-[13px] text-[var(--color-muted)]">
           Your plan is for one person. Upgrade to Team to invite others — each seat
           brings its own AI allowance.
