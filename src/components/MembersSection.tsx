@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import posthog from '@/lib/posthog'
 
 // Members and pending invitations.
 //
@@ -69,6 +70,7 @@ export function MembersSection({ onSeatsChanged }: { onSeatsChanged?: () => void
         toast.error(d.error || 'Could not send the invitation')
         return
       }
+      posthog.capture('team_invitation_sent', { role })
       toast.success(`Invitation sent to ${addr}`)
       setEmail('')
       refresh()

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { usePlanStore } from '@/store/planStore'
 import { Nav, Footer } from '@/pages/LandingPage'
 import { RULE } from '@/lib/brandSurface'
+import posthog from '@/lib/posthog'
 
 // The pricing page.
 //
@@ -123,6 +124,7 @@ export function PricingPage() {
         setError(data.error || 'Could not start checkout. Please try again.')
         return
       }
+      posthog.capture('checkout_started', { plan_id: plan.id })
       window.location.href = data.url
     } catch {
       setError('Could not reach the server. Please try again.')

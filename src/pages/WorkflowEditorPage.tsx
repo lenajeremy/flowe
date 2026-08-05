@@ -24,6 +24,7 @@ import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { useTheme } from '@/lib/theme'
 import { UserMenu } from '@/components/ui/UserMenu'
+import posthog from '@/lib/posthog'
 
 // ── Resize logic (unchanged from original App.tsx) ───────────
 
@@ -165,6 +166,7 @@ export function WorkflowEditorPage() {
     try {
       if (next) await handleSave()
       await setWorkflowPublished(id, next)
+      posthog.capture(next ? 'workflow_published' : 'workflow_unpublished', { workflow_id: id })
       setPublished(next)
       toast.success(next ? 'Published — scheduled runs are live' : 'Unpublished — scheduled runs paused')
     } catch (e) {
@@ -297,6 +299,7 @@ export function WorkflowEditorPage() {
     try {
       const ast = serializeToAST(nodes, edges, workflowName)
       await saveWorkflow(ast, dbId)
+      posthog.capture('workflow_saved', { workflow_id: dbId, node_count: nodes.length, edge_count: edges.length })
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)
     } catch {

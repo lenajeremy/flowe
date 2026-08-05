@@ -9,6 +9,7 @@ import { IntegrationLogo } from '@/components/IntegrationLogo'
 import { UserMenu } from '@/components/ui/UserMenu'
 import { NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 import type { NodeType } from '@/types/workflow'
+import posthog from '@/lib/posthog'
 
 interface Connection {
   provider: NodeType
@@ -58,6 +59,7 @@ export function ConnectionsPage() {
       const d = e.data as { type?: string; provider?: string } | null
       if (d?.type === 'integration-oauth' && d.provider) {
         clearResourceCache(d.provider)
+        posthog.capture('integration_connected', { provider: d.provider })
         refresh()
         setAdding(false)
         toast.success(`${NODE_LABELS[d.provider as NodeType] ?? d.provider} connected`)
@@ -69,6 +71,7 @@ export function ConnectionsPage() {
 
   function connect(provider: NodeType) {
     if (provider === 'shopify' && !shop.trim()) return
+    posthog.capture('integration_connection_started', { provider })
     // Opened synchronously inside the click so the popup blocker allows it; the
     // authorize URL needs our bearer token, so it arrives a moment later.
     const win = window.open('about:blank', `connect-${provider}`, 'width=560,height=720,menubar=no,toolbar=no')
@@ -96,6 +99,7 @@ export function ConnectionsPage() {
     try {
       await apiFetch(`${API}/api/integrations/${c.provider}`, { method: 'DELETE' })
       clearResourceCache(c.provider)
+      posthog.capture('integration_disconnected', { provider: c.provider, workflow_count: c.workflows })
       toast.success(`${name} disconnected`)
       refresh()
     } catch {

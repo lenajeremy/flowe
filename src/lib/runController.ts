@@ -6,6 +6,7 @@ import { serializeToAST } from '@/lib/executor'
 import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
 import { apiFetch } from '@/lib/http'
+import posthog from '@/lib/posthog'
 
 // Run orchestration extracted from the old BottomToolDock so the canvas
 // (node Run buttons, zoom controls) can trigger runs without the dock UI.
@@ -48,9 +49,11 @@ function makeEventHandler(initialFallback: string): (event: ExecutionEvent) => v
         }
         break
       case 'workflow_completed':
+        posthog.capture('workflow_run_completed', { run_id: event.runId ?? fallback })
         s.setExecutionState('completed')
         break
       case 'workflow_error':
+        posthog.capture('workflow_run_failed', { run_id: event.runId ?? fallback })
         s.setExecutionState('error')
         break
     }
@@ -82,6 +85,7 @@ export function startRun(opts?: { webhookPayload?: string }) {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
   prepareRunState(null)
+  posthog.capture('workflow_run_started', { workflow_id: s.dbId ?? null, trigger: opts?.webhookPayload === undefined ? 'manual' : 'webhook_simulation' })
 
   const controller = new AbortController()
   runAbort = controller
@@ -118,6 +122,7 @@ export function startRun(opts?: { webhookPayload?: string }) {
         message: `Connection error: ${message}`,
         timestamp: Date.now() - startTime,
       })
+      posthog.capture('workflow_run_failed', { workflow_id: dbId ?? null, failure_stage: 'connection' })
       st.setExecutionState('error')
     } finally {
       runAbort = null

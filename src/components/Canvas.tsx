@@ -17,6 +17,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { getDefaultNodeData } from '@/lib/nodeDefaults'
 import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import type { NodeType, FlowEdge } from '@/types/workflow'
+import posthog from '@/lib/posthog'
 
 // Must be defined at module scope — never inside a component body
 const edgeTypes = { gradient: GradientEdge }
@@ -192,6 +193,7 @@ export function Canvas({ theme }: CanvasProps) {
       const position = rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
       const nodeId = crypto.randomUUID()
       addNode({ id: nodeId, type, position, data: getDefaultNodeData(type) })
+      posthog.capture('workflow_node_added', { node_type: type })
       setSelectedNodeId(nodeId)
     },
     [rfInstance, addNode, setSelectedNodeId],

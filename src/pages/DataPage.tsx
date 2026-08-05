@@ -10,6 +10,7 @@ import {
   listDataEntries, putDataEntry, deleteDataEntry,
   type DataStore, type EntriesResponse, type KVEntry, type RecordEntry, type StoreKind, type StoreScope,
 } from '@/lib/dataApi'
+import posthog from '@/lib/posthog'
 
 const KIND_LABEL: Record<StoreKind, string> = { kv: 'Key–Value', collection: 'Collection', text: 'Text' }
 const SCOPE_LABEL: Record<StoreScope, string> = { run: 'Run', workflow: 'Workflow', account: 'Account' }
@@ -144,6 +145,7 @@ function KVEditor({ store, entries, reload }: { store: DataStore; entries: KVEnt
     if (!key.trim()) return
     try {
       await putDataEntry(store.id, { key: key.trim(), value: coerceValue(value) })
+      posthog.capture('data_entry_saved', { store_kind: store.kind, entry_type: 'key_value' })
       setKey(''); setValue(''); reload()
     } catch (e) { toast.error(String((e as Error).message)) }
   }
@@ -225,7 +227,7 @@ function CollectionEditor({ store, entries, reload }: { store: DataStore; entrie
   async function add() {
     let record: unknown
     try { record = JSON.parse(draft) } catch { toast.error('Record must be valid JSON — e.g. {"sku": "A123", "qty": 2}'); return }
-    try { await putDataEntry(store.id, { record }); setDraft(''); reload() }
+    try { await putDataEntry(store.id, { record }); posthog.capture('data_entry_saved', { store_kind: store.kind, entry_type: 'record' }); setDraft(''); reload() }
     catch (e) { toast.error(String((e as Error).message)) }
   }
 
@@ -310,7 +312,7 @@ function TextEditor({ store, value, reload }: { store: DataStore; value: string;
   const dirty = text !== value
 
   async function save() {
-    try { await putDataEntry(store.id, { value: text }); toast.success('Saved'); reload() }
+    try { await putDataEntry(store.id, { value: text }); posthog.capture('data_entry_saved', { store_kind: store.kind, entry_type: 'text' }); toast.success('Saved'); reload() }
     catch (e) { toast.error(String((e as Error).message)) }
   }
 
@@ -364,6 +366,7 @@ export function DataPage() {
     if (!form.name.trim()) return
     try {
       const store = await createDataStore({ name: form.name.trim(), kind: form.kind, scope: 'account' })
+      posthog.capture('data_store_created', { store_kind: form.kind, scope: 'account' })
       await reloadStores()
       setEntries(null); setSelectedId(store.id)
       setShowNew(false); setForm({ name: '', kind: 'kv' })

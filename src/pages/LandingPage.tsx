@@ -477,8 +477,13 @@ function Glyph({ d, size = 20 }: { d: string; size?: number }) {
   )
 }
 
-// A 2×2 grid mark for the "integrations" capability (no single node owns it)
+// Marks for the capabilities no single node owns: a 2×2 grid for integrations,
+// two figures for the team, a publish toggle sitting on, and a gauge that stops
+// short of the end for metering.
 const GRID_PATH = 'M2 2.5h4.5v4.5H2zM9.5 2.5H14v4.5H9.5zM2 9.5h4.5v4.5H2zM9.5 9.5H14v4.5H9.5z'
+const PEOPLE_PATH = 'M6 2.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8zM1.6 13.6c0-2.4 2-4.4 4.4-4.4s4.4 2 4.4 4.4M10.6 3a2.4 2.4 0 010 4.4M11.6 9.6c1.6.6 2.8 2.1 2.8 4'
+const TOGGLE_PATH = 'M5 4.6h6a3.4 3.4 0 010 6.8H5a3.4 3.4 0 010-6.8zM11 6.6a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8z'
+const GAUGE_PATH = 'M2.5 12a5.5 5.5 0 1111 0M8 12l3.3-3.5'
 
 // Brand accents — the dark-theme --na-* values, fixed here because the
 // landing never re-themes. Keeps the wall in the same ink as the canvas.
@@ -544,8 +549,10 @@ function Integrations() {
             Plugs into the tools<br />you already run.
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
+            {/* The count is read off the wall below rather than written out, so
+                adding a connector updates the sentence too. */}
             <p className={LEAD}>
-              Thirteen integrations and hundreds of read-and-write actions — messaging, mail, code, docs, spreadsheets and commerce. Connect an account once, then reach for it in any workflow.
+              {INTEGRATIONS.length} integrations and more than 800 read-and-write actions — messaging, mail, code, docs, spreadsheets, CRM and commerce. Connect an account once, then reach for it in any workflow.
             </p>
             <div className="group flex cursor-default items-center gap-2.5 font-mono text-[13px]">
               <span className="text-white/30">4.0</span>
@@ -720,15 +727,144 @@ function ChatBand() {
   )
 }
 
+// ─── Memory — a store the scheduled run keeps writing to.
+// Continues the standup workflow the chat mock just built: what it
+// remembers is which issues it has already posted, so tomorrow's digest
+// doesn't repeat today's. One timer drives it — odd beats are a fresh
+// write (tinted), even beats rest — so there are no nested timeouts to
+// unwind. Reduced motion gets the store at rest.
+const DATA_TINT = '#2dd4bf'
+const SCOPES = ['Run', 'Workflow', 'Account'] as const
+
+function MemoryMock() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+  const [beat, setBeat] = useState(0)
+  const [flat, setFlat] = useState(false)
+  const [poses] = useState(() => finePointer() && !reducedMotion())
+
+  useEffect(() => {
+    if (!inView || reducedMotion()) return
+    const id = setInterval(() => setBeat((b) => b + 1), 1300)
+    return () => clearInterval(id)
+  }, [inView])
+
+  const writes = Math.ceil(beat / 2)
+  const fresh = beat % 2 === 1
+  const rows = [
+    { key:'issues_posted', value: String(418 + writes), live: true },
+    { key:'last_issue', value: `LIN-${2181 + writes}`, live: true },
+    { key:'digests_sent', value:'41', live: false },
+  ]
+
+  return (
+    <div ref={ref}
+      onMouseEnter={() => setFlat(true)}
+      onMouseLeave={() => setFlat(false)}
+      className="rounded-2xl p-5 sm:p-6"
+      style={{
+        border:'1px solid rgba(255,255,255,0.08)', background:'#0a0a0d', boxShadow:'0 40px 120px rgba(0,0,0,0.5)',
+        // Leans the other way from the chat mock — it sits on the other side
+        // of the page, so the two lean toward each other rather than parallel
+        transform: poses && !flat ? 'perspective(1400px) rotateY(5deg) rotateX(2deg)' : 'none',
+        transition:'transform 600ms var(--ease-out)',
+      }}>
+      <div className="mb-4 flex items-center gap-2.5 border-b border-white/[0.06] pb-4">
+        <span style={{ color: DATA_TINT }}><Glyph d={NODE_ICON_PATHS.data} size={16} /></span>
+        <span className="font-mono text-[12px] font-semibold text-white/80">standup-memory</span>
+        <span className="ml-auto font-mono text-[10.5px] text-white/35">Key–Value</span>
+      </div>
+
+      {/* The three scopes, with this store's own selected — the model reads
+          faster as a row of choices than as a sentence */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-white/30">Scope</span>
+        {SCOPES.map((s) => {
+          const on = s === 'Account'
+          return (
+            <span key={s} className="rounded-full px-2.5 py-1 font-mono text-[10.5px]"
+              style={{
+                border:`1px solid ${on ? `color-mix(in srgb, ${DATA_TINT} 45%, transparent)` : 'rgba(255,255,255,0.08)'}`,
+                background: on ? `color-mix(in srgb, ${DATA_TINT} 10%, transparent)` : 'transparent',
+                color: on ? '#fff' : 'rgba(255,255,255,0.4)',
+              }}>
+              {s}
+            </span>
+          )
+        })}
+      </div>
+
+      <div className="overflow-hidden rounded-xl" style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.02)' }}>
+        {rows.map((r, i) => {
+          const lit = fresh && r.live
+          return (
+            <div key={r.key} className="flex items-center gap-3 px-3.5 py-2.5"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                background: lit ? `color-mix(in srgb, ${DATA_TINT} 6%, transparent)` : 'transparent',
+                opacity: inView ? 1 : 0,
+                transform: inView ? 'none' : 'translateY(8px)',
+                transition: `background 500ms var(--ease-out), opacity 500ms var(--ease-out) ${180 + i * 90}ms, transform 500ms var(--ease-out) ${180 + i * 90}ms`,
+              }}>
+              <span className="font-mono text-[11.5px] text-white/45">{r.key}</span>
+              <span className="ml-auto font-mono text-[12px] tabular-nums"
+                style={{ color: lit ? DATA_TINT : '#fff', transition:'color 500ms var(--ease-out)' }}>
+                {r.value}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-4 flex items-center gap-2 font-mono text-[10.5px] text-white/35">
+        <span className={fresh ? 'pulse-dot' : undefined}
+          style={{ width:6, height:6, borderRadius:999, background: fresh ? DATA_TINT : 'rgba(255,255,255,0.2)' }} />
+        Written by the 9:00 run · kept until you clear it
+      </p>
+    </div>
+  )
+}
+
+function MemoryBand() {
+  return (
+    <section className={SECTION} style={RULE}>
+      <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
+        {/* Mock second on a phone so the claim is read before the evidence,
+            first on a wide screen so the page stops alternating text-left */}
+        <div className="order-2 lg:order-1">
+          <Reveal delay={120} y={34}>
+            <MemoryMock />
+          </Reveal>
+        </div>
+        <div className="order-1 lg:order-2">
+          <Reveal>
+            <div>
+              <span className={`mb-5 block ${EYEBROW}`}>Memory</span>
+              <h2 className={H2} style={H2_STYLE}>
+                It remembers<br />between runs.
+              </h2>
+              <p className={`mt-6 max-w-md ${LEAD}`}>
+                Give a workflow somewhere to keep things — a counter, a list of what it has already seen, a running note. Scope it to one run, one workflow, or everything in your account. The AI builder proposes a store when a workflow needs one, and asks before it creates it.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Capabilities — the breadth, at a glance. Each icon wears the
 // accent of the node that owns the capability inside the app.
 const CAPABILITIES: Array<{ icon: string; tint: string; title: string; body: string }> = [
   { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok — choose per step, switch whenever.' },
   { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Live web access', body:'AI steps search and read current pages, so answers never go stale.' },
-  { icon: GRID_PATH, tint: ACCENT, title:'13 integrations', body:'Slack, Gmail, Notion, GitHub, Stripe, Google Workspace and more.' },
+  { icon: GRID_PATH, tint: ACCENT, title:`${INTEGRATIONS.length} integrations`, body:'Slack, Gmail, Notion, GitHub, Jira, Stripe, HubSpot, Google Workspace and more.' },
   { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Triggers on your terms', body:'Run on a schedule, or fire instantly from an incoming webhook.' },
   { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Human in the loop', body:'Pause for a one-tap approval before anything important ships.' },
   { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branch & loop', body:'Real control flow — fork on conditions, iterate across a list.' },
+  { icon: TOGGLE_PATH, tint:'#2dd4bf', title:'Nothing runs unasked', body:'Schedules only fire once you publish. Until then it’s a draft.' },
+  { icon: PEOPLE_PATH, tint:'#8FE06A', title:'Built for teams', body:'Invite the team, share connections, and see what each person spent.' },
+  { icon: GAUGE_PATH, tint:'#0FA3A3', title:'No surprise bills', body:'Every charge is itemised, and we never bill overage — it stops instead.' },
 ]
 
 function Capabilities() {
@@ -1012,6 +1148,9 @@ export function LandingPage() {
 
       {/* ── Build by chat — the AI builder ── */}
       <ChatBand />
+
+      {/* ── Memory — state that outlives the run ── */}
+      <MemoryBand />
 
       {/* ── Capabilities — the breadth, at a glance ── */}
       <Capabilities />
