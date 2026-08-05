@@ -97,6 +97,15 @@ export function UserMenu() {
         </div>
 
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate('/settings/billing')} className="gap-2 text-[12px]">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <rect x="1.5" y="3.5" width="11" height="7.5" rx="1.4" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+          Plan &amp; billing
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => { void signOut().then(() => navigate('/login')) }}
           className="gap-2 text-[12px]"

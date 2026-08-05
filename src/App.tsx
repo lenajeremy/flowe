@@ -14,6 +14,8 @@ import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { PricingPage } from '@/pages/PricingPage'
+import { BillingPage } from '@/pages/BillingPage'
 import { useAuthStore } from '@/store/authStore'
 import { initTheme, useTheme } from '@/lib/theme'
 
@@ -52,6 +54,8 @@ function App() {
         <Route path="/workflow/:id/chat" element={<ProtectedRoute><WorkflowChatPage /></ProtectedRoute>} />
         <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
         <Route path="/run/:runId" element={<RunDetailPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/settings/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
         <Route path="/terms" element={<LegalPage doc="terms" />} />
         <Route path="/privacy" element={<LegalPage doc="privacy" />} />
       </Routes>

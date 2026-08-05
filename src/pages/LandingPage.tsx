@@ -9,6 +9,7 @@ import { FloweIcon } from '@/components/FloweIcon'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
 import { isIntegration } from '@/lib/integrationLogos'
 import { NODE_ICON_PATHS, NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
+import { RULE } from '@/lib/brandSurface'
 
 // The landing stays dark by design — it's the brand surface. Colors are
 // deliberately fixed (not theme tokens). Structure follows the Linear
@@ -361,7 +362,6 @@ function Reveal({ children, delay = 0, y = 28 }: {
 // gets the same vertical beat and the same heading scale, so the page
 // stops drifting between py-28/32/36. Tracking tightens as type grows.
 const SECTION = 'mx-auto max-w-6xl px-6 py-24 sm:py-32'
-const RULE = { borderTop: '1px solid rgba(255,255,255,0.06)' } as const
 const H2 = 'text-[2.05rem] font-bold sm:text-[2.6rem]'
 const H2_STYLE = { letterSpacing: '-0.03em', lineHeight: 1.08 } as const
 const LEAD = 'text-[16px] leading-relaxed text-white/55 sm:text-[17px]'
@@ -767,7 +767,7 @@ function Capabilities() {
 }
 
 // ─── Nav ──────────────────────────────────────────────────────
-function Nav({ onOpen }: { onOpen: () => void }) {
+export function Nav({ onOpen }: { onOpen: () => void }) {
   const navigate = useNavigate()
   return (
     <header style={{ position:'sticky', top:0, zIndex:50, backdropFilter:'blur(20px) saturate(160%)', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(5,5,8,0.72)' }}>
@@ -783,10 +783,16 @@ function Nav({ onOpen }: { onOpen: () => void }) {
             <span style={{ letterSpacing:'-0.01em' }}>Fernary</span>
           </button>
         </h1>
-        <button onClick={onOpen}
-          className="pressable rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:opacity-90">
-          Open app
-        </button>
+        <div className="flex items-center gap-5">
+          <button onClick={() => navigate('/pricing')}
+            className="text-[13.5px] text-white/55 transition-colors hover:text-white">
+            Pricing
+          </button>
+          <button onClick={onOpen}
+            className="pressable rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:opacity-90">
+            Open app
+          </button>
+        </div>
       </div>
     </header>
   )
@@ -827,7 +833,7 @@ function FooterLink({ children, href, onClick }: {
   )
 }
 
-function Footer({ onGetStarted }: { onGetStarted: () => void }) {
+export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
   const navigate = useNavigate()
   // Real hrefs so the links are crawlable and middle-clickable; the click
   // handler keeps the SPA from doing a full reload.
@@ -865,6 +871,7 @@ function Footer({ onGetStarted }: { onGetStarted: () => void }) {
 
           <FooterCol title="Product">
             <FooterLink href="/workflows" onClick={go('/workflows')}>Open app</FooterLink>
+            <FooterLink href="/pricing" onClick={go('/pricing')}>Pricing</FooterLink>
             <FooterLink href="/login" onClick={go('/login')}>Sign in</FooterLink>
             <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Get started</FooterLink>
           </FooterCol>
