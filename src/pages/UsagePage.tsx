@@ -169,6 +169,36 @@ export function UsagePage() {
   // than on who has spent, so a team where only one person has been active still
   // gets the view.
   const hasTeammates = (data?.member_count ?? 1) > 1
+
+  // Whose numbers are on screen. The rows are already scoped by the server — a
+  // member only ever sees their own — so the TOTAL has to be measured against the
+  // same scope. Showing one person's spend "of 160,000 included" compared their
+  // 698 against the whole organization's allowance, which reads as though they
+  // had barely touched a budget they cannot actually spend.
+  const viewingEveryone = Boolean(data?.is_admin) && !person
+  const viewedPerson = person
+    ? data?.summary.by_user?.find((u) => u.user_id === person)
+    : undefined
+  const scopeLimit = viewingEveryone
+    ? (data?.included_credits ?? 0)
+    : person
+      ? (viewedPerson?.limit ?? 0)
+      : (data?.my_allocation.limit ?? 0)
+  const scopeLabel = viewingEveryone
+    ? 'Organization used'
+    : person
+      ? `${viewedPerson?.name ?? 'Member'} used`
+      : 'You used'
+  const scopeSub = scopeLimit <= 0
+    ? 'of your included credits'
+    : viewingEveryone
+      ? `of ${num(scopeLimit)} included`
+      : person
+        ? `of their ${num(scopeLimit)} share`
+        : `of your ${num(scopeLimit)} share`
+  // A one-person org has no separate "share" — the org allowance IS that person's,
+  // so both cards would say the same thing twice.
+  const showOwnShare = (data?.my_allocation.limit ?? 0) > 0 && !person && hasTeammates
   const showPerPerson = Boolean(data?.is_admin) && hasTeammates
   // The Member column only exists in that view, so the empty/loading rows have to
   // span the same width or the table visibly jumps.
@@ -239,8 +269,9 @@ export function UsagePage() {
 
         {/* Totals */}
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
-          <Stat label={`Used · ${data?.period.label ?? ''}`} value={s ? num(s.spent) : '—'}
-            sub={data ? `of ${num(data.included_credits)} included` : ''} />
+          <Stat label={`${scopeLabel} · ${data?.period.label ?? ''}`}
+            value={s ? num(s.spent) : '—'}
+            sub={data ? scopeSub : ''} />
           <Stat label="Credits added" value={s ? num(s.granted) : '—'}
             sub="allowances, top-ups and refunds" />
           <Stat label="Charges" value={data ? num(data.total_rows) : '—'}
@@ -250,7 +281,7 @@ export function UsagePage() {
         {/* Your own share. Shown to everyone including admins, because "how much of
             MY allowance is left" is a different question from "what is the org
             spending" and people ask it more often. */}
-        {data && data.my_allocation.limit > 0 && !person && (
+        {data && showOwnShare && (
           <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
             <div className="flex items-baseline justify-between">
               <h3 className="text-[13px] font-semibold">
