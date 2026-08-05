@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
+import { reportApiError } from '@/lib/limitToast'
 import { createWorkflow } from '@/lib/workflowApi'
 import { setPendingPrompt } from '@/lib/pendingPrompt'
 import { NODE_ICON_PATHS } from '@/lib/nodeColors'
@@ -60,7 +61,11 @@ export function BuildPage() {
       const wf = await createWorkflow({ description: text })
       setPendingPrompt(wf.id, text)
       navigate(`/workflow/${wf.id}`)
-    } catch {
+    } catch (e) {
+      // Silently resetting the button was the worst version of this: on a plan
+      // that has run out of workflows, the only feedback was that nothing
+      // happened when you pressed it.
+      reportApiError(e, navigate, 'Could not create the workflow')
       setCreating(false)
     }
   }
@@ -72,7 +77,8 @@ export function BuildPage() {
     try {
       const wf = await createWorkflow()
       navigate(`/workflow/${wf.id}`)
-    } catch {
+    } catch (e) {
+      reportApiError(e, navigate, 'Could not create the workflow')
       setCreatingBlank(false)
     }
   }

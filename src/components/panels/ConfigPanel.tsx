@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { throwApiError } from '@/lib/apiError'
+import { reportApiError } from '@/lib/limitToast'
 import { motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
@@ -193,6 +196,7 @@ function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
 
 // ── Main panel ───────────────────────────────────────────────
 export function ConfigPanel() {
+  const navigate = useNavigate()
   const { nodes, edges, selectedNodeId, selectedNodeIds, updateNodeData, dbId } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
@@ -278,8 +282,11 @@ export function ConfigPanel() {
     }
   }, [selectedNode?.data.nodeType, fetchWebhook])
 
-  useEffect(() => {
-    if (selectedNode?.data.nodeType !== 'scheduledTrigger' || !dbId) return
+  // Pulls the schedule the SERVER actually holds into the picker. Called on open,
+  // and again after a refused save so the form can never sit showing a cadence
+  // that was rejected.
+  const loadSchedule = useCallback(() => {
+    if (!dbId) return
     apiFetch(`${API}/api/workflows/${dbId}/schedule`)
       .then((r) => r.ok ? r.json() : null)
       .then((s: { frequency?: string; interval_seconds?: number; run_time?: string; day_of_week?: number; day_of_month?: number; repeat?: boolean; next_run_at?: string } | null) => {
@@ -297,7 +304,12 @@ export function ConfigPanel() {
         if (s.next_run_at)  setSchedNextRun(s.next_run_at)
       })
       .catch(() => {})
-  }, [selectedNode?.data.nodeType, dbId])
+  }, [dbId])
+
+  useEffect(() => {
+    if (selectedNode?.data.nodeType !== 'scheduledTrigger') return
+    loadSchedule()
+  }, [selectedNode?.data.nodeType, loadSchedule])
 
   async function saveSchedule(overrides?: Partial<{ frequency: string; interval_seconds: number; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }>) {
     if (!dbId || !selectedNodeId) return
@@ -317,7 +329,13 @@ export function ConfigPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (r.ok) {
+      if (!r.ok) {
+        // A plan limit here was previously swallowed whole: the frequency picker
+        // would snap back with no message, which reads as the app being broken
+        // rather than as a limit.
+        await throwApiError(r, 'Could not save the schedule')
+      }
+      {
         const s = await r.json() as { next_run_at?: string; frequency: string; interval_seconds: number; run_time: string; day_of_week: number; day_of_month: number; repeat: boolean }
         if (s.next_run_at) setSchedNextRun(s.next_run_at)
         // Push schedule data into node so the canvas node stays in sync
@@ -331,7 +349,12 @@ export function ConfigPanel() {
           scheduleNextRunAt:       s.next_run_at,
         } as Parameters<typeof updateNodeData>[1])
       }
-    } catch { /* ignore */ } finally {
+    } catch (e) {
+      reportApiError(e, navigate, 'Could not save the schedule')
+      // Put the picker back to what the server actually has, so the UI never
+      // shows a cadence that was refused.
+      void loadSchedule()
+    } finally {
       setSchedSaving(false)
     }
   }

@@ -1,3 +1,4 @@
+import { throwApiError } from '@/lib/apiError'
 import type { WorkflowAST, ExecutionEvent } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
@@ -37,7 +38,7 @@ export async function createWorkflow(opts?: { name?: string; description?: strin
       edges: [],
     }),
   })
-  if (!res.ok) throw new Error(`Failed to create workflow: ${res.status}`)
+  if (!res.ok) await throwApiError(res, 'Could not create the workflow')
   return res.json() as Promise<SavedWorkflow>
 }
 
@@ -52,25 +53,25 @@ export async function saveWorkflow(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: ast.name, nodes: ast.nodes, edges: ast.edges }),
   })
-  if (!res.ok) throw new Error(`Failed to save workflow: ${res.status}`)
+  if (!res.ok) await throwApiError(res, 'Could not save the workflow')
   return res.json() as Promise<SavedWorkflow>
 }
 
 export async function listWorkflows(): Promise<WorkflowSummary[]> {
   const res = await apiFetch(`${API}/api/workflows`)
-  if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`)
+  if (!res.ok) await throwApiError(res, 'Could not load your workflows')
   return res.json() as Promise<WorkflowSummary[]>
 }
 
 export async function getWorkflow(id: string): Promise<SavedWorkflow> {
   const res = await apiFetch(`${API}/api/workflows/${id}`)
-  if (!res.ok) throw new Error(`Failed to get workflow: ${res.status}`)
+  if (!res.ok) await throwApiError(res, 'Could not load that workflow')
   return res.json() as Promise<SavedWorkflow>
 }
 
 export async function deleteWorkflow(id: string): Promise<void> {
   const res = await apiFetch(`${API}/api/workflows/${id}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error(`Failed to delete workflow: ${res.status}`)
+  if (!res.ok) await throwApiError(res, 'Could not delete the workflow')
 }
 
 /** Publishing gates SCHEDULED runs only — manual, webhook, and API triggers
@@ -79,7 +80,9 @@ export async function setWorkflowPublished(id: string, published: boolean): Prom
   const res = await apiFetch(`${API}/api/workflows/${id}/${published ? 'publish' : 'unpublish'}`, {
     method: 'POST',
   })
-  if (!res.ok) throw new Error(`Failed to ${published ? 'publish' : 'unpublish'} workflow`)
+  if (!res.ok) {
+    await throwApiError(res, `Could not ${published ? 'publish' : 'unpublish'} the workflow`)
+  }
 }
 
 // ── Run history ──────────────────────────────────────────────

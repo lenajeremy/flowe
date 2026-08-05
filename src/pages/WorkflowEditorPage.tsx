@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { reportApiError } from '@/lib/limitToast'
+import { throwApiError } from '@/lib/apiError'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ReactFlowProvider } from '@xyflow/react'
 import { NodePalette, type LeftTab } from '@/components/panels/NodePalette'
@@ -140,6 +142,22 @@ export function WorkflowEditorPage() {
   const [publishBusy, setPublishBusy] = useState(false)
   const [publishMenuOpen, setPublishMenuOpen] = useState(false)
 
+  // Attaching a scheduledTrigger node creates a DAILY schedule, which every plan
+  // allows — so this normally cannot be refused. It is still reported if it is,
+  // because a silent failure here leaves a trigger node that quietly never fires.
+  const createDefaultSchedule = useCallback(async (workflowId: string) => {
+    try {
+      const r = await apiFetch(`${API}/api/workflows/${workflowId}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
+      })
+      if (!r.ok) await throwApiError(r, 'Could not set up the schedule')
+    } catch (e) {
+      reportApiError(e, navigate, 'Could not set up the schedule')
+    }
+  }, [navigate])
+
   async function togglePublished(next: boolean) {
     if (!id || publishBusy) return
     setPublishMenuOpen(false)
@@ -150,7 +168,10 @@ export function WorkflowEditorPage() {
       setPublished(next)
       toast.success(next ? 'Published — scheduled runs are live' : 'Unpublished — scheduled runs paused')
     } catch (e) {
-      toast.error(String((e as Error).message))
+      // A publish blocked by the plan is the case worth handling properly: the
+      // server explains which limit was hit and what to do, and the way out is an
+      // upgrade rather than a retry.
+      reportApiError(e, navigate, `Could not ${next ? 'publish' : 'unpublish'} the workflow`)
     } finally {
       setPublishBusy(false)
     }
@@ -241,11 +262,9 @@ export function WorkflowEditorPage() {
     if (hasScheduled && !prev) {
       // Node was added
       if (dbId) {
-        void apiFetch(`${API}/api/workflows/${dbId}/schedule`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
-        })
+        // Fire-and-forget hid plan refusals completely: the node appeared on the
+        // canvas with no schedule behind it and nothing said why.
+        void createDefaultSchedule(dbId)
       } else {
         pendingScheduleCreate.current = true
       }
@@ -256,7 +275,7 @@ export function WorkflowEditorPage() {
         void apiFetch(`${API}/api/workflows/${dbId}/schedule`, { method: 'DELETE' })
       }
     }
-  }, [nodes, dbId])
+  }, [nodes, dbId, createDefaultSchedule])
 
   // If dbId arrives after node was already added (new workflow flow)
   useEffect(() => {
@@ -264,13 +283,9 @@ export function WorkflowEditorPage() {
     prevDbIdForSchedule.current = dbId
     if (dbId && !prevId && pendingScheduleCreate.current) {
       pendingScheduleCreate.current = false
-      void apiFetch(`${API}/api/workflows/${dbId}/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frequency: 'daily', run_time: '09:00', day_of_week: 0, day_of_month: 1, repeat: true, enabled: true }),
-      })
+      void createDefaultSchedule(dbId)
     }
-  }, [dbId])
+  }, [dbId, createDefaultSchedule])
 
   // ── Save function ─────────────────────────────────────────
   const isSavingRef = useRef(false)
