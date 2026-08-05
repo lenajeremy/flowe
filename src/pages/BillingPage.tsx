@@ -5,6 +5,7 @@ import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { FloweIcon } from '@/components/FloweIcon'
 import { UserMenu } from '@/components/ui/UserMenu'
+import { MembersSection } from '@/components/MembersSection'
 
 // The in-app billing screen: what plan you're on, what you've used, and the way
 // to change either.
@@ -221,6 +222,8 @@ export function BillingPage() {
                 <Row label="Shared connections" value={l!.shared_connections ? 'Included' : 'Team and above'} />
               </dl>
             </section>
+
+            <MembersSection onSeatsChanged={refresh} />
 
             <p className="mt-5 text-center text-[12.5px] text-[var(--color-subtle)]">
               Invoices, card details and cancellation all live in{' '}

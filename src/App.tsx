@@ -16,6 +16,7 @@ import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { PricingPage } from '@/pages/PricingPage'
 import { BillingPage } from '@/pages/BillingPage'
+import { InvitePage } from '@/pages/InvitePage'
 import { useAuthStore } from '@/store/authStore'
 import { initTheme, useTheme } from '@/lib/theme'
 
@@ -55,6 +56,8 @@ function App() {
         <Route path="/trigger/:token" element={<WebhookTriggerPage />} />
         <Route path="/run/:runId" element={<RunDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        {/* Public: the page explains the invitation before asking you to sign in. */}
+        <Route path="/invite" element={<InvitePage />} />
         <Route path="/settings/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
         <Route path="/terms" element={<LegalPage doc="terms" />} />
         <Route path="/privacy" element={<LegalPage doc="privacy" />} />
