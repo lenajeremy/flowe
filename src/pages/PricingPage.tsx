@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { useAuthStore } from '@/store/authStore'
+import { usePlanStore } from '@/store/planStore'
 import { Nav, Footer } from '@/pages/LandingPage'
 import { RULE } from '@/lib/brandSurface'
 
@@ -38,9 +39,18 @@ interface Plan {
 const SYMBOL: Record<string, string> = { EUR: '\u20ac', USD: '$', GBP: '\u00a3' }
 const symbolFor = (c: string) => SYMBOL[c] ?? (c ? c + '\u00a0' : '')
 
+// TIER_ORDER lets the page tell an upgrade from a downgrade. A downgrade has to go
+// through Stripe's portal, which prorates it properly — sending it to Checkout
+// would open a second subscription alongside the first.
+const TIER_ORDER: Record<string, number> = { free: 0, pro: 1, team: 2, business: 3 }
+
 export function PricingPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const currentPlan = usePlanStore((s) => s.plan)
+  const cancelling = usePlanStore((s) => s.cancelAtPeriodEnd)
+  const hasBillingAccount = usePlanStore((s) => s.hasBillingAccount)
+  const loadPlan = usePlanStore((s) => s.load)
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
@@ -56,11 +66,37 @@ export function PricingPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Only signed-in visitors have a plan to compare against.
+  useEffect(() => {
+    if (user) void loadPlan()
+  }, [user, loadPlan])
+
+  async function openPortal() {
+    try {
+      const res = await apiFetch(`${API}/api/billing/portal`, { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (d.url) window.location.href = d.url
+      else setError(d.error || 'Could not open the billing portal')
+    } catch {
+      setError('Could not reach the server. Please try again.')
+    }
+  }
+
   // Free and Business never reach Stripe: free needs no payment, and Business is
   // sold by conversation. Anyone not signed in goes to login first — checkout
   // needs an account to attach the subscription to.
   const choose = async (plan: Plan) => {
     setError('')
+    // Downgrades and cancellations belong in the portal, where Stripe prorates
+    // them. Checkout would create a second subscription next to the existing one.
+    if (currentPlan && user && TIER_ORDER[plan.id] < TIER_ORDER[currentPlan]) {
+      if (hasBillingAccount) {
+        void openPortal()
+      } else {
+        navigate('/settings/billing')
+      }
+      return
+    }
     if (plan.id === 'free') {
       navigate(user ? '/workflows' : '/login')
       return
@@ -128,7 +164,9 @@ export function PricingPage() {
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <PlanSkeleton key={i} />)
             : plans.map((p) => (
-                <PlanCard key={p.id} plan={p} busy={busy === p.id} onChoose={() => choose(p)} />
+                <PlanCard key={p.id} plan={p} busy={busy === p.id}
+                  state={cardState(p, currentPlan, cancelling)}
+                  onChoose={() => choose(p)} />
               ))}
         </section>
 
@@ -145,9 +183,36 @@ export function PricingPage() {
   )
 }
 
+// cardState decides what a plan's button says and whether it does anything.
+//
+// Derived in one place so the label and the disabled state cannot disagree — a
+// button reading "Upgrade to Pro" that silently does nothing, or an enabled button
+// for the plan you already have, are both worse than no button.
+type CardState = { label: string | null; disabled: boolean; note?: string }
+
+function cardState(plan: Plan, currentPlan: string | null, cancelling: boolean): CardState {
+  // Not signed in, or the plan is not loaded yet: the catalog's own CTA stands.
+  if (!currentPlan) return { label: null, disabled: false }
+
+  if (plan.id === currentPlan) {
+    // Still on it, but leaving at period end — so re-subscribing IS meaningful and
+    // the portal is where that happens.
+    if (cancelling) {
+      return { label: 'Resume in portal', disabled: false, note: 'Ends at period end' }
+    }
+    return { label: 'Your current plan', disabled: true, note: 'Change seats or cancel in the billing portal' }
+  }
+  if (TIER_ORDER[plan.id] < TIER_ORDER[currentPlan]) {
+    return { label: plan.id === 'free' ? 'Cancel in portal' : `Switch to ${plan.name}`, disabled: false }
+  }
+  return { label: null, disabled: false }
+}
+
 // ─── Plan card ────────────────────────────────────────────────
-function PlanCard({ plan, busy, onChoose }: { plan: Plan; busy: boolean; onChoose: () => void }) {
-  const featured = plan.highlight
+function PlanCard({ plan, busy, state, onChoose }: {
+  plan: Plan; busy: boolean; state: CardState; onChoose: () => void
+}) {
+  const featured = plan.highlight && !state.disabled
   return (
     <div className="relative flex flex-col rounded-2xl p-6"
       style={{
@@ -157,12 +222,17 @@ function PlanCard({ plan, busy, onChoose }: { plan: Plan; busy: boolean; onChoos
         background: featured ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.015)',
         boxShadow: featured ? '0 1px 40px rgba(255,255,255,0.05)' : 'none',
       }}>
-      {featured && (
+      {state.disabled ? (
+        <span className="absolute -top-2.5 left-6 rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+          style={{ background: 'var(--fern-emerald, #16C08A)', color: '#04120d', letterSpacing: '0.08em' }}>
+          Current
+        </span>
+      ) : featured ? (
         <span className="absolute -top-2.5 left-6 rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-black"
           style={{ background: '#fff', letterSpacing: '0.08em' }}>
           Most popular
         </span>
-      )}
+      ) : null}
 
       <h3 className="text-[15px] font-semibold" style={{ letterSpacing: '-0.01em' }}>{plan.name}</h3>
       <p className="mt-1.5 min-h-[36px] text-[13px] leading-snug text-white/40">{plan.tagline}</p>
@@ -193,13 +263,23 @@ function PlanCard({ plan, busy, onChoose }: { plan: Plan; busy: boolean; onChoos
         <p className="mt-1.5 text-[12px] text-transparent select-none" aria-hidden="true">&nbsp;</p>
       )}
 
-      <button onClick={onChoose} disabled={busy}
-        className="pressable mt-6 w-full rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={featured
-          ? { background: '#fff', color: '#000' }
-          : { background: 'rgba(255,255,255,0.06)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }}>
-        {busy ? 'Opening checkout…' : plan.cta}
+      <button onClick={onChoose} disabled={busy || state.disabled}
+        aria-current={state.disabled ? 'true' : undefined}
+        className={`mt-6 w-full rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-opacity ${
+          state.disabled ? 'cursor-default' : 'pressable hover:opacity-90'
+        } disabled:opacity-100`}
+        style={state.disabled
+          // The current plan reads as a status, not an action: no fill, dimmed
+          // text, no hover. Greying out an otherwise identical button looks broken.
+          ? { background: 'transparent', color: 'rgba(255,255,255,0.45)', border: '1px dashed rgba(255,255,255,0.16)' }
+          : featured
+            ? { background: '#fff', color: '#000' }
+            : { background: 'rgba(255,255,255,0.06)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }}>
+        {busy ? 'Opening checkout…' : state.label ?? plan.cta}
       </button>
+      {state.note && (
+        <p className="mt-2 text-center text-[11.5px] leading-snug text-white/30">{state.note}</p>
+      )}
 
       <ul className="mt-7 flex flex-col gap-2.5">
         {plan.features.map((f) => (

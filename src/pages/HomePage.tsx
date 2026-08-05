@@ -6,6 +6,7 @@ import { NODE_ICONS } from '@/lib/nodeIcons'
 import { NODE_ACCENT_HEX, NODE_LABELS } from '@/lib/nodeColors'
 import { FloweIcon } from '@/components/FloweIcon'
 import { UserMenu } from '@/components/ui/UserMenu'
+import { PlanBadge } from '@/components/PlanBadge'
 import type { NodeType } from '@/types/workflow'
 
 // The workflows dashboard: searchable, filterable grid of workflow cards plus
@@ -214,6 +215,7 @@ export function HomePage() {
               <FloweIcon size={18} />
             </button>
             <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Workflows</h1>
+            <PlanBadge />
           </div>
           <div className="flex items-center gap-4">
             <button
