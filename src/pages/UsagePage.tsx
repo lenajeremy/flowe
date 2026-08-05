@@ -26,9 +26,22 @@ interface Tokens {
   total: number
 }
 
+interface PersonSpend {
+  user_id: string
+  name: string
+  credits: number
+  calls: number
+  tokens: number
+  limit?: number
+  percent?: number
+  custom_limit?: boolean
+}
+
 interface Row {
   id: string
   at: string
+  user_id?: string
+  user_name?: string
   kind: 'spend' | 'grant'
   reason: string
   label: string
@@ -55,6 +68,15 @@ interface Breakdown {
 
 interface UsageData {
   period: { label: string; from: string | null; to: string }
+  is_admin: boolean
+  viewing_user: string
+  my_allocation: {
+    limit: number
+    spent: number
+    remaining: number
+    percent: number
+    custom: boolean
+  }
   included_credits: number
   rows: Row[]
   total_rows: number
@@ -66,6 +88,7 @@ interface UsageData {
     by_reason: Breakdown[]
     by_workflow: Breakdown[]
     by_model: Breakdown[]
+    by_user?: PersonSpend[]
   }
 }
 
@@ -92,6 +115,7 @@ export function UsagePage() {
   const navigate = useNavigate()
   const [period, setPeriod] = useState<string>('current')
   const [kind, setKind] = useState<string>('')
+  const [person, setPerson] = useState<string>('')
   const [offset, setOffset] = useState(0)
   const [data, setData] = useState<UsageData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -100,12 +124,13 @@ export function UsagePage() {
     setLoading(true)
     const q = new URLSearchParams({ period, offset: String(offset), limit: '100' })
     if (kind) q.set('kind', kind)
+    if (person) q.set('user_id', person)
     apiFetch(`${API}/api/usage?${q}`)
       .then((r) => r.json())
       .then((d: UsageData) => setData(d))
       .catch(() => toast.error('Could not load your usage'))
       .finally(() => setLoading(false))
-  }, [period, kind, offset])
+  }, [period, kind, person, offset])
 
   useEffect(() => {
     document.title = 'Usage · Fernary'
@@ -116,7 +141,9 @@ export function UsagePage() {
   // so it is fetched and handed to the browser as a blob.
   async function exportCsv() {
     try {
-      const res = await fetch(`${API}/api/usage/export.csv?period=${period}`, {
+      const q = new URLSearchParams({ period })
+      if (person) q.set('user_id', person)
+      const res = await fetch(`${API}/api/usage/export.csv?${q}`, {
         headers: { Authorization: `Bearer ${getToken() ?? ''}` },
       })
       if (!res.ok) throw new Error()
@@ -135,6 +162,9 @@ export function UsagePage() {
   }
 
   const s = data?.summary
+  // The Member column only exists for an admin, so the empty/loading rows have to
+  // span the same width or the table visibly jumps.
+  const columns = data?.is_admin ? 9 : 8
   const pageEnd = Math.min((data?.offset ?? 0) + (data?.rows.length ?? 0), data?.total_rows ?? 0)
 
   return (
@@ -176,6 +206,18 @@ export function UsagePage() {
             onChange={(v) => { setPeriod(v); setOffset(0) }} />
           <Segmented options={KINDS} value={kind}
             onChange={(v) => { setKind(v); setOffset(0) }} />
+          {/* Only an admin gets this. A plain member's view is already restricted
+              to themselves by the server, so a picker would be a control that
+              cannot change anything. */}
+          {data?.is_admin && (s?.by_user?.length ?? 0) > 0 && (
+            <select value={person} onChange={(e) => { setPerson(e.target.value); setOffset(0) }}
+              className="h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 text-[12.5px] outline-none">
+              <option value="">Everyone</option>
+              {s!.by_user!.filter((u) => u.user_id).map((u) => (
+                <option key={u.user_id} value={u.user_id}>{u.name}</option>
+              ))}
+            </select>
+          )}
           <div className="flex-1" />
           <button onClick={exportCsv}
             className="pressable flex h-9 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3.5 text-[12.5px] font-medium hover:border-[var(--color-border2)]">
@@ -197,6 +239,78 @@ export function UsagePage() {
             sub="itemised entries in this window" />
         </div>
 
+        {/* Your own share. Shown to everyone including admins, because "how much of
+            MY allowance is left" is a different question from "what is the org
+            spending" and people ask it more often. */}
+        {data && data.my_allocation.limit > 0 && !person && (
+          <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-[13px] font-semibold">
+                Your allowance
+                {data.my_allocation.custom && (
+                  <span className="ml-2 font-mono text-[10.5px] uppercase tracking-wider text-[var(--color-subtle)]">
+                    set by your admin
+                  </span>
+                )}
+              </h3>
+              <span className="font-mono text-[12px] text-[var(--color-muted)]">
+                {num(data.my_allocation.spent)} of {num(data.my_allocation.limit)}
+              </span>
+            </div>
+            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
+              <div className="h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${Math.max(data.my_allocation.percent, 1.5)}%`,
+                  background: data.my_allocation.percent >= 80 ? '#f59e0b' : 'var(--color-accent)',
+                }} />
+            </div>
+            <p className="mt-2 text-[12.5px] text-[var(--color-subtle)]">
+              {data.my_allocation.remaining > 0
+                ? `${num(data.my_allocation.remaining)} left. Your share is ring-fenced, so a busy colleague cannot spend it.`
+                : 'You have used your share. Your organization\u2019s owner can raise your limit.'}
+            </p>
+          </div>
+        )}
+
+        {/* Who spent what — admin only. */}
+        {data?.is_admin && (s?.by_user?.length ?? 0) > 0 && (
+          <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <h3 className="text-[13px] font-semibold">Spend by teammate</h3>
+            <ul className="mt-3.5 flex flex-col gap-3">
+              {s!.by_user!.map((u) => {
+                const pct = u.limit && u.limit > 0
+                  ? Math.min(Math.round((u.credits / u.limit) * 100), 100)
+                  : (s!.spent > 0 ? Math.round((u.credits / s!.spent) * 100) : 0)
+                return (
+                  <li key={u.user_id || 'unattributed'}>
+                    <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
+                      <button
+                        onClick={() => u.user_id && (setPerson(u.user_id), setOffset(0))}
+                        disabled={!u.user_id}
+                        className={`truncate text-left ${u.user_id ? 'hover:text-[var(--color-accent)]' : 'cursor-default text-[var(--color-subtle)]'}`}>
+                        {u.name}
+                      </button>
+                      <span className="shrink-0 font-mono tabular-nums text-[var(--color-muted)]">
+                        {num(u.credits)}{u.limit ? ` / ${num(u.limit)}` : ''}
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--color-border)]">
+                      <div className="h-full rounded-full"
+                        style={{ width: `${Math.max(pct, 1)}%`,
+                          background: pct >= 100 ? '#f59e0b' : 'var(--color-accent)' }} />
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-[var(--color-subtle)]">
+                      {u.limit ? `${pct}% of their share` : `${pct}% of org spend`}
+                      {' · '}{num(u.calls)} {u.calls === 1 ? 'call' : 'calls'}
+                      {u.custom_limit ? ' · custom limit' : ''}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
         {/* Breakdowns — each sums to the Used figure above, deliberately, so the
             page can be reconciled rather than merely read. */}
         {s && (
@@ -215,6 +329,7 @@ export function UsagePage() {
                 <tr className="border-b border-[var(--color-border)] text-[11px] uppercase tracking-wider text-[var(--color-subtle)]">
                   <Th>When</Th>
                   <Th>What</Th>
+                  {data?.is_admin && <Th>Member</Th>}
                   <Th>Workflow</Th>
                   <Th>Step</Th>
                   <Th>Model</Th>
@@ -227,19 +342,19 @@ export function UsagePage() {
                 {loading && !data ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="border-b border-[var(--color-border)]">
-                      <td colSpan={8} className="px-4 py-3">
+                      <td colSpan={columns} className="px-4 py-3">
                         <div className="h-3.5 animate-pulse rounded bg-[var(--color-hover)]" />
                       </td>
                     </tr>
                   ))
                 ) : data?.rows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[var(--color-muted)]">
+                    <td colSpan={columns} className="px-4 py-12 text-center text-[13px] text-[var(--color-muted)]">
                       Nothing charged in this window.
                     </td>
                   </tr>
                 ) : (
-                  data?.rows.map((r) => <LedgerRow key={r.id} row={r} />)
+                  data?.rows.map((r) => <LedgerRow key={r.id} row={r} showMember={Boolean(data.is_admin)} />)
                 )}
               </tbody>
             </table>
@@ -276,7 +391,7 @@ export function UsagePage() {
 }
 
 // ─── row ──────────────────────────────────────────────────────
-function LedgerRow({ row: r }: { row: Row }) {
+function LedgerRow({ row: r, showMember }: { row: Row; showMember: boolean }) {
   const isGrant = r.kind === 'grant'
   return (
     <tr className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-hover)]">
@@ -288,6 +403,13 @@ function LedgerRow({ row: r }: { row: Row }) {
         </span>
         {r.op && <div className="font-mono text-[11px] text-[var(--color-subtle)]">{r.op}</div>}
       </Td>
+      {showMember && (
+        <Td>
+          {r.user_name
+            ? <span className="text-[var(--color-muted)]">{r.user_name}</span>
+            : <span className="text-[var(--color-subtle)]">\u2014</span>}
+        </Td>
+      )}
       <Td>
         {r.workflow_id ? (
           <Link to={`/workflow/${r.workflow_id}`}
