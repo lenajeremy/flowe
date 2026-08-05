@@ -20,6 +20,8 @@ interface Billing {
   status: string
   cancel_at_period_end: boolean
   personal: boolean
+  seats: number
+  per_seat: boolean
   has_billing_account: boolean
   current_period_end?: string
   usage: {
@@ -148,6 +150,11 @@ export function BillingPage() {
                       One scheduled agent, running daily. Upgrade to run more, more often.
                     </p>
                   )}
+                  {data.per_seat && (
+                    <p className="mt-1.5 text-[13px] text-[var(--color-muted)]">
+                      {data.seats} {data.seats === 1 ? 'seat' : 'seats'} · each one adds to your AI allowance.
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2.5">
                   {data.has_billing_account && (
@@ -205,7 +212,12 @@ export function BillingPage() {
                     : `${u!.scheduled_agents} of ${l!.max_scheduled_agents}`} />
                 <Row label="Fastest schedule" value={frequencyLabel(l!.min_schedule_minutes)} />
                 <Row label="Run history" value={`${l!.run_history_days} days`} />
-                <Row label="Team members" value={l!.max_members === 0 ? 'Unlimited' : String(l!.max_members)} />
+                <Row label="Team members"
+                  value={l!.max_members === 0
+                    ? 'Unlimited'
+                    : data.per_seat
+                      ? `${l!.max_members} (${data.seats} seats)`
+                      : String(l!.max_members)} />
                 <Row label="Shared connections" value={l!.shared_connections ? 'Included' : 'Team and above'} />
               </dl>
             </section>

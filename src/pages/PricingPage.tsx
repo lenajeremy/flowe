@@ -24,13 +24,19 @@ interface Plan {
   id: string
   name: string
   tagline: string
-  price_usd: number
+  price: number
+  currency: string
   interval: string
+  per_seat: boolean
+  min_seats?: number
   cta: string
   features: string[]
   highlight: boolean
   self_serve: boolean
 }
+
+const SYMBOL: Record<string, string> = { EUR: '\u20ac', USD: '$', GBP: '\u00a3' }
+const symbolFor = (c: string) => SYMBOL[c] ?? (c ? c + '\u00a0' : '')
 
 export function PricingPage() {
   const navigate = useNavigate()
@@ -60,7 +66,8 @@ export function PricingPage() {
       return
     }
     if (!plan.self_serve) {
-      window.location.href = 'mailto:hello@fernary.com?subject=Fernary%20Business%20plan'
+      const subject = encodeURIComponent(`Fernary ${plan.name} plan`)
+      window.location.href = `mailto:hello@fernary.com?subject=${subject}`
       return
     }
     if (!user) {
@@ -106,7 +113,7 @@ export function PricingPage() {
               USD reference. Saying so up front avoids the "why is this a different
               number" support ticket. */}
           <p className="mt-4 font-mono text-[11.5px] text-white/25">
-            Prices in USD · shown in your local currency at checkout
+            Prices in EUR · shown in your local currency at checkout
           </p>
         </section>
 
@@ -161,17 +168,30 @@ function PlanCard({ plan, busy, onChoose }: { plan: Plan; busy: boolean; onChoos
       <p className="mt-1.5 min-h-[36px] text-[13px] leading-snug text-white/40">{plan.tagline}</p>
 
       <div className="mt-5 flex items-baseline gap-1.5">
-        {plan.price_usd < 0 ? (
+        {plan.price < 0 ? (
           <span className="text-[26px] font-semibold" style={{ letterSpacing: '-0.02em' }}>Let&rsquo;s talk</span>
         ) : (
           <>
             <span className="text-[36px] font-semibold leading-none" style={{ letterSpacing: '-0.03em' }}>
-              ${plan.price_usd}
+              {symbolFor(plan.currency)}{plan.price}
             </span>
-            {plan.interval && <span className="text-[13px] text-white/35">/{plan.interval}</span>}
+            {plan.interval && (
+              <span className="text-[13px] text-white/35">
+                {plan.per_seat ? `/seat/${plan.interval}` : `/${plan.interval}`}
+              </span>
+            )}
           </>
         )}
       </div>
+      {/* The minimum is part of the price on a per-seat plan — a customer who
+          discovers it at checkout feels misled rather than informed. */}
+      {plan.per_seat && plan.min_seats ? (
+        <p className="mt-1.5 text-[12px] text-white/30">
+          {plan.min_seats} seats minimum &middot; {symbolFor(plan.currency)}{plan.price * plan.min_seats}/{plan.interval}
+        </p>
+      ) : (
+        <p className="mt-1.5 text-[12px] text-transparent select-none" aria-hidden="true">&nbsp;</p>
+      )}
 
       <button onClick={onChoose} disabled={busy}
         className="pressable mt-6 w-full rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
@@ -243,7 +263,11 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Which currency am I charged in?',
-    a: 'Yours, where we can. Prices are set in US dollars and converted at checkout using the current rate, so you see and pay a local amount.',
+    a: 'Yours, where we can. Prices are set in euros and converted at checkout using the current rate, so you see and pay a local amount.',
+  },
+  {
+    q: 'How does Team pricing work?',
+    a: 'Per seat, from two seats up. Every seat brings its own AI allowance, so a small team running a lot of automation is not squeezed and a large team is not overcharged. Add or remove seats whenever you like and we prorate it.',
   },
 ]
 
