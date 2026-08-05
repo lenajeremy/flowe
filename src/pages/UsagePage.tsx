@@ -69,6 +69,7 @@ interface Breakdown {
 interface UsageData {
   period: { label: string; from: string | null; to: string }
   is_admin: boolean
+  member_count: number
   viewing_user: string
   my_allocation: {
     limit: number
@@ -162,9 +163,16 @@ export function UsagePage() {
   }
 
   const s = data?.summary
-  // The Member column only exists for an admin, so the empty/loading rows have to
+  // Nothing per-person is worth showing in a one-person organisation: the
+  // breakdown would list only you, the filter would have a single option, and the
+  // Member column would repeat one name down every row. Gated on membership rather
+  // than on who has spent, so a team where only one person has been active still
+  // gets the view.
+  const hasTeammates = (data?.member_count ?? 1) > 1
+  const showPerPerson = Boolean(data?.is_admin) && hasTeammates
+  // The Member column only exists in that view, so the empty/loading rows have to
   // span the same width or the table visibly jumps.
-  const columns = data?.is_admin ? 9 : 8
+  const columns = showPerPerson ? 9 : 8
   const pageEnd = Math.min((data?.offset ?? 0) + (data?.rows.length ?? 0), data?.total_rows ?? 0)
 
   return (
@@ -209,7 +217,7 @@ export function UsagePage() {
           {/* Only an admin gets this. A plain member's view is already restricted
               to themselves by the server, so a picker would be a control that
               cannot change anything. */}
-          {data?.is_admin && (s?.by_user?.length ?? 0) > 0 && (
+          {showPerPerson && (s?.by_user?.length ?? 0) > 0 && (
             <select value={person} onChange={(e) => { setPerson(e.target.value); setOffset(0) }}
               className="h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 text-[12.5px] outline-none">
               <option value="">Everyone</option>
@@ -273,7 +281,7 @@ export function UsagePage() {
         )}
 
         {/* Who spent what — admin only. */}
-        {data?.is_admin && (s?.by_user?.length ?? 0) > 0 && (
+        {showPerPerson && (s?.by_user?.length ?? 0) > 0 && (
           <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
             <h3 className="text-[13px] font-semibold">Spend by teammate</h3>
             <ul className="mt-3.5 flex flex-col gap-3">
@@ -329,7 +337,7 @@ export function UsagePage() {
                 <tr className="border-b border-[var(--color-border)] text-[11px] uppercase tracking-wider text-[var(--color-subtle)]">
                   <Th>When</Th>
                   <Th>What</Th>
-                  {data?.is_admin && <Th>Member</Th>}
+                  {showPerPerson && <Th>Member</Th>}
                   <Th>Workflow</Th>
                   <Th>Step</Th>
                   <Th>Model</Th>
@@ -354,7 +362,7 @@ export function UsagePage() {
                     </td>
                   </tr>
                 ) : (
-                  data?.rows.map((r) => <LedgerRow key={r.id} row={r} showMember={Boolean(data.is_admin)} />)
+                  data?.rows.map((r) => <LedgerRow key={r.id} row={r} showMember={showPerPerson} />)
                 )}
               </tbody>
             </table>
