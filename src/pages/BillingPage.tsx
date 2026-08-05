@@ -100,7 +100,7 @@ export function BillingPage() {
       {/* The same measure as Usage. These two are one screen split in half — each is
           reached from a link on the other — and content changing width on arrival
           reads as a different site rather than the next page of this one. */}
-      <div className="mx-auto max-w-[1180px] px-8 py-12">
+      <div className="mx-auto max-w-[860px] px-8 py-12">
 
         <div className="mb-7 flex items-center justify-between">
           <div className="flex items-center gap-3">
