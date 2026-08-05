@@ -108,6 +108,12 @@ const KINDS = [
   { id: 'grant', label: 'Credits' },
 ] as const
 
+// Rows per page. Was 100, which meant the pager below the table — gated on there
+// being more than one page — never appeared for anybody, and reading your charges
+// was scrolling a single slab of a hundred rows. A page you can take in at once is
+// the point of paging it at all.
+const PAGE_SIZE = 25
+
 const num = (n: number) => n.toLocaleString()
 
 const when = (iso: string) =>
@@ -126,7 +132,7 @@ export function UsagePage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    const q = new URLSearchParams({ period, offset: String(offset), limit: '100' })
+    const q = new URLSearchParams({ period, offset: String(offset), limit: String(PAGE_SIZE) })
     if (kind) q.set('kind', kind)
     if (person) q.set('user_id', person)
     apiFetch(`${API}/api/usage?${q}`)
@@ -393,7 +399,7 @@ export function UsagePage() {
                   <li key={u.user_id || 'unattributed'}>
                     <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
                       <button
-                        onClick={() => u.user_id && (setPerson(u.user_id), setOffset(0))}
+                        onClick={() => u.user_id && selectPerson(u.user_id)}
                         disabled={!u.user_id}
                         className={`truncate text-left ${u.user_id ? 'hover:text-[var(--color-accent)]' : 'cursor-default text-[var(--color-subtle)]'}`}>
                         {u.name}
