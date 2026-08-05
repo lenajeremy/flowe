@@ -27,6 +27,7 @@ interface Billing {
   current_period_end?: string
   usage: {
     included_credits: number
+    used_credits: number
     remaining_credits: number
     used_percent: number
     workflows: number
@@ -188,7 +189,12 @@ export function BillingPage() {
               <p className="mt-3 text-[13px] text-[var(--color-muted)]">
                 {u!.remaining_credits > 0
                   ? <><strong className="text-[var(--color-text)]">{100 - u!.used_percent}% of your allowance left</strong> this period.
-                      How far that goes depends on the models your agents use.</>
+                      {/* Carried-over credit means the balance can exceed one
+                          period's allowance, so the two figures are shown
+                          separately rather than one being derived from the other. */}
+                      {u!.remaining_credits > u!.included_credits &&
+                        ' You also have credit carried over from earlier.'}
+                      {' '}How far that goes depends on the models your agents use.</>
                   : <>You’ve used this period’s allowance. Scheduled agents are paused until it renews.</>}
               </p>
               {/* The honest promise, stated where it matters: we stop rather than
