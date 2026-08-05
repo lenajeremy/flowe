@@ -104,6 +104,13 @@ export function UserMenu() {
           </svg>
           Plan &amp; billing
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/settings/usage')} className="gap-2 text-[12px]">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M2 12V8m3.3 4V4m3.4 8V6.5M12 12V2.5" stroke="currentColor"
+              strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+          Usage
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         <DropdownMenuItem

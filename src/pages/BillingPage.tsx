@@ -175,9 +175,15 @@ export function BillingPage() {
 
             {/* Usage this period */}
             <section className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-[14px] font-semibold">AI usage this period</h3>
-                <span className="font-mono text-[12px] text-[var(--color-muted)]">{u!.used_percent}% used</span>
+                <div className="flex items-baseline gap-3">
+                  <button onClick={() => navigate('/settings/usage')}
+                    className="text-[12.5px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]">
+                    See every charge
+                  </button>
+                  <span className="font-mono text-[12px] text-[var(--color-muted)]">{u!.used_percent}% used</span>
+                </div>
               </div>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
                 <div className="h-full rounded-full transition-[width] duration-500"
