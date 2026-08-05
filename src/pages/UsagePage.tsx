@@ -34,6 +34,9 @@ interface PersonSpend {
   tokens: number
   limit?: number
   percent?: number
+  /** Of their monthly share, always this period — unlike `credits`, which follows
+   *  the selected window. */
+  remaining?: number
   custom_limit?: boolean
 }
 
@@ -142,7 +145,10 @@ export function UsagePage() {
   // so it is fetched and handed to the browser as a blob.
   async function exportCsv() {
     try {
+      // Same filters as the table. The button sits beside them, so exporting a
+      // different set of rows from the ones on screen is a quiet way to be wrong.
       const q = new URLSearchParams({ period })
+      if (kind) q.set('kind', kind)
       if (person) q.set('user_id', person)
       const res = await fetch(`${API}/api/usage/export.csv?${q}`, {
         headers: { Authorization: `Bearer ${getToken() ?? ''}` },
@@ -189,13 +195,47 @@ export function UsagePage() {
     : person
       ? `${viewedPerson?.name ?? 'Member'} used`
       : 'You used'
-  const scopeSub = scopeLimit <= 0
-    ? 'of your included credits'
-    : viewingEveryone
-      ? `of ${num(scopeLimit)} included`
-      : person
-        ? `of their ${num(scopeLimit)} share`
-        : `of your ${num(scopeLimit)} share`
+  // Allowances are monthly. Measuring a window that is not this month against one
+  // compares two different things: "all time · 698 of your 80,000 share" invites the
+  // reader to work out a percentage that means nothing, and on an account older than
+  // a month it would understate spend badly.
+  const scopeSub = period !== 'current'
+    ? 'credits in this window'
+    : scopeLimit <= 0
+      ? 'of your included credits'
+      : viewingEveryone
+        ? `of ${num(scopeLimit)} included`
+        : person
+          ? `of their ${num(scopeLimit)} share`
+          : `of your ${num(scopeLimit)} share`
+
+  // Taken from the allocation rather than subtracting the window's spend from the
+  // share: a share is monthly, so "all time" spend against it would go negative on
+  // any account older than a month.
+  const scopeRemaining = person
+    ? (viewedPerson?.remaining ?? 0)
+    : (data?.my_allocation.remaining ?? 0)
+
+  // Grants belong to the organization and carry no member, so a per-person view can
+  // only ever return an empty list — the filter was a control that did nothing.
+  const canSeeGrants = viewingEveryone
+  const grantView = kind === 'grant' && canSeeGrants
+  const kinds = canSeeGrants ? KINDS : KINDS.filter((k) => k.id !== 'grant')
+
+  // Switching to a person takes the grant filter away with it, so the page cannot be
+  // left showing a tab that is no longer offered.
+  const selectPerson = (id: string) => {
+    setPerson(id)
+    setOffset(0)
+    if (id && kind === 'grant') setKind('')
+  }
+
+  const entryLabel = kind === 'grant' ? 'Credit entries' : kind === 'spend' ? 'Charges' : 'Entries'
+  const emptyText = kind === 'grant'
+    ? 'No credits added in this window.'
+    : kind === 'spend'
+      ? 'Nothing charged in this window.'
+      : 'Nothing recorded in this window.'
   // A one-person org has no separate "share" — the org allowance IS that person's,
   // so both cards would say the same thing twice.
   const showOwnShare = (data?.my_allocation.limit ?? 0) > 0 && !person && hasTeammates
@@ -242,13 +282,13 @@ export function UsagePage() {
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <Segmented options={PERIODS} value={period}
             onChange={(v) => { setPeriod(v); setOffset(0) }} />
-          <Segmented options={KINDS} value={kind}
+          <Segmented options={kinds} value={kind}
             onChange={(v) => { setKind(v); setOffset(0) }} />
           {/* Only an admin gets this. A plain member's view is already restricted
               to themselves by the server, so a picker would be a control that
               cannot change anything. */}
           {showPerPerson && (s?.by_user?.length ?? 0) > 0 && (
-            <select value={person} onChange={(e) => { setPerson(e.target.value); setOffset(0) }}
+            <select value={person} onChange={(e) => selectPerson(e.target.value)}
               className="h-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 text-[12.5px] outline-none">
               <option value="">Everyone</option>
               {s!.by_user!.filter((u) => u.user_id).map((u) => (
@@ -267,14 +307,34 @@ export function UsagePage() {
           </button>
         </div>
 
-        {/* Totals */}
+        {/* Totals. Every card here is measured in the same scope as the rows below —
+            an organization figure beside a personal one is how "used 698 of 160,000,
+            79,302 left" happened, three numbers that cannot all be about one person. */}
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
-          <Stat label={`${scopeLabel} · ${data?.period.label ?? ''}`}
-            value={s ? num(s.spent) : '—'}
-            sub={data ? scopeSub : ''} />
-          <Stat label="Credits added" value={s ? num(s.granted) : '—'}
-            sub="allowances, top-ups and refunds" />
-          <Stat label="Charges" value={data ? num(data.total_rows) : '—'}
+          {grantView ? (
+            <Stat label={`Credits added · ${data?.period.label ?? ''}`}
+              value={s ? num(s.granted) : '—'}
+              sub="allowances, top-ups and refunds" />
+          ) : (
+            <Stat label={`${scopeLabel} · ${data?.period.label ?? ''}`}
+              value={s ? num(s.spent) : '—'}
+              sub={data ? scopeSub : ''} />
+          )}
+          {grantView ? (
+            <Stat label={scopeLabel} value={s ? num(s.spent) : '—'}
+              sub={data ? scopeSub : ''} />
+          ) : viewingEveryone ? (
+            <Stat label="Credits added" value={s ? num(s.granted) : '—'}
+              sub="allowances, top-ups and refunds" />
+          ) : (
+            // A member cannot see grants, so the org's total added would be the one
+            // number on the page that was not theirs. What is left of their own share
+            // is the question they came to ask anyway.
+            <Stat label={person ? 'Left of their share' : 'Left of your share'}
+              value={data ? num(scopeRemaining) : '—'}
+              sub={period === 'current' ? 'this period' : 'as of now'} />
+          )}
+          <Stat label={entryLabel} value={data ? num(data.total_rows) : '—'}
             sub="itemised entries in this window" />
         </div>
 
@@ -286,6 +346,12 @@ export function UsagePage() {
             <div className="flex items-baseline justify-between">
               <h3 className="text-[13px] font-semibold">
                 Your allowance
+                {/* Named because this card is always the current period, whatever
+                    window is selected above — the two sat side by side showing
+                    different spans of the same number with nothing to say so. */}
+                <span className="ml-2 text-[11.5px] font-normal text-[var(--color-subtle)]">
+                  this period
+                </span>
                 {data.my_allocation.custom && (
                   <span className="ml-2 font-mono text-[10.5px] uppercase tracking-wider text-[var(--color-subtle)]">
                     set by your admin
@@ -311,15 +377,18 @@ export function UsagePage() {
           </div>
         )}
 
-        {/* Who spent what — admin only. */}
-        {showPerPerson && (s?.by_user?.length ?? 0) > 0 && (
+        {/* Who spent what — admin only, and about spend, so it has no place in a
+            view filtered to credits. */}
+        {showPerPerson && !grantView && (s?.by_user?.length ?? 0) > 0 && (
           <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
             <h3 className="text-[13px] font-semibold">Spend by teammate</h3>
             <ul className="mt-3.5 flex flex-col gap-3">
               {s!.by_user!.map((u) => {
-                const pct = u.limit && u.limit > 0
-                  ? Math.min(Math.round((u.credits / u.limit) * 100), 100)
-                  : (s!.spent > 0 ? Math.round((u.credits / s!.spent) * 100) : 0)
+                const share = u.limit && u.limit > 0
+                  ? Math.min((u.credits / u.limit) * 100, 100)
+                  : (s!.spent > 0 ? (u.credits / s!.spent) * 100 : 0)
+                const pct = Math.round(share)
+                const pctLabel = pct === 0 && u.credits > 0 ? '<1%' : `${pct}%`
                 return (
                   <li key={u.user_id || 'unattributed'}>
                     <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
@@ -335,11 +404,11 @@ export function UsagePage() {
                     </div>
                     <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--color-border)]">
                       <div className="h-full rounded-full"
-                        style={{ width: `${Math.max(pct, 1)}%`,
+                        style={{ width: `${Math.max(share, 1)}%`,
                           background: pct >= 100 ? '#f59e0b' : 'var(--color-accent)' }} />
                     </div>
                     <div className="mt-0.5 text-[11px] text-[var(--color-subtle)]">
-                      {u.limit ? `${pct}% of their share` : `${pct}% of org spend`}
+                      {u.limit ? `${pctLabel} of their share` : `${pctLabel} of org spend`}
                       {' · '}{num(u.calls)} {u.calls === 1 ? 'call' : 'calls'}
                       {u.custom_limit ? ' · custom limit' : ''}
                     </div>
@@ -350,15 +419,24 @@ export function UsagePage() {
           </div>
         )}
 
-        {/* Breakdowns — each sums to the Used figure above, deliberately, so the
-            page can be reconciled rather than merely read. */}
-        {s && (
+        {/* Breakdowns — each sums to the headline figure above, deliberately, so the
+            page can be reconciled rather than merely read. They follow the charges/
+            credits filter: describing spend while the table listed credits put a
+            three-card itemisation of charges directly above the words "no credits
+            added", and only one of them could be answering the question asked. */}
+        {s && (grantView ? (
+          <div className="mb-6">
+            {/* Grants have no workflow and no model — there is nothing to say about a
+                monthly allowance except where it came from. */}
+            <BreakdownCard title="Where credits came from" rows={s.by_reason} total={s.granted} />
+          </div>
+        ) : (
           <div className="mb-6 grid gap-3 lg:grid-cols-3">
             <BreakdownCard title="By type" rows={s.by_reason} total={s.spent} />
             <BreakdownCard title="By workflow" rows={s.by_workflow} total={s.spent} />
             <BreakdownCard title="By model" rows={s.by_model} total={s.spent} />
           </div>
-        )}
+        ))}
 
         {/* Ledger */}
         <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
@@ -389,7 +467,7 @@ export function UsagePage() {
                 ) : data?.rows.length === 0 ? (
                   <tr>
                     <td colSpan={columns} className="px-4 py-12 text-center text-[13px] text-[var(--color-muted)]">
-                      Nothing charged in this window.
+                      {emptyText}
                     </td>
                   </tr>
                 ) : (
@@ -440,13 +518,18 @@ function LedgerRow({ row: r, showMember }: { row: Row; showMember: boolean }) {
           <Dot reason={r.reason} />
           {r.label}
         </span>
-        {r.op && <div className="font-mono text-[11px] text-[var(--color-subtle)]">{r.op}</div>}
+        {/* A non-AI charge stores its node type where a model would go. It belongs
+            here, under what kind of work it was — in the Model column it read as the
+            name of a model, which "emailSend" plainly is not. */}
+        {(r.op || (!r.model && r.provider)) && (
+          <div className="font-mono text-[11px] text-[var(--color-subtle)]">{r.op || r.provider}</div>
+        )}
       </Td>
       {showMember && (
         <Td>
           {r.user_name
             ? <span className="text-[var(--color-muted)]">{r.user_name}</span>
-            : <span className="text-[var(--color-subtle)]">\u2014</span>}
+            : <span className="text-[var(--color-subtle)]">—</span>}
         </Td>
       )}
       <Td>
@@ -469,9 +552,7 @@ function LedgerRow({ row: r, showMember }: { row: Row; showMember: boolean }) {
       <Td>
         {r.model
           ? <span className="font-mono text-[11.5px]">{r.model}</span>
-          : r.provider
-            ? <span className="font-mono text-[11.5px] text-[var(--color-muted)]">{r.provider}</span>
-            : <span className="text-[var(--color-subtle)]">—</span>}
+          : <span className="text-[var(--color-subtle)]">—</span>}
       </Td>
       <Td right>
         {r.tokens ? (
@@ -547,7 +628,11 @@ function BreakdownCard({ title, rows, total }: { title: string; rows: Breakdown[
       ) : (
         <ul className="mt-3.5 flex flex-col gap-2.5">
           {top.map((b) => {
-            const pct = total > 0 ? Math.round((b.credits / total) * 100) : 0
+            const share = total > 0 ? (b.credits / total) * 100 : 0
+            const pct = Math.round(share)
+            // A 2-credit line among 698 rounded to a flat "0%", which reads as a row
+            // that cost nothing sitting next to a figure saying it did not.
+            const pctLabel = pct === 0 && b.credits > 0 ? '<1%' : `${pct}%`
             return (
               <li key={b.key || b.label}>
                 <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
@@ -558,10 +643,10 @@ function BreakdownCard({ title, rows, total }: { title: string; rows: Breakdown[
                 </div>
                 <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--color-border)]">
                   <div className="h-full rounded-full bg-[var(--color-accent)]"
-                    style={{ width: `${Math.max(pct, 1)}%` }} />
+                    style={{ width: `${Math.max(share, 1)}%` }} />
                 </div>
                 <div className="mt-0.5 text-[11px] text-[var(--color-subtle)]">
-                  {pct}% · {num(b.calls)} {b.calls === 1 ? 'call' : 'calls'}
+                  {pctLabel} · {num(b.calls)} {b.calls === 1 ? 'call' : 'calls'}
                 </div>
               </li>
             )
