@@ -135,14 +135,14 @@ export function PricingPage() {
 
   return (
     <div style={{ background: '#050508', color: '#fff', minHeight: '100vh' }}>
-      <Nav onOpen={() => navigate(user ? '/workflows' : '/login')} />
+      <Nav onOpen={() => navigate(user ? '/workflows' : '/login')} isAuthed={Boolean(user)} />
 
       <main className="mx-auto max-w-6xl px-6">
         <section className="pt-16 pb-12 text-center sm:pt-24 sm:pb-16">
-          <h2 className="mx-auto max-w-2xl text-[34px] font-semibold leading-[1.1] sm:text-[46px]"
+          <h1 className="mx-auto max-w-2xl text-[34px] font-semibold leading-[1.1] sm:text-[46px]"
             style={{ letterSpacing: '-0.03em' }}>
             Start free. Pay when<br />it&rsquo;s doing real work.
-          </h2>
+          </h1>
           {/* The spend objection, answered in the first sentence a buyer reads. On
               a product that acts while you sleep it is *the* objection, and the
               honest answer happens to be the strongest line on the page. */}

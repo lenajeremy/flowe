@@ -514,18 +514,6 @@ select:focus-visible { outline: none; }
 }
 .data-live { animation: data-live-flash 900ms var(--ease-out) 1; }
 
-/* Headline word entrance — each word rises out of a blur, staggered.
-   First-paint only (landing hero); delay set inline per word. */
-@keyframes word-in {
-  from { opacity: 0; transform: translateY(0.35em); filter: blur(8px); }
-  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-.word-in {
-  display: inline-block;
-  opacity: 0;
-  animation: word-in 640ms var(--ease-out) forwards;
-}
-
 /* Popover/menu entrance — scales from its trigger, never from nothing.
    Set --pop-origin per menu (defaults to top center). */
 @keyframes pop-in {
@@ -737,7 +725,6 @@ select:focus-visible { outline: none; }
 /* ── Reduced motion: keep meaning, drop movement ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .rise-in { animation-duration: 1ms; }
-  .word-in { animation-duration: 1ms; animation-delay: 0ms !important; }
   .pop-in { animation: none; }
   .aurora-drift { animation: none; }
   .pulse-dot { animation: none; }

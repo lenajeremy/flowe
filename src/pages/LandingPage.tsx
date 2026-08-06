@@ -432,7 +432,8 @@ function Shot({ src, alt }: { src: string; alt: string }) {
 }
 
 // ─── Numbered section — Linear's 1.0 / 2.0 / 3.0 grammar ───────
-function NumberedSection({ index, name, title, sub, shot, alt }: {
+function NumberedSection({ id, index, name, title, sub, shot, alt }: {
+  id?: string
   index: string
   name: string
   title: React.ReactNode
@@ -441,7 +442,7 @@ function NumberedSection({ index, name, title, sub, shot, alt }: {
   alt: string
 }) {
   return (
-    <section className={SECTION}>
+    <section id={id} className={`${SECTION} ${id ? 'scroll-mt-20' : ''}`}>
       <Reveal>
         <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
           <h2 className={H2} style={H2_STYLE}>
@@ -477,15 +478,9 @@ function Glyph({ d, size = 20 }: { d: string; size?: number }) {
   )
 }
 
-// Marks for the capabilities no single node owns: a 2×2 grid for integrations,
-// two figures for the team, a publish toggle sitting on, and a gauge that stops
-// short of the end for metering.
-const GRID_PATH = 'M2 2.5h4.5v4.5H2zM9.5 2.5H14v4.5H9.5zM2 9.5h4.5v4.5H2zM9.5 9.5H14v4.5H9.5z'
-// A dismissal mark for the hero's three "no" claims — they are things the
-// product spares you, so they read as struck out rather than ticked off.
-const CROSS_PATH = 'M3.5 3.5l9 9M12.5 3.5l-9 9'
-const PEOPLE_PATH = 'M6 2.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8zM1.6 13.6c0-2.4 2-4.4 4.4-4.4s4.4 2 4.4 4.4M10.6 3a2.4 2.4 0 010 4.4M11.6 9.6c1.6.6 2.8 2.1 2.8 4'
-const TOGGLE_PATH = 'M5 4.6h6a3.4 3.4 0 010 6.8H5a3.4 3.4 0 010-6.8zM11 6.6a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8z'
+// Marks for claims no single node owns: a quiet check for the hero's trust
+// statements, and a gauge that stops short of the end for metering.
+const CHECK_PATH = 'M2.5 8.2l3.2 3.1 7.8-7.5'
 const GAUGE_PATH = 'M2.5 12a5.5 5.5 0 1111 0M8 12l3.3-3.5'
 
 // Brand accents — the dark-theme --na-* values, fixed here because the
@@ -510,6 +505,15 @@ const INTEGRATIONS: NodeType[] = [
   'googleforms', 'googlemeet', 'googlechat', 'googletasks', 'googlekeep', 'outlook',
   'slack', 'notion', 'linear', 'github', 'gitlab', 'jira',
   'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly', 'dropbox', 'netlify', 'supabase', 'gumroad', 'googlesearchconsole', 'googlecontacts', 'hubspot', 'front',
+]
+
+// Sixteen familiar tools trigger recognition faster than a 38-logo wall. The
+// full catalogue still drives the honest breadth count and capability copy.
+const FEATURED_INTEGRATIONS: NodeType[] = [
+  'gmail', 'slack', 'notion', 'linear',
+  'github', 'googlesheets', 'googledrive', 'googlecalendar',
+  'stripe', 'hubspot', 'shopify', 'airtable',
+  'front', 'jira', 'calendly', 'typeform',
 ]
 
 function IntegrationTile({ type }: { type: NodeType }) {
@@ -545,40 +549,44 @@ function IntegrationTile({ type }: { type: NodeType }) {
 
 function Integrations() {
   return (
-    <section className={SECTION} style={RULE}>
+    <section id="integrations" className={`${SECTION} scroll-mt-20`} style={RULE}>
       <Reveal>
         <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
           <h2 className={H2} style={H2_STYLE}>
-            If you run on it,<br />it&rsquo;s wired in.
+            Your tools are<br />already waiting.
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
-            {/* The count is read off the wall below rather than written out, so
-                adding a connector updates the sentence too.
-                We have dozens of connectors, not the four figures the category
-                advertises, so the copy competes on depth instead of pretending
-                otherwise: a real read-and-write action beats a logo on a page. */}
             <p className={LEAD}>
-              {INTEGRATIONS.length} apps and more than 800 read-and-write actions. Not a wall
-              of logos: every one is connected properly, so a single run can read a Stripe
-              charge, file a Linear issue and post to Slack without you gluing anything
-              together. Connect an account once and reach for it in any workflow.
+              {INTEGRATIONS.length} connected apps and more than 800 read-and-write actions.
+              One workflow can read a Stripe charge, update a Sheet, file a Linear issue,
+              and post the result to Slack. Connect an account once, then use it anywhere.
             </p>
-            <div className="group flex cursor-default items-center gap-2.5 font-mono text-[13px]">
-              <span className="text-white/30">4.0</span>
-              <span className="text-white/55 transition-colors duration-200 group-hover:text-white">Connect</span>
-              <span className="text-white/30 transition-transform duration-200 ease-[var(--ease-out)] group-hover:translate-x-1 group-hover:text-white/60">→</span>
-            </div>
+            <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-white/35">
+              A few you can put to work today
+            </p>
           </div>
         </div>
       </Reveal>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {INTEGRATIONS.map((type, i) => (
+        {FEATURED_INTEGRATIONS.map((type, i) => (
           <Reveal key={type} delay={(i % 4) * 60} y={16}>
             <IntegrationTile type={type} />
           </Reveal>
         ))}
       </div>
-
+      <Reveal delay={120} y={16}>
+        <div className="mt-8 flex flex-col gap-3 rounded-xl px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.02)' }}>
+          <p className="text-[14px] text-white/55">
+            <span className="font-semibold text-white">And {INTEGRATIONS.length - FEATURED_INTEGRATIONS.length} more.</span>{' '}
+            Plus any service with an API.
+          </p>
+          <a href="#examples" className="group inline-flex items-center gap-2 text-[13.5px] font-medium text-white/65 hover:text-white">
+            See what they can do
+            <span aria-hidden className="transition-transform duration-200 ease-[var(--ease-out)] group-hover:translate-x-1">→</span>
+          </a>
+        </div>
+      </Reveal>
     </section>
   )
 }
@@ -875,12 +883,9 @@ function MemoryBand() {
 const CAPABILITIES: Array<{ icon: string; tint: string; title: string; body: string }> = [
   { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok. Choose per step, switch whenever.' },
   { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Reads the live web', body:'Steps search and read today’s pages, so an answer is never last month’s.' },
-  { icon: GRID_PATH, tint: ACCENT, title:`${INTEGRATIONS.length} apps, wired properly`, body:'Slack, Gmail, Notion, GitHub, Jira, Stripe, HubSpot, Google Workspace and more.' },
   { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Runs on your clock', body:'On a schedule you set, or the moment a webhook hits it.' },
   { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Waits for your yes', body:'One tap approves. Anything you ignore simply never ships.' },
   { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branches and loops', body:'Real control flow. Fork on a condition, iterate across a list.' },
-  { icon: TOGGLE_PATH, tint:'#2dd4bf', title:'Nothing runs unasked', body:'Schedules only fire once you publish. Until then it’s a draft.' },
-  { icon: PEOPLE_PATH, tint:'#8FE06A', title:'Built for teams', body:'Invite the team, share connections, and see what each person spent.' },
   { icon: GAUGE_PATH, tint:'#0FA3A3', title:'It stops, it doesn’t bill', body:'Every charge itemised, and no overage, ever. It stops instead.' },
 ]
 
@@ -912,69 +917,6 @@ function Capabilities() {
               <span className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>{c.title}</span>
             </div>
             <p className="text-[14px] leading-relaxed text-white/45">{c.body}</p>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-// ─── Three modes — what the product actually is, in one screen ──
-// A visitor who has read only the hero still doesn't know the shape of the
-// thing. This is the orientation beat: the three moments that make up every
-// Fernary workflow, each one input → outcome, so the whole product reads in
-// about six seconds.
-const MODES: Array<{ input: string; outcome: string; body: string; tint: string; icon: string }> = [
-  {
-    input: 'One sentence',
-    outcome: 'It’s built.',
-    body: 'Describe the job. The builder picks the trigger, the tools and the steps, then explains what it did.',
-    tint: '#8FE06A',
-    icon: NODE_ICON_PATHS.llm,
-  },
-  {
-    input: 'One schedule',
-    outcome: 'It’s handled.',
-    body: 'Every weekday at nine, every hour, or the second a webhook fires. You do not have to be there.',
-    tint: '#F5A524',
-    icon: NODE_ICON_PATHS.scheduledTrigger,
-  },
-  {
-    input: 'One tap',
-    outcome: 'It’s approved.',
-    body: 'Anything consequential waits for you. Approve and it ships. Ignore it and nothing ships.',
-    tint: '#f94b4b',
-    icon: NODE_ICON_PATHS.humanApproval,
-  },
-]
-
-function Modes() {
-  return (
-    <section className={SECTION} style={RULE}>
-      <Reveal>
-        <h2 className={`${HEAD_GAP} max-w-2xl ${H2}`} style={H2_STYLE}>
-          Handles the work you&rsquo;d<br />rather not do twice.
-        </h2>
-      </Reveal>
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        {MODES.map((m, i) => (
-          <Reveal key={m.input} delay={i * 90} y={20}>
-            <div className="flex h-full flex-col rounded-xl p-5"
-              style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.015)' }}>
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg"
-                style={{
-                  border:`1px solid color-mix(in srgb, ${m.tint} 25%, transparent)`,
-                  background:`color-mix(in srgb, ${m.tint} 6%, transparent)`,
-                  color: m.tint,
-                }}>
-                <Glyph d={m.icon} size={18} />
-              </div>
-              {/* Input in the machine voice, outcome in the brand voice — the
-                  two halves of the promise, typographically separated. */}
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/35">{m.input}</div>
-              <div className="mt-1.5 text-[1.35rem] font-bold" style={{ letterSpacing:'-0.025em' }}>{m.outcome}</div>
-              <p className="mt-3 text-[14px] leading-relaxed text-white/45">{m.body}</p>
-            </div>
           </Reveal>
         ))}
       </div>
@@ -1179,9 +1121,8 @@ function DayCard({ d }: { d: DayEntry }) {
       <div className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>{d.title}</div>
       {/* What you typed, in your voice — quoted, because a person wrote it */}
       <p className="mt-2.5 text-[13.5px] italic leading-relaxed text-white/40">&ldquo;{d.ask}&rdquo;</p>
-      {/* What came back, in the past tense. The whole point of the section: not
-          what the product does, but what already happened because of it. */}
-      <p className="mt-4 flex items-start gap-2 text-[13.5px] leading-relaxed text-white/75">
+      <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white/30">Example result</div>
+      <p className="mt-2 flex items-start gap-2 text-[13.5px] leading-relaxed text-white/75">
         <span className="mt-[3px] flex-shrink-0">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
             <path d="M2.5 7l3 3 5-6.5" stroke="#3dd68c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1193,7 +1134,7 @@ function DayCard({ d }: { d: DayEntry }) {
   )
 }
 
-function DayInTheLife() {
+function DayInTheLife({ onGetStarted }: { onGetStarted: () => void }) {
   const [role, setRole] = useState(0)
   const tabs = useRef<Array<HTMLButtonElement | null>>([])
   const active = DAY[role]
@@ -1210,16 +1151,19 @@ function DayInTheLife() {
   }
 
   return (
-    <section className={SECTION} style={RULE}>
+    <section id="examples" className={`${SECTION} scroll-mt-20`} style={RULE}>
       <Reveal>
         <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
-          <h2 className={H2} style={H2_STYLE}>
-            Your Monday,<br />already done.
-          </h2>
+          <div>
+            <span className={`mb-5 block ${EYEBROW}`}>Example workflows</span>
+            <h2 className={H2} style={H2_STYLE}>
+              Pick the work<br />you want back.
+            </h2>
+          </div>
           <div className="flex flex-col gap-6 lg:pt-2">
             <p className={LEAD}>
-              Work that finished before you opened your laptop. Someone wrote each of
-              these as a sentence, once, and then stopped thinking about it.
+              Choose your team, then see the sentence someone could type and the result
+              Fernary could leave waiting. Every example uses tools and actions available today.
             </p>
           </div>
         </div>
@@ -1259,6 +1203,19 @@ function DayInTheLife() {
           </Reveal>
         ))}
       </div>
+      <Reveal delay={120} y={16}>
+        <div className="mt-10 flex flex-col items-start justify-between gap-5 rounded-xl p-6 sm:flex-row sm:items-center"
+          style={{ border:'1px solid rgba(22,192,138,0.22)', background:'rgba(22,192,138,0.055)' }}>
+          <div>
+            <p className="text-[16px] font-semibold text-white">Already have a job in mind?</p>
+            <p className="mt-1 text-[14px] text-white/45">Start with the sentence. The builder handles the blank canvas.</p>
+          </div>
+          <button onClick={onGetStarted}
+            className="pressable shrink-0 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black hover:opacity-90">
+            Build one like this
+          </button>
+        </div>
+      </Reveal>
     </section>
   )
 }
@@ -1269,17 +1226,12 @@ function DayInTheLife() {
 // a category they have already made up their mind about. Per BRAND.md §9 the
 // promise is what happens while you are not there, so the sentence has to end
 // on the repetition, not on the building.
-const HERO_LEAD = ['The', 'AI', 'that', 'does', 'the', 'work']
+const HERO_LEAD = 'The AI that does the work'
 const HERO_TURN = 'you keep redoing.'
 
-// NB: the second line animates as ONE element, not word by word. `.word-in`
-// applies `filter: blur()`, which gives every word its own stacking context —
-// and a descendant stacking context stops the parent's `background-clip: text`
-// painting through, so a per-word gradient line renders completely invisible.
-// Gradient and filter on the same span is fine: the element paints its clipped
-// background first, and the blur applies to that result.
-// The brand ramp lands here because this half of the sentence is the
-// differentiator, and it is the same gradient the closing CTA uses.
+// The brand ramp lands on the differentiated half of the promise and returns
+// in the closing CTA. Each line animates as one block so the text can wrap on a
+// narrow screen without the spacing and clipping problems of per-word spans.
 const HERO_ACCENT = {
   background: 'linear-gradient(100deg, #8FE06A 0%, #16C08A 55%, #0FA3A3 115%)',
   WebkitBackgroundClip: 'text',
@@ -1287,41 +1239,49 @@ const HERO_ACCENT = {
   color: 'transparent',
 } as const
 
-// The three objections a visitor arrives with. The last one is the claim a
-// chat-first competitor structurally cannot make.
-//
-// NB: these say "required", and they have to. We *do* have a drag-and-drop
-// canvas — it is in the product shot directly below this line — so claiming
-// "no drag-and-drop" is both false and refuted by our own screenshot. The true
-// and better claim is that none of it is required: the builder wires the nodes,
-// and the canvas is there for when you want it.
-const HERO_PROOF = ['No wiring required', 'No code required', 'Nothing runs until you publish']
+// Three positive trust claims: how it starts, when it becomes live, and where
+// human judgement stays in control.
+const HERO_PROOF = ['Built from one sentence', 'Draft until you publish', 'Approval before action']
 
 // ─── Nav ──────────────────────────────────────────────────────
-export function Nav({ onOpen }: { onOpen: () => void }) {
+export function Nav({ onGetStarted, onOpen, isAuthed }: {
+  onGetStarted?: () => void
+  onOpen: () => void
+  isAuthed?: boolean
+}) {
   const navigate = useNavigate()
+  const start = onGetStarted ?? onOpen
+  const go = (to: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    navigate(to)
+  }
+
   return (
     <header style={{ position:'sticky', top:0, zIndex:50, backdropFilter:'blur(20px) saturate(160%)', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(5,5,8,0.72)' }}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        {/* The app name is the page's h1. Google's OAuth homepage review matches
-            the consent-screen app name against the homepage, and a slogan in the
-            h1 with the name only in a nav <span> reads as a mismatch. Styling is
-            by class, so promoting the tag changes nothing visually — the hero
-            headline below is an h2 for the same reason. */}
-        <h1 className="m-0 text-[15px] font-semibold leading-none">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2.5 text-white">
+        <a href="/" onClick={go('/')} aria-label="Fernary home"
+          className="flex items-center gap-2.5 text-[15px] font-semibold leading-none text-white">
+          <span aria-hidden="true">
             <FloweIcon size={22} />
-            <span style={{ letterSpacing:'-0.01em' }}>Fernary</span>
+          </span>
+          <span style={{ letterSpacing:'-0.01em' }}>Fernary</span>
+        </a>
+
+        <nav aria-label="Landing page" className="hidden items-center gap-6 md:flex">
+          <a href="/#how-it-works" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">How it works</a>
+          <a href="/#examples" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Examples</a>
+          <a href="/#integrations" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Integrations</a>
+          <a href="/pricing" onClick={go('/pricing')} className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Pricing</a>
+        </nav>
+
+        <div className="flex items-center gap-2.5">
+          <button onClick={isAuthed ? onOpen : () => navigate('/login')}
+            className="hidden px-3 py-2 text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white sm:block">
+            {isAuthed ? 'Open app' : 'Sign in'}
           </button>
-        </h1>
-        <div className="flex items-center gap-5">
-          <button onClick={() => navigate('/pricing')}
-            className="text-[13.5px] text-white/55 transition-colors hover:text-white">
-            Pricing
-          </button>
-          <button onClick={onOpen}
-            className="pressable rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:opacity-90">
-            Open app
+          <button onClick={start}
+            className="pressable rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black hover:opacity-90 sm:px-5">
+            {isAuthed ? 'New workflow' : 'Start free'}
           </button>
         </div>
       </div>
@@ -1376,25 +1336,19 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
   return (
     <footer style={RULE}>
       <div className="mx-auto max-w-6xl px-6 pb-10 pt-16 sm:pt-20">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-[2.2fr_repeat(2,1fr)]">
-          {/* Brand */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-[2.2fr_repeat(3,1fr)]">
           <div className="col-span-2 lg:col-span-1 lg:pr-10">
             <div className="flex items-center gap-2.5">
-              <FloweIcon size={22} />
+              <span aria-hidden="true"><FloweIcon size={22} /></span>
               <span className="text-[15px] font-semibold text-white" style={{ letterSpacing:'-0.01em' }}>Fernary</span>
             </div>
-            {/* The positioning here, the tagline in the bottom bar — saying
-                the same sentence twice reads like a template */}
             <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/40">
-              Describe the work once. It runs on a schedule, asks before anything
-              consequential, and remembers where it left off.
+              The automation system for AI you can actually leave running.
             </p>
-            <p className="mt-3 font-mono text-[11px] text-white/25">Founded 2026</p>
-            <div className="mt-6 flex items-center gap-2">
+            <div className="mt-6 flex items-center gap-3">
               {SOCIALS.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-white/40 transition-colors duration-200 hover:text-white"
-                  style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.015)' }}>
+                  className="flex h-8 w-8 items-center justify-center text-white/35 transition-colors duration-200 hover:text-white">
                   <Glyph d={s.d} size={16} />
                 </a>
               ))}
@@ -1402,10 +1356,16 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
           </div>
 
           <FooterCol title="Product">
-            <FooterLink href="/workflows" onClick={go('/workflows')}>Open app</FooterLink>
+            <FooterLink href="#how-it-works">How it works</FooterLink>
+            <FooterLink href="#examples">Examples</FooterLink>
+            <FooterLink href="#integrations">Integrations</FooterLink>
             <FooterLink href="/pricing" onClick={go('/pricing')}>Pricing</FooterLink>
+          </FooterCol>
+
+          <FooterCol title="Account">
+            <FooterLink href="/workflows" onClick={go('/workflows')}>Open app</FooterLink>
             <FooterLink href="/login" onClick={go('/login')}>Sign in</FooterLink>
-            <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Get started</FooterLink>
+            <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Start free</FooterLink>
           </FooterCol>
 
           <FooterCol title="Legal">
@@ -1415,8 +1375,8 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
         </div>
 
         <div className="mt-14 flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between" style={RULE}>
-          <p className="font-mono text-[11.5px] text-white/25">© 2026 Fernary · fernary.com</p>
-          <p className="text-[12.5px] text-white/25">The automation system for AI you can actually leave running.</p>
+          <p className="font-mono text-[11.5px] text-white/25">© 2026 Fernary</p>
+          <p className="font-mono text-[11.5px] text-white/25">fernary.com</p>
         </div>
       </div>
     </footer>
@@ -1451,7 +1411,11 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen text-white" style={{ fontFamily:'var(--font-sans)', background:'#050507' }}>
-      <Nav onOpen={() => navigate('/workflows')} />
+      <Nav
+        onGetStarted={handleCreate}
+        onOpen={() => navigate('/workflows')}
+        isAuthed={authStatus === 'authed'}
+      />
 
       {/* ── Hero — one voice: the headline ── */}
       <section className="relative overflow-hidden">
@@ -1462,74 +1426,58 @@ export function LandingPage() {
         <div className="pointer-events-none absolute inset-0"
           style={{ background:'linear-gradient(to bottom, rgba(5,5,7,0.2), rgba(5,5,7,0.6) 60%, #050507)' }} />
 
-        <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-24 lg:pb-20 lg:pt-36">
-          {/* Each word rises out of a blur, left to right — one gesture,
-              then the sub, buttons and shot follow through. */}
-          {/* h2, not h1 — the app name in the nav holds the page h1. See Nav. */}
-          <h2 className="max-w-4xl text-[2.9rem] font-bold sm:text-[4rem] lg:text-[4.6rem]"
+        <div className="relative mx-auto max-w-6xl px-6 pb-14 pt-20 sm:pt-24 lg:pb-16 lg:pt-32">
+          <p className="rise-in mb-6 font-mono text-[11px] uppercase tracking-[0.15em] text-white/45"
+            style={{ animationDelay:'20ms' }}>
+            AI workflow automation for recurring work
+          </p>
+          <h1 className="max-w-5xl text-[clamp(2.45rem,7vw,4.6rem)] font-bold"
             style={{ lineHeight:1.02, letterSpacing:'-0.035em' }}>
-            <span className="block">
-                {/* NB: the separator below is U+00A0 — a plain space would be
-                    trimmed as trailing whitespace inside the inline-block */}
-                {HERO_LEAD.map((word, wi) => (
-                  <span key={wi} className="word-in" style={{ animationDelay:`${wi * 70}ms` }}>
-                    {word}{wi < HERO_LEAD.length - 1 ?' ' : ''}
-                  </span>
-                ))}
-            </span>
-            {/* The turn arrives as one piece, a beat after the lead. See the note
-                on HERO_ACCENT for why this line must not be split per word. */}
-            <span className="word-in block"
-              style={{ ...HERO_ACCENT, animationDelay:`${HERO_LEAD.length * 70}ms` }}>
+            <span className="rise-in block" style={{ animationDelay:'80ms' }}>{HERO_LEAD}</span>{' '}
+            <span className="rise-in block" style={{ ...HERO_ACCENT, animationDelay:'160ms' }}>
               {HERO_TURN}
             </span>
-          </h2>
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
-                Describe it once. Fernary builds it, runs it on your schedule, and asks
-                before it does anything you&rsquo;d want to sign off on.
-              </p>
-              {/* The three objections a visitor arrives with, answered before they
-                  ask. The third is the one no chat-first competitor can make. */}
-              <ul className="rise-in mt-5 flex flex-wrap items-center gap-x-5 gap-y-2" style={{ animationDelay:'540ms' }}>
-                {HERO_PROOF.map((claim) => (
-                  <li key={claim} className="flex items-center gap-1.5 text-[13px] text-white/40">
-                    <span aria-hidden style={{ color:'rgba(255,255,255,0.22)' }}>
-                      <Glyph d={CROSS_PATH} size={11} />
-                    </span>
-                    {claim}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rise-in flex items-center gap-3" style={{ animationDelay:'600ms' }}>
+          </h1>
+
+          <div className="mt-8 max-w-2xl">
+            <p className="rise-in max-w-xl text-[16px] leading-relaxed text-white/60 sm:text-[18px]"
+              style={{ animationDelay:'240ms' }}>
+              Describe one recurring job. Fernary builds the workflow, runs it on your
+              schedule, and waits for your approval wherever judgement matters.
+            </p>
+            <div className="rise-in mt-7 flex flex-wrap items-center gap-3" style={{ animationDelay:'320ms' }}>
               <button onClick={handleCreate} disabled={creating}
-                className="pressable rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
+                className="pressable rounded-full bg-white px-6 py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
                 {creating ? 'Creating…' : 'Start free'}
               </button>
-              <button onClick={() => navigate('/workflows')}
-                className="pressable rounded-full px-6 py-2.5 text-sm font-semibold text-white/60 hover:text-white"
+              <a href="#examples"
+                className="pressable rounded-full px-6 py-3 text-sm font-semibold text-white/70 hover:text-white"
                 style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}>
-                Open app
-              </button>
+                See example workflows
+              </a>
+              <span className="w-full pt-1 text-[12px] text-white/30">Free plan · no card required</span>
             </div>
+            <ul className="rise-in mt-6 flex flex-wrap items-center gap-x-5 gap-y-2" style={{ animationDelay:'400ms' }}>
+              {HERO_PROOF.map((claim) => (
+                <li key={claim} className="flex items-center gap-1.5 text-[12.5px] text-white/45">
+                  <span aria-hidden style={{ color:ACCENT }}><Glyph d={CHECK_PATH} size={11} /></span>
+                  {claim}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
         {/* The product — one shot, full width */}
         <div className="relative mx-auto max-w-6xl px-6 pb-8">
-          <div className="rise-in" style={{ animationDelay:'680ms' }}>
+          <div className="rise-in" style={{ animationDelay:'480ms' }}>
             <Shot src="/product-editor.jpg" alt="The Fernary workflow editor" />
           </div>
         </div>
       </section>
 
-      {/* ── The three moments every workflow is made of ── */}
-      <Modes />
-
       {/* ── Statement — words light up as you scroll ── */}
-      <section className="mx-auto max-w-6xl px-6 py-28 sm:py-36">
+      <section className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
         <ScrollStatement
           lead="You already know the work."
           rest="It’s the same twenty minutes every Monday, the same five tabs, the same copy and paste. Describe it once and it stops being your job."
@@ -1538,30 +1486,34 @@ export function LandingPage() {
 
       {/* ── 1.0 Build ── */}
       <NumberedSection
+        id="how-it-works"
         index="1.0" name="Build"
         title={<>Say it once.<br />It&rsquo;s built.</>}
-        sub="The builder reads the tools you have connected, picks the steps, and tells you what it did. Thirteen nodes out of one sentence, and you wired none of them. The canvas is right there when you want to change something by hand."
+        sub="The builder reads the tools you connected, picks the steps, and explains what it made. The canvas is there when you want to change something by hand, but you never start from a blank one."
         shot="/shot-build.jpg" alt="Building a workflow by describing it to Fernary AI"
       />
 
       {/* ── 2.0 Run ── */}
       <NumberedSection
         index="2.0" name="Run"
-        title={<>It runs at 9am.<br />You don&rsquo;t have to.</>}
-        sub="Every step it took and everything each one returned, kept. When something breaks you see which step, and what it was holding at the time. No log spelunking."
+        title={<>It runs without you.<br />You see everything.</>}
+        sub="Set the schedule once. Every step and every output stays in one trace, so if something breaks you see exactly where, why, and what it was holding at the time."
         shot="/shot-run.jpg" alt="A completed run with the output of every step"
       />
 
       {/* ── 3.0 Approve ── */}
       <NumberedSection
         index="3.0" name="Approve"
-        title={<>It asks before<br />it sends.</>}
-        sub="Drop a review step anywhere. The run pauses, emails you the draft, and waits. Approve and it ships. Ignore it and nothing ships."
+        title={<>It waits for<br />your yes.</>}
+        sub="Put a review step before anything consequential. The run pauses and brings you the draft. Approve and it continues. Ignore it and nothing ships."
         shot="/shot-approve.jpg" alt="A run paused for human approval"
       />
 
       {/* ── Integrations — the tools Fernary drives ── */}
       <Integrations />
+
+      {/* ── Example work, by role — prompt to outcome ── */}
+      <DayInTheLife onGetStarted={handleCreate} />
 
       {/* ── Build by chat — the AI builder ── */}
       <ChatBand />
@@ -1569,44 +1521,43 @@ export function LandingPage() {
       {/* ── Memory — state that outlives the run ── */}
       <MemoryBand />
 
-      {/* ── A day of it, by role — the outcome in the past tense ── */}
-      <DayInTheLife />
-
       {/* ── Capabilities — the breadth, at a glance ── */}
       <Capabilities />
 
       {/* ── Close — full-stop CTA ── */}
-      <section className="px-6 py-28 text-center sm:py-36">
-        <Reveal y={36}>
-          <h2 className="mx-auto mb-6 max-w-3xl text-[2.6rem] font-bold sm:text-[3.4rem]"
-            style={{ letterSpacing:'-0.035em', lineHeight:1.05 }}>
-            Stop doing it
-            <br />
-            <span style={{
-              background:'linear-gradient(100deg, #8FE06A 0%, #16C08A 55%, #0FA3A3 115%)',
-              WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent',
-            }}>every Monday.</span>
-          </h2>
-          {/* Closes on the person, not the product. The page has already made the
-              argument; this is the only line allowed to be about how it feels. */}
-          <p className="mx-auto mb-10 max-w-lg text-[16px] leading-relaxed text-white/50 sm:text-[17px]">
-            You shouldn&rsquo;t be the one pasting Linear issues into Slack at 8:55am.
-            Describe it once, then go do the work only you can do.
-          </p>
-        </Reveal>
-        <Reveal delay={150} y={20}>
-          <div className="flex items-center justify-center gap-3">
-            <button onClick={handleCreate} disabled={creating}
-              className="pressable rounded-full bg-white px-7 py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
-              {creating ? 'Creating…' : 'Start free'}
-            </button>
-            <button onClick={() => navigate('/login')}
-              className="pressable rounded-full px-7 py-3 text-sm font-semibold text-white/60 hover:text-white"
-              style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}>
-              Sign in
-            </button>
-          </div>
-        </Reveal>
+      <section className="px-6 py-20 text-center sm:py-28">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl px-6 py-20 sm:py-24"
+          style={{
+            border:'1px solid rgba(22,192,138,0.18)',
+            background:'radial-gradient(circle at 50% 115%, rgba(22,192,138,0.16), transparent 48%), rgba(255,255,255,0.015)',
+          }}>
+          <Reveal y={36}>
+            <h2 className="mx-auto mb-6 max-w-3xl text-[2.5rem] font-bold sm:text-[3.4rem]"
+              style={{ letterSpacing:'-0.035em', lineHeight:1.05 }}>
+              Give Fernary one job.
+              <br />
+              <span style={HERO_ACCENT}>Get the time back every run.</span>
+            </h2>
+            <p className="mx-auto mb-9 max-w-xl text-[16px] leading-relaxed text-white/50 sm:text-[17px]">
+              Start with the report, inbox, or copy-and-paste job already in your head.
+              Describe it, review what Fernary builds, and publish when you&rsquo;re ready.
+            </p>
+          </Reveal>
+          <Reveal delay={120} y={20}>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button onClick={handleCreate} disabled={creating}
+                className="pressable rounded-full bg-white px-7 py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
+                {creating ? 'Creating…' : 'Start free'}
+              </button>
+              <a href="/pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }}
+                className="pressable rounded-full px-7 py-3 text-sm font-semibold text-white/65 hover:text-white"
+                style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}>
+                View pricing
+              </a>
+              <span className="w-full pt-1 text-[12px] text-white/30">Free plan · no card required</span>
+            </div>
+          </Reveal>
+        </div>
       </section>
 
       <Footer onGetStarted={handleCreate} />
