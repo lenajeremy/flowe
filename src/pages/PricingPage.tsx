@@ -141,11 +141,14 @@ export function PricingPage() {
         <section className="pt-16 pb-12 text-center sm:pt-24 sm:pb-16">
           <h2 className="mx-auto max-w-2xl text-[34px] font-semibold leading-[1.1] sm:text-[46px]"
             style={{ letterSpacing: '-0.03em' }}>
-            Simple pricing for agents<br />that run without you
+            Start free. Pay when<br />it&rsquo;s doing real work.
           </h2>
+          {/* The spend objection, answered in the first sentence a buyer reads. On
+              a product that acts while you sleep it is *the* objection, and the
+              honest answer happens to be the strongest line on the page. */}
           <p className="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-white/45">
-            Start free, with every integration included. Upgrade when you want your
-            agents running on a schedule.
+            Every integration is included from the free plan up. No overage, ever:
+            when the allowance runs out it stops, it doesn&rsquo;t bill you.
           </p>
           {/* Adaptive Pricing converts at checkout, so the figures here are the
               USD reference. Saying so up front avoids the "why is this a different
@@ -173,8 +176,8 @@ export function PricingPage() {
         </section>
 
         <p className="pb-16 pt-6 text-center text-[12.5px] text-white/30">
-          Every plan includes the full node library, unlimited manual runs, and approval
-          steps on any action. Cancel any time.
+          Every plan gets the full node library, unlimited manual runs, and an approval
+          step on any action. Cancel any time.
         </p>
 
         <FaqSection />

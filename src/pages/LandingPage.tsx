@@ -481,6 +481,9 @@ function Glyph({ d, size = 20 }: { d: string; size?: number }) {
 // two figures for the team, a publish toggle sitting on, and a gauge that stops
 // short of the end for metering.
 const GRID_PATH = 'M2 2.5h4.5v4.5H2zM9.5 2.5H14v4.5H9.5zM2 9.5h4.5v4.5H2zM9.5 9.5H14v4.5H9.5z'
+// A dismissal mark for the hero's three "no" claims — they are things the
+// product spares you, so they read as struck out rather than ticked off.
+const CROSS_PATH = 'M3.5 3.5l9 9M12.5 3.5l-9 9'
 const PEOPLE_PATH = 'M6 2.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8zM1.6 13.6c0-2.4 2-4.4 4.4-4.4s4.4 2 4.4 4.4M10.6 3a2.4 2.4 0 010 4.4M11.6 9.6c1.6.6 2.8 2.1 2.8 4'
 const TOGGLE_PATH = 'M5 4.6h6a3.4 3.4 0 010 6.8H5a3.4 3.4 0 010-6.8zM11 6.6a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8z'
 const GAUGE_PATH = 'M2.5 12a5.5 5.5 0 1111 0M8 12l3.3-3.5'
@@ -546,13 +549,19 @@ function Integrations() {
       <Reveal>
         <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
           <h2 className={H2} style={H2_STYLE}>
-            Plugs into the tools<br />you already run.
+            If you run on it,<br />it&rsquo;s wired in.
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
             {/* The count is read off the wall below rather than written out, so
-                adding a connector updates the sentence too. */}
+                adding a connector updates the sentence too.
+                We have dozens of connectors, not the four figures the category
+                advertises, so the copy competes on depth instead of pretending
+                otherwise: a real read-and-write action beats a logo on a page. */}
             <p className={LEAD}>
-              {INTEGRATIONS.length} integrations and more than 800 read-and-write actions — messaging, mail, code, docs, spreadsheets, CRM and commerce. Connect an account once, then reach for it in any workflow.
+              {INTEGRATIONS.length} apps and more than 800 read-and-write actions. Not a wall
+              of logos: every one is connected properly, so a single run can read a Stripe
+              charge, file a Linear issue and post to Slack without you gluing anything
+              together. Connect an account once and reach for it in any workflow.
             </p>
             <div className="group flex cursor-default items-center gap-2.5 font-mono text-[13px]">
               <span className="text-white/30">4.0</span>
@@ -710,12 +719,17 @@ function ChatBand() {
       <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
         <Reveal>
           <div>
-            <span className={`mb-5 block ${EYEBROW}`}>Build by chat</span>
+            {/* Framed as revision, not conversation: per BRAND.md §9 the promise
+                is unattended work, so the chat is a way to change the thing, not
+                the thing itself. */}
+            <span className={`mb-5 block ${EYEBROW}`}>Change it</span>
             <h2 className={H2} style={H2_STYLE}>
-              Talk to it like<br />a teammate.
+              Changed your mind?<br />Say so.
             </h2>
             <p className={`mt-6 max-w-md ${LEAD}`}>
-              The AI builder rides along on the canvas and sits behind a button on every screen. Ask it to add a step, wire up an integration, or reshape the whole flow — in plain language. It edits the workflow in place while you watch.
+              The builder sits behind a button on every screen. Add a step, swap an
+              integration, or reshape the whole thing by asking. It edits the workflow
+              in place while you watch, and the next run picks up the change.
             </p>
           </div>
         </Reveal>
@@ -840,10 +854,13 @@ function MemoryBand() {
             <div>
               <span className={`mb-5 block ${EYEBROW}`}>Memory</span>
               <h2 className={H2} style={H2_STYLE}>
-                It remembers<br />between runs.
+                It remembers what<br />it already did.
               </h2>
               <p className={`mt-6 max-w-md ${LEAD}`}>
-                Give a workflow somewhere to keep things — a counter, a list of what it has already seen, a running note. Scope it to one run, one workflow, or everything in your account. The AI builder proposes a store when a workflow needs one, and asks before it creates it.
+                Today&rsquo;s digest doesn&rsquo;t repeat yesterday&rsquo;s. Give a workflow somewhere to
+                keep a counter, a list of what it has already seen, or a running note, scoped
+                to one run, one workflow, or your whole account. The builder offers to set one
+                up when a job needs it, and asks first.
               </p>
             </div>
           </Reveal>
@@ -856,15 +873,15 @@ function MemoryBand() {
 // ─── Capabilities — the breadth, at a glance. Each icon wears the
 // accent of the node that owns the capability inside the app.
 const CAPABILITIES: Array<{ icon: string; tint: string; title: string; body: string }> = [
-  { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok — choose per step, switch whenever.' },
-  { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Live web access', body:'AI steps search and read current pages, so answers never go stale.' },
-  { icon: GRID_PATH, tint: ACCENT, title:`${INTEGRATIONS.length} integrations`, body:'Slack, Gmail, Notion, GitHub, Jira, Stripe, HubSpot, Google Workspace and more.' },
-  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Triggers on your terms', body:'Run on a schedule, or fire instantly from an incoming webhook.' },
-  { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Human in the loop', body:'Pause for a one-tap approval before anything important ships.' },
-  { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branch & loop', body:'Real control flow — fork on conditions, iterate across a list.' },
+  { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok. Choose per step, switch whenever.' },
+  { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Reads the live web', body:'Steps search and read today’s pages, so an answer is never last month’s.' },
+  { icon: GRID_PATH, tint: ACCENT, title:`${INTEGRATIONS.length} apps, wired properly`, body:'Slack, Gmail, Notion, GitHub, Jira, Stripe, HubSpot, Google Workspace and more.' },
+  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Runs on your clock', body:'On a schedule you set, or the moment a webhook hits it.' },
+  { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Waits for your yes', body:'One tap approves. Anything you ignore simply never ships.' },
+  { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branches and loops', body:'Real control flow. Fork on a condition, iterate across a list.' },
   { icon: TOGGLE_PATH, tint:'#2dd4bf', title:'Nothing runs unasked', body:'Schedules only fire once you publish. Until then it’s a draft.' },
   { icon: PEOPLE_PATH, tint:'#8FE06A', title:'Built for teams', body:'Invite the team, share connections, and see what each person spent.' },
-  { icon: GAUGE_PATH, tint:'#0FA3A3', title:'No surprise bills', body:'Every charge is itemised, and we never bill overage — it stops instead.' },
+  { icon: GAUGE_PATH, tint:'#0FA3A3', title:'It stops, it doesn’t bill', body:'Every charge itemised, and no overage, ever. It stops instead.' },
 ]
 
 function Capabilities() {
@@ -872,7 +889,7 @@ function Capabilities() {
     <section className={SECTION} style={RULE}>
       <Reveal>
         <h2 className={`${HEAD_GAP} max-w-2xl ${H2}`} style={H2_STYLE}>
-          Everything the<br />workflow needs.
+          Everything it needs<br />to run without you.
         </h2>
       </Reveal>
       <div className="grid grid-cols-1 gap-x-12 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
@@ -901,6 +918,378 @@ function Capabilities() {
     </section>
   )
 }
+
+// ─── Three modes — what the product actually is, in one screen ──
+// A visitor who has read only the hero still doesn't know the shape of the
+// thing. This is the orientation beat: the three moments that make up every
+// Fernary workflow, each one input → outcome, so the whole product reads in
+// about six seconds.
+const MODES: Array<{ input: string; outcome: string; body: string; tint: string; icon: string }> = [
+  {
+    input: 'One sentence',
+    outcome: 'It’s built.',
+    body: 'Describe the job. The builder picks the trigger, the tools and the steps, then explains what it did.',
+    tint: '#8FE06A',
+    icon: NODE_ICON_PATHS.llm,
+  },
+  {
+    input: 'One schedule',
+    outcome: 'It’s handled.',
+    body: 'Every weekday at nine, every hour, or the second a webhook fires. You do not have to be there.',
+    tint: '#F5A524',
+    icon: NODE_ICON_PATHS.scheduledTrigger,
+  },
+  {
+    input: 'One tap',
+    outcome: 'It’s approved.',
+    body: 'Anything consequential waits for you. Approve and it ships. Ignore it and nothing ships.',
+    tint: '#f94b4b',
+    icon: NODE_ICON_PATHS.humanApproval,
+  },
+]
+
+function Modes() {
+  return (
+    <section className={SECTION} style={RULE}>
+      <Reveal>
+        <h2 className={`${HEAD_GAP} max-w-2xl ${H2}`} style={H2_STYLE}>
+          Handles the work you&rsquo;d<br />rather not do twice.
+        </h2>
+      </Reveal>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        {MODES.map((m, i) => (
+          <Reveal key={m.input} delay={i * 90} y={20}>
+            <div className="flex h-full flex-col rounded-xl p-5"
+              style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.015)' }}>
+              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg"
+                style={{
+                  border:`1px solid color-mix(in srgb, ${m.tint} 25%, transparent)`,
+                  background:`color-mix(in srgb, ${m.tint} 6%, transparent)`,
+                  color: m.tint,
+                }}>
+                <Glyph d={m.icon} size={18} />
+              </div>
+              {/* Input in the machine voice, outcome in the brand voice — the
+                  two halves of the promise, typographically separated. */}
+              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/35">{m.input}</div>
+              <div className="mt-1.5 text-[1.35rem] font-bold" style={{ letterSpacing:'-0.025em' }}>{m.outcome}</div>
+              <p className="mt-3 text-[14px] leading-relaxed text-white/45">{m.body}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ─── A day of it — the outcome, written in the past tense ──────
+// The most persuasive thing on the page: not what the product does, but what
+// already happened because of it. Every entry is one of the workflows that
+// actually ships in the demo account, so the copy and the screenshots agree,
+// and each one quietly demonstrates a different capability — approval,
+// deduplication by memory, schedule, webhook-free unattended running.
+type DayEntry = {
+  when: string
+  moment: string
+  title: string
+  ask: string
+  tools: NodeType[]
+  result: string
+}
+
+// Grouped by who is being spared the work, because the objection is never "can
+// it automate" — it is "would it do *my* job". Every scenario is buildable from
+// the connectors on the wall above, so nothing here promises an integration we
+// do not have.
+const DAY: Array<{ role: string; entries: DayEntry[] }> = [
+  {
+    role: 'Founder',
+    entries: [
+      {
+        when: '08:00',
+        moment: 'Before standup',
+        title: 'Weekly AI digest',
+        ask: 'Find this week’s top AI news, summarise it, and email the team once I’ve read it.',
+        tools: ['llm', 'gmail'],
+        result: 'Drafted and held. You approved it at 08:12, and it went out to the team.',
+      },
+      {
+        when: '09:00',
+        moment: 'Monday only',
+        title: 'Revenue snapshot',
+        ask: 'Every Monday, pull last week’s Stripe charges and refunds into the metrics sheet and tell me what moved.',
+        tools: ['stripe', 'googlesheets'],
+        result: 'Sheet updated, 3 lines written. Net revenue up 12% on the week before.',
+      },
+      {
+        when: '17:30',
+        moment: 'End of day',
+        title: 'Standup summary',
+        ask: 'Summarise today’s Linear activity and post it to #standup.',
+        tools: ['linear', 'slack'],
+        result: 'Posted to #standup with 4 items flagged.',
+      },
+      {
+        when: 'Hourly',
+        moment: 'All day, quietly',
+        title: 'Release watch',
+        ask: 'Watch this repo for new releases and post them to the engineering channel.',
+        tools: ['github', 'slack'],
+        result: 'shopify-api@9.7.1 posted. It remembered the version, so it won’t post it twice.',
+      },
+    ],
+  },
+  {
+    role: 'Sales',
+    entries: [
+      {
+        when: 'On new deal',
+        moment: 'The moment it lands',
+        title: 'Brief me before the call',
+        ask: 'When a deal reaches proposal in HubSpot, read the company’s site and write me a one-page brief in Notion.',
+        tools: ['hubspot', 'llm', 'notion'],
+        result: 'Brief written and linked on the deal. Ready 4 minutes after the stage changed.',
+      },
+      {
+        when: '07:30',
+        moment: 'Before the day starts',
+        title: 'Meeting prep, done',
+        ask: 'Each morning, take today’s Calendly bookings and put last contact and open deals next to each name.',
+        tools: ['calendly', 'hubspot', 'gmail'],
+        result: '6 meetings prepped and emailed to you as one list.',
+      },
+    ],
+  },
+  {
+    role: 'Marketing',
+    entries: [
+      {
+        when: 'Monday 06:00',
+        moment: 'Weekly',
+        title: 'Search performance, read for you',
+        ask: 'Pull last week’s Search Console numbers, compare them to the week before, and flag anything that moved more than 20%.',
+        tools: ['googlesearchconsole', 'googlesheets', 'slack'],
+        result: '2 queries flagged. One page lost 34% of impressions after a title change.',
+      },
+      {
+        when: 'On publish',
+        moment: 'Every new post',
+        title: 'Newsletter draft from the blog',
+        ask: 'When a post goes live, draft the newsletter version in Kit and hold it for me.',
+        tools: ['llm', 'kit'],
+        result: 'Draft waiting in Kit. Nothing sends until you press send.',
+      },
+    ],
+  },
+  {
+    role: 'Support',
+    entries: [
+      {
+        when: 'On new message',
+        moment: 'All day',
+        title: 'Triage the shared inbox',
+        ask: 'Read new Front conversations, tag them by topic, and file anything that looks like a bug in Linear.',
+        tools: ['front', 'linear'],
+        result: '11 tagged, 2 filed as bugs. Duplicates of ones already filed were left alone.',
+      },
+      {
+        when: 'On response',
+        moment: 'As feedback arrives',
+        title: 'Feedback that goes somewhere',
+        ask: 'Turn each Typeform response into a Linear issue, and post the harsh ones to #product.',
+        tools: ['typeform', 'linear', 'slack'],
+        result: '9 issues created. 1 posted to #product for a closer look.',
+      },
+    ],
+  },
+  {
+    role: 'Engineering',
+    entries: [
+      {
+        when: 'On failure',
+        moment: 'Within a minute',
+        title: 'Failed deploy, filed',
+        ask: 'If a Netlify deploy fails, open a Linear issue with the build log and post it to #eng.',
+        tools: ['netlify', 'linear', 'slack'],
+        result: 'Issue opened with the failing step quoted. Posted to #eng 40 seconds after the build died.',
+      },
+      {
+        when: 'Friday 16:00',
+        moment: 'Weekly',
+        title: 'Release notes, drafted',
+        ask: 'Collect this week’s merged pull requests and write release notes in Confluence for me to check.',
+        tools: ['github', 'llm', 'confluence'],
+        result: '23 PRs read, notes drafted in Confluence. Waiting on your review.',
+      },
+    ],
+  },
+  {
+    role: 'Operations',
+    entries: [
+      {
+        when: '08:00',
+        moment: 'Every weekday',
+        title: 'Unshipped order chaser',
+        ask: 'Check Shopify for orders that haven’t shipped in three days and draft a polite update for each one.',
+        tools: ['shopify', 'gmail'],
+        result: '4 drafts written and held for approval. Orders it had already chased were skipped.',
+      },
+      {
+        when: 'On failed charge',
+        moment: 'As it happens',
+        title: 'Recover the payment',
+        ask: 'When a Stripe payment fails, write the customer a short note with the update link, but let me read it first.',
+        tools: ['stripe', 'gmail'],
+        result: '3 notes drafted and held. You approved 2 and rewrote 1.',
+      },
+    ],
+  },
+]
+
+function ToolMarks({ tools }: { tools: NodeType[] }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {tools.map((t) =>
+        isIntegration(t) ? (
+          <span key={t} className="flex h-[18px] w-[18px] items-center justify-center">
+            <IntegrationLogo type={t} size={18} onDark />
+          </span>
+        ) : (
+          <span key={t} style={{ color: NODE_TINTS[t] ?? ACCENT }}>
+            <Glyph d={NODE_ICON_PATHS[t]} size={16} />
+          </span>
+        ),
+      )}
+    </div>
+  )
+}
+
+function DayCard({ d }: { d: DayEntry }) {
+  return (
+    <div className="flex h-full flex-col rounded-xl p-5"
+      style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.015)' }}>
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="rounded-full px-2.5 py-1 font-mono text-[10.5px] tabular-nums text-white/70"
+          style={{ border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.03)' }}>
+          {d.when}
+        </span>
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-white/30">{d.moment}</span>
+        <span className="ml-auto"><ToolMarks tools={d.tools} /></span>
+      </div>
+      <div className="text-[15px] font-semibold" style={{ letterSpacing:'-0.01em' }}>{d.title}</div>
+      {/* What you typed, in your voice — quoted, because a person wrote it */}
+      <p className="mt-2.5 text-[13.5px] italic leading-relaxed text-white/40">&ldquo;{d.ask}&rdquo;</p>
+      {/* What came back, in the past tense. The whole point of the section: not
+          what the product does, but what already happened because of it. */}
+      <p className="mt-4 flex items-start gap-2 text-[13.5px] leading-relaxed text-white/75">
+        <span className="mt-[3px] flex-shrink-0">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+            <path d="M2.5 7l3 3 5-6.5" stroke="#3dd68c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {d.result}
+      </p>
+    </div>
+  )
+}
+
+function DayInTheLife() {
+  const [role, setRole] = useState(0)
+  const tabs = useRef<Array<HTMLButtonElement | null>>([])
+  const active = DAY[role]
+
+  // Arrow keys move between tabs, which is what a tablist is expected to do
+  // once you have told screen readers that is what this is.
+  function onKey(e: React.KeyboardEvent) {
+    const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+    if (!delta) return
+    e.preventDefault()
+    const next = (role + delta + DAY.length) % DAY.length
+    setRole(next)
+    tabs.current[next]?.focus()
+  }
+
+  return (
+    <section className={SECTION} style={RULE}>
+      <Reveal>
+        <div className={`${HEAD_GAP} grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start`}>
+          <h2 className={H2} style={H2_STYLE}>
+            Your Monday,<br />already done.
+          </h2>
+          <div className="flex flex-col gap-6 lg:pt-2">
+            <p className={LEAD}>
+              Work that finished before you opened your laptop. Someone wrote each of
+              these as a sentence, once, and then stopped thinking about it.
+            </p>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* Pick your job, see your own day. The objection is never "can it automate
+          something" — it is "would it do the thing *I* keep redoing". */}
+      <Reveal>
+        <div role="tablist" aria-label="Work by role" onKeyDown={onKey}
+          className="mb-10 flex flex-wrap items-center gap-2 border-b border-white/[0.07] pb-px">
+          {DAY.map((r, i) => {
+            const on = i === role
+            return (
+              <button key={r.role} role="tab" aria-selected={on} tabIndex={on ? 0 : -1}
+                ref={(el) => { tabs.current[i] = el }}
+                onClick={() => setRole(i)}
+                className="relative px-3.5 py-2.5 text-[13.5px] font-medium transition-colors duration-200"
+                style={{ color: on ? '#fff' : 'rgba(255,255,255,0.45)' }}>
+                {r.role}
+                {/* The underline sits on the section rule, so the active tab
+                    reads as attached to the panel below it. */}
+                <span aria-hidden className="absolute inset-x-2 -bottom-px h-px"
+                  style={{ background: on ? ACCENT : 'transparent', transition:'background 200ms var(--ease-out)' }} />
+              </button>
+            )
+          })}
+        </div>
+      </Reveal>
+
+      {/* Keyed on the role so switching tabs replays the entrance, which is the
+          cheapest way to make the swap feel like new content rather than a
+          text substitution. */}
+      <div key={active.role} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {active.entries.map((d, i) => (
+          <Reveal key={d.title} delay={(i % 2) * 90} y={20}>
+            <DayCard d={d} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ─── Hero copy ────────────────────────────────────────────────
+// The claim is the *recurring* work, not automation in general. "The thing I
+// redo every Monday" is a pain people recognise in themselves; "automation" is
+// a category they have already made up their mind about. Per BRAND.md §9 the
+// promise is what happens while you are not there, so the sentence has to end
+// on the repetition, not on the building.
+const HERO_LEAD = ['The', 'AI', 'that', 'does', 'the', 'work']
+const HERO_TURN = 'you keep redoing.'
+
+// NB: the second line animates as ONE element, not word by word. `.word-in`
+// applies `filter: blur()`, which gives every word its own stacking context —
+// and a descendant stacking context stops the parent's `background-clip: text`
+// painting through, so a per-word gradient line renders completely invisible.
+// Gradient and filter on the same span is fine: the element paints its clipped
+// background first, and the blur applies to that result.
+// The brand ramp lands here because this half of the sentence is the
+// differentiator, and it is the same gradient the closing CTA uses.
+const HERO_ACCENT = {
+  background: 'linear-gradient(100deg, #8FE06A 0%, #16C08A 55%, #0FA3A3 115%)',
+  WebkitBackgroundClip: 'text',
+  backgroundClip: 'text',
+  color: 'transparent',
+} as const
+
+// The three objections a visitor arrives with. The last one is the claim a
+// chat-first competitor structurally cannot make.
+const HERO_PROOF = ['No drag-and-drop', 'No code', 'Nothing runs until you publish']
 
 // ─── Nav ──────────────────────────────────────────────────────
 export function Nav({ onOpen }: { onOpen: () => void }) {
@@ -991,7 +1380,8 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
             {/* The positioning here, the tagline in the bottom bar — saying
                 the same sentence twice reads like a template */}
             <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/40">
-              Workflows that run on a schedule, pause for approval where it matters, and remember where they left off.
+              Describe the work once. It runs on a schedule, asks before anything
+              consequential, and remembers where it left off.
             </p>
             <p className="mt-3 font-mono text-[11px] text-white/25">Founded 2026</p>
             <div className="mt-6 flex items-center gap-2">
@@ -1072,27 +1462,45 @@ export function LandingPage() {
           {/* h2, not h1 — the app name in the nav holds the page h1. See Nav. */}
           <h2 className="max-w-4xl text-[2.9rem] font-bold sm:text-[4rem] lg:text-[4.6rem]"
             style={{ lineHeight:1.02, letterSpacing:'-0.035em' }}>
-            {[['Automation', 'for', 'people,'], ['not', 'just', 'developers']].map((line, li) => (
-              <span key={li} className="block">
+            <span className="block">
                 {/* NB: the separator below is U+00A0 — a plain space would be
                     trimmed as trailing whitespace inside the inline-block */}
-                {line.map((word, wi) => (
-                  <span key={word} className="word-in" style={{ animationDelay:`${(li * 3 + wi) * 90}ms` }}>
-                    {word}{wi < line.length - 1 ? ' ' : ''}
+                {HERO_LEAD.map((word, wi) => (
+                  <span key={wi} className="word-in" style={{ animationDelay:`${wi * 70}ms` }}>
+                    {word}{wi < HERO_LEAD.length - 1 ?' ' : ''}
                   </span>
                 ))}
-              </span>
-            ))}
+            </span>
+            {/* The turn arrives as one piece, a beat after the lead. See the note
+                on HERO_ACCENT for why this line must not be split per word. */}
+            <span className="word-in block"
+              style={{ ...HERO_ACCENT, animationDelay:`${HERO_LEAD.length * 70}ms` }}>
+              {HERO_TURN}
+            </span>
           </h2>
           <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
-              Describe what you want in plain English — Fernary builds the workflow,
-              connects your tools, and runs it on a schedule while you&rsquo;re away.
-            </p>
+            <div>
+              <p className="rise-in max-w-md text-[16px] leading-relaxed text-white/55 sm:text-[17px]" style={{ animationDelay:'480ms' }}>
+                Describe it once. Fernary builds it, runs it on your schedule, and asks
+                before it does anything you&rsquo;d want to sign off on.
+              </p>
+              {/* The three objections a visitor arrives with, answered before they
+                  ask. The third is the one no chat-first competitor can make. */}
+              <ul className="rise-in mt-5 flex flex-wrap items-center gap-x-5 gap-y-2" style={{ animationDelay:'540ms' }}>
+                {HERO_PROOF.map((claim) => (
+                  <li key={claim} className="flex items-center gap-1.5 text-[13px] text-white/40">
+                    <span aria-hidden style={{ color:'rgba(255,255,255,0.22)' }}>
+                      <Glyph d={CROSS_PATH} size={11} />
+                    </span>
+                    {claim}
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="rise-in flex items-center gap-3" style={{ animationDelay:'600ms' }}>
               <button onClick={handleCreate} disabled={creating}
                 className="pressable rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
-                {creating ? 'Creating…' : 'Start for free'}
+                {creating ? 'Creating…' : 'Start free'}
               </button>
               <button onClick={() => navigate('/workflows')}
                 className="pressable rounded-full px-6 py-2.5 text-sm font-semibold text-white/60 hover:text-white"
@@ -1111,35 +1519,38 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ── The three moments every workflow is made of ── */}
+      <Modes />
+
       {/* ── Statement — words light up as you scroll ── */}
       <section className="mx-auto max-w-6xl px-6 py-28 sm:py-36">
         <ScrollStatement
-          lead="A new way to automate."
-          rest="No drag-and-drop tutorials, no configuration rabbit holes. Tell Fernary what you want — it designs the workflow, wires the tools, and keeps it running."
+          lead="You already know the work."
+          rest="It’s the same twenty minutes every Monday, the same five tabs, the same copy and paste. Describe it once and it stops being your job."
         />
       </section>
 
       {/* ── 1.0 Build ── */}
       <NumberedSection
         index="1.0" name="Build"
-        title={<>Describe it once.<br />Watch it build.</>}
-        sub="The AI builder turns a sentence into a working pipeline — triggers, models, branches and all. Refine it through conversation."
+        title={<>Say it once.<br />It&rsquo;s built.</>}
+        sub="The builder reads the tools you have connected, picks the steps, and tells you what it did. Thirteen nodes out of one sentence, and you never opened a node editor."
         shot="/shot-build.jpg" alt="Building a workflow by describing it to Fernary AI"
       />
 
       {/* ── 2.0 Run ── */}
       <NumberedSection
         index="2.0" name="Run"
-        title={<>Every step,<br />fully visible.</>}
-        sub="Runs stream live and every output is saved. When something fails, you see exactly where and why — no digging through logs."
+        title={<>It runs at 9am.<br />You don&rsquo;t have to.</>}
+        sub="Every step it took and everything each one returned, kept. When something breaks you see which step, and what it was holding at the time. No log spelunking."
         shot="/shot-run.jpg" alt="A completed run with the output of every step"
       />
 
       {/* ── 3.0 Approve ── */}
       <NumberedSection
         index="3.0" name="Approve"
-        title={<>AI drafts.<br />You decide.</>}
-        sub="Drop a review step anywhere. The workflow pauses, emails you the draft, and waits for one tap — approve or reject, from any device."
+        title={<>It asks before<br />it sends.</>}
+        sub="Drop a review step anywhere. The run pauses, emails you the draft, and waits. Approve and it ships. Ignore it and nothing ships."
         shot="/shot-approve.jpg" alt="A run paused for human approval"
       />
 
@@ -1152,27 +1563,36 @@ export function LandingPage() {
       {/* ── Memory — state that outlives the run ── */}
       <MemoryBand />
 
+      {/* ── A day of it, by role — the outcome in the past tense ── */}
+      <DayInTheLife />
+
       {/* ── Capabilities — the breadth, at a glance ── */}
       <Capabilities />
 
       {/* ── Close — full-stop CTA ── */}
       <section className="px-6 py-28 text-center sm:py-36">
         <Reveal y={36}>
-          <h2 className="mx-auto mb-10 max-w-3xl text-[2.6rem] font-bold sm:text-[3.4rem]"
+          <h2 className="mx-auto mb-6 max-w-3xl text-[2.6rem] font-bold sm:text-[3.4rem]"
             style={{ letterSpacing:'-0.035em', lineHeight:1.05 }}>
-            Describe it once.
+            Stop doing it
             <br />
             <span style={{
               background:'linear-gradient(100deg, #8FE06A 0%, #16C08A 55%, #0FA3A3 115%)',
               WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent',
-            }}>It runs forever.</span>
+            }}>every Monday.</span>
           </h2>
+          {/* Closes on the person, not the product. The page has already made the
+              argument; this is the only line allowed to be about how it feels. */}
+          <p className="mx-auto mb-10 max-w-lg text-[16px] leading-relaxed text-white/50 sm:text-[17px]">
+            You shouldn&rsquo;t be the one pasting Linear issues into Slack at 8:55am.
+            Describe it once, then go do the work only you can do.
+          </p>
         </Reveal>
         <Reveal delay={150} y={20}>
           <div className="flex items-center justify-center gap-3">
             <button onClick={handleCreate} disabled={creating}
               className="pressable rounded-full bg-white px-7 py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50">
-              {creating ? 'Creating…' : 'Get started'}
+              {creating ? 'Creating…' : 'Start free'}
             </button>
             <button onClick={() => navigate('/login')}
               className="pressable rounded-full px-7 py-3 text-sm font-semibold text-white/60 hover:text-white"
