@@ -351,6 +351,19 @@ async function executeNode(
     case 'scheduledTrigger':
       return `{"trigger":"scheduled","time":"${new Date().toISOString()}"}`
 
+    // A canvas run has no real event to replay, so hand downstream nodes the
+    // shape one would have. Returning nothing would make every template below
+    // the trigger fail during exactly the manual run someone is using to check
+    // their work.
+    case 'integrationTrigger':
+      return JSON.stringify({
+        provider: data.triggerProvider ?? '',
+        event: data.triggerEvent ?? '',
+        resource: data.triggerResourceId ?? '',
+        data: {},
+        test: true,
+      })
+
     case 'notion':
     case 'linear':
     case 'github':

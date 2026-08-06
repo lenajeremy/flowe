@@ -10,6 +10,12 @@ import { UserMenu } from '@/components/ui/UserMenu'
 import { NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 import type { NodeType } from '@/types/workflow'
 import posthog from '@/lib/posthog'
+import {
+  activeGitHubInstallations,
+  fetchGitHubSetup,
+  isGitHubInstallURL,
+  type GitHubSetupSnapshot,
+} from '@/lib/githubSetup'
 
 interface Connection {
   provider: NodeType
@@ -38,6 +44,10 @@ export function ConnectionsPage() {
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [shop, setShop] = useState('')
+  const [githubSetup, setGitHubSetup] = useState<GitHubSetupSnapshot>({
+    phase: 'loading',
+    status: null,
+  })
 
   const refresh = useCallback(() => {
     apiFetch(`${API}/api/integrations`)
@@ -46,44 +56,91 @@ export function ConnectionsPage() {
       .catch(() => setRows([]))
   }, [])
 
+  const refreshGitHub = useCallback(() => {
+    fetchGitHubSetup()
+      .then((status) => setGitHubSetup({ phase: 'ready', status }))
+      .catch((error: unknown) => setGitHubSetup({
+        phase: 'failed',
+        status: null,
+        error: error instanceof Error ? error.message : 'Could not check the GitHub App installation',
+      }))
+  }, [])
+
   useEffect(() => {
     document.title = 'Connections · Fernary'
     refresh()
-  }, [refresh])
+    refreshGitHub()
+  }, [refresh, refreshGitHub])
+
+  useEffect(() => {
+    function onFocus() {
+      refresh()
+      refreshGitHub()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [refresh, refreshGitHub])
 
   // The OAuth popup posts back when it lands on the callback page.
   useEffect(() => {
     const apiOrigin = API ? new URL(API).origin : window.location.origin
     function onMessage(e: MessageEvent) {
       if (e.origin !== apiOrigin) return
-      const d = e.data as { type?: string; provider?: string } | null
+      const d = e.data as {
+        type?: string
+        provider?: string
+        status?: string
+        error?: string
+      } | null
       if (d?.type === 'integration-oauth' && d.provider) {
+        const providerLabel = NODE_LABELS[d.provider as NodeType] ?? d.provider
+        if (d.status !== 'connected') {
+          posthog.capture('integration_connection_failed', {
+            provider: d.provider,
+            status: 'oauth_error',
+          })
+          refresh()
+          if (d.provider === 'github') refreshGitHub()
+          toast.error(`${providerLabel} connection failed`, {
+            description: d.error || 'The provider did not complete authorization. Try again.',
+          })
+          return
+        }
         clearResourceCache(d.provider)
         posthog.capture('integration_connected', { provider: d.provider })
         refresh()
+        if (d.provider === 'github') refreshGitHub()
         setAdding(false)
-        toast.success(`${NODE_LABELS[d.provider as NodeType] ?? d.provider} connected`)
+        toast.success(`${providerLabel} connected`)
       }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [refresh])
+  }, [refresh, refreshGitHub])
 
   function connect(provider: NodeType) {
     if (provider === 'shopify' && !shop.trim()) return
     posthog.capture('integration_connection_started', { provider })
     // Opened synchronously inside the click so the popup blocker allows it; the
     // authorize URL needs our bearer token, so it arrives a moment later.
-    const win = window.open('about:blank', `connect-${provider}`, 'width=560,height=720,menubar=no,toolbar=no')
-    let url = `${API}/api/integrations/${provider}/connect?origin=${encodeURIComponent(window.location.origin)}`
+    const popupName = provider === 'github' ? 'install-fernary-github' : `connect-${provider}`
+    const popupWidth = provider === 'github' ? 720 : 560
+    const win = window.open('about:blank', popupName, `width=${popupWidth},height=720,menubar=no,toolbar=no`)
+    let url = provider === 'github'
+      ? `${API}/api/integrations/github/setup?origin=${encodeURIComponent(window.location.origin)}`
+      : `${API}/api/integrations/${provider}/connect?origin=${encodeURIComponent(window.location.origin)}`
     if (provider === 'shopify') url += `&shop=${encodeURIComponent(shop.trim())}`
     apiFetch(url)
       .then((r) => r.json())
-      .then((d: { url?: string; error?: string }) => {
-        if (d.url && win) win.location.href = d.url
+      .then((d: { url?: string; install_url?: string; error?: string }) => {
+        const destination = provider === 'github' ? d.install_url : d.url
+        const safeDestination = provider !== 'github' || isGitHubInstallURL(destination)
+        if (destination && safeDestination && win) win.location.href = destination
         else {
           win?.close()
-          toast.error(d.error ?? 'Could not start the connection')
+          toast.error(d.error ?? (provider === 'github'
+            ? 'Could not start the GitHub App installation'
+            : 'Could not start the connection'))
         }
       })
       .catch(() => { win?.close(); toast.error('Could not start the connection') })
@@ -229,6 +286,7 @@ export function ConnectionsPage() {
                 busy={busy === c.provider}
                 onDisconnect={() => void disconnect(c)}
                 onReconnect={() => connect(c.provider)}
+                githubSetup={c.provider === 'github' ? githubSetup : undefined}
               />
             ))}
           </div>
@@ -267,14 +325,18 @@ function Banner({ tone, children }: { tone: 'hold' | 'fail'; children: React.Rea
   )
 }
 
-function Row({ c, busy, onDisconnect, onReconnect }: {
+function Row({ c, busy, onDisconnect, onReconnect, githubSetup }: {
   c: Connection
   busy: boolean
   onDisconnect: () => void
   onReconnect: () => void
+  githubSetup?: GitHubSetupSnapshot
 }) {
   const label = NODE_LABELS[c.provider] ?? c.provider
   const attention = needsAttention(c)
+  const githubHealth = c.provider === 'github' ? getGitHubHealth(githubSetup) : null
+  const statusColor = githubHealth?.color ?? (attention ? 'var(--color-hold)' : 'var(--color-ok)')
+  const statusLabel = githubHealth?.label ?? (attention ? 'Expired' : 'Connected')
   return (
     <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_120px_110px_120px_92px] items-center gap-4 border-b border-[var(--color-border)] px-5 py-3.5 last:border-b-0 hover:bg-[var(--color-surface2)]">
       <div className="flex min-w-0 items-center gap-3">
@@ -292,10 +354,10 @@ function Row({ c, busy, onDisconnect, onReconnect }: {
       <span className="flex items-center gap-2">
         <span
           className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-          style={{ background: attention ? 'var(--color-hold)' : 'var(--color-ok)' }}
+          style={{ background: statusColor }}
         />
-        <span className="text-[12.5px]" style={{ color: attention ? 'var(--color-hold)' : 'var(--color-ok)' }}>
-          {attention ? 'Expired' : 'Connected'}
+        <span className="text-[12.5px]" style={{ color: statusColor }} title={githubHealth?.detail}>
+          {statusLabel}
         </span>
       </span>
 
@@ -311,9 +373,9 @@ function Row({ c, busy, onDisconnect, onReconnect }: {
         <button
           onClick={onReconnect}
           className="text-[12px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-          title="Run the OAuth flow again to refresh access"
+          title={c.provider === 'github' ? 'Manage the GitHub App installation and repository access' : 'Run the OAuth flow again to refresh access'}
         >
-          Reconnect
+          {c.provider === 'github' ? 'Manage' : 'Reconnect'}
         </button>
         <button
           onClick={onDisconnect}
@@ -325,6 +387,41 @@ function Row({ c, busy, onDisconnect, onReconnect }: {
       </div>
     </div>
   )
+}
+
+function getGitHubHealth(snapshot?: GitHubSetupSnapshot): {
+  label: string
+  color: string
+  detail: string
+} {
+  if (!snapshot || snapshot.phase === 'loading') {
+    return { label: 'Checking', color: 'var(--color-subtle)', detail: 'Checking GitHub App access' }
+  }
+  if (snapshot.phase === 'failed' || !snapshot.status) {
+    return { label: 'Check failed', color: 'var(--color-fail)', detail: snapshot.error ?? 'Could not verify GitHub App access' }
+  }
+  const status = snapshot.status
+  if (!status.app_configured) {
+    return { label: 'Setup needed', color: 'var(--color-fail)', detail: 'The GitHub App is not configured on Fernary’s server' }
+  }
+  if (!status.connected || status.token_kind !== 'github_app' || status.reconnect_required) {
+    return { label: 'Reconnect', color: 'var(--color-hold)', detail: 'Authorize through the Fernary GitHub App' }
+  }
+  const active = activeGitHubInstallations(status)
+  if (active.length === 0) {
+    const suspended = status.installations.some((installation) => installation.suspended)
+    return suspended
+      ? { label: 'Suspended', color: 'var(--color-hold)', detail: 'Restore the suspended GitHub App installation' }
+      : { label: 'Install app', color: 'var(--color-hold)', detail: 'Install Fernary on a GitHub account and choose repository access' }
+  }
+  if (!status.webhook_configured) {
+    return { label: 'Webhook setup', color: 'var(--color-fail)', detail: 'The GitHub webhook secret is missing on Fernary’s server' }
+  }
+  return {
+    label: 'Ready',
+    color: 'var(--color-ok)',
+    detail: `${active.length} active installation${active.length === 1 ? '' : 's'} · ${status.repositories.length} repositories`,
+  }
 }
 
 function EmptyState({ searching, onAdd }: { searching: boolean; onAdd: () => void }) {
@@ -413,7 +510,11 @@ function AddConnection({ options, shop, onShop, onPick, onClose }: {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium">{NODE_LABELS[o.provider]}</span>
                   <span className="block truncate text-[11.5px] text-[var(--color-subtle)]">
-                    {o.available ? NODE_DESCRIPTIONS[o.provider] : 'Not configured on this server'}
+                    {o.available
+                      ? o.provider === 'github'
+                        ? 'Install the GitHub App and choose repository access'
+                        : NODE_DESCRIPTIONS[o.provider]
+                      : 'Not configured on this server'}
                   </span>
                 </span>
                 {o.workflows > 0 && (
@@ -446,8 +547,8 @@ function AddConnection({ options, shop, onShop, onPick, onClose }: {
         </div>
 
         <p className="border-t border-[var(--color-border)] px-5 py-3.5 text-[11.5px] leading-relaxed text-[var(--color-subtle)]">
-          You’ll authorise on the provider’s own site. Fernary stores an encrypted access token and
-          nothing else — never your password.
+          You’ll authorise on the provider’s own site. GitHub also asks which repositories to install
+          Fernary on. Access tokens are encrypted at rest — Fernary never sees your password.
         </p>
       </div>
     </div>

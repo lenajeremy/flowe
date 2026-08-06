@@ -52,6 +52,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       }
     case 'webhookTrigger':
       return { nodeType: 'webhookTrigger', label: 'Webhook Trigger' }
+    case 'integrationTrigger':
+      return { nodeType: 'integrationTrigger', label: 'App Trigger' }
     case 'scheduledTrigger':
       return { nodeType: 'scheduledTrigger', label: 'Scheduled Trigger' }
     case 'notion':

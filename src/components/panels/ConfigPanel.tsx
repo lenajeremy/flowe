@@ -23,6 +23,7 @@ import {
   GoogleSearchConsoleConfig, GoogleContactsConfig,
   HubSpotConfig, FrontConfig,
 } from '@/components/panels/integrationConfigs'
+import { IntegrationTriggerConfig } from '@/components/panels/IntegrationTriggerConfig'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
@@ -955,6 +956,10 @@ export function ConfigPanel() {
               {webhookLoading ? 'Regenerating…' : 'Regenerate webhook token'}
             </button>
           </div>
+        )}
+
+        {nodeType === 'integrationTrigger' && (
+          <IntegrationTriggerConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
         )}
 
         {nodeType === 'notion' && <NotionConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}

@@ -16,22 +16,45 @@ import {
  * appears via the explicit toggle, or when the current value is a template
  * token / unknown ID that the dropdown can't represent.
  */
-export function ResourcePicker({ provider, kind, id, value, onChange, placeholder }: {
+export function ResourcePicker({
+  provider,
+  kind,
+  parent,
+  id,
+  value,
+  onChange,
+  placeholder,
+  allowManual = true,
+}: {
   provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep' | 'airtable' | 'clickup' | 'supabase' | 'googlesearchconsole'
-  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'project' | 'property'
+  kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'project' | 'property' | 'branch'
+  /**
+   * Scopes the list to what lives inside another resource — a repository's
+   * branches. Undefined keeps the account-wide behaviour every other caller
+   * relies on; set-but-empty means the parent has not been chosen yet, so the
+   * picker waits instead of fetching a list it knows will be wrong.
+   */
+  parent?: string
   id: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  /** Disable for security-scoped lists where a free-form ID would imply access the app does not have. */
+  allowManual?: boolean
 }) {
   const [resources, setResources] = useState<IntegrationResource[]>([])
   const [state, setState] = useState<'loading' | 'ready' | 'disconnected' | 'failed'>('loading')
   const [manual, setManual] = useState(false)
 
+  const awaitingParent = parent === ''
+
   useEffect(() => {
     let alive = true
+    // Nothing to fetch until the parent is chosen. Derived below rather than
+    // written to state here, so this effect never triggers a cascading render.
+    if (awaitingParent) return
     function load() {
-      fetchResources(provider)
+      fetchResources(provider, parent || undefined)
         .then((all) => {
           if (!alive) return
           setResources(all.filter((r) => r.type === kind))
@@ -65,17 +88,23 @@ export function ResourcePicker({ provider, kind, id, value, onChange, placeholde
       alive = false
       window.removeEventListener(INTEGRATION_CHANGED_EVENT, onChanged)
     }
-  }, [provider, kind])
+  }, [provider, kind, parent, awaitingParent])
+
+  // While the parent is unchosen the last list is stale (it belongs to the
+  // previous repository), so show nothing rather than the wrong thing.
+  const visible = awaitingParent ? [] : resources
+  const phase = awaitingParent ? 'ready' : state
 
   // A value that isn't a known resource (template token, pasted ID) needs the input.
-  const valueIsForeign = value !== '' && !resources.some((r) => r.id === value)
-  const showInput = manual || (valueIsForeign && state === 'ready')
+  const valueIsForeign = value !== '' && !visible.some((r) => r.id === value)
+  const showInput = allowManual && (manual || (valueIsForeign && phase === 'ready' && !awaitingParent))
 
   const placeholderLabel =
-    state === 'loading' ? 'Loading…' :
-    state === 'failed' ? `Couldn't load ${kind}s — retry or enter an ID` :
-    state === 'disconnected' ? `Connect ${provider} to pick a ${kind}` :
-    resources.length === 0 ? `No ${kind}s shared with your connection` :
+    awaitingParent ? 'Pick the repository first' :
+    phase === 'loading' ? 'Loading…' :
+    phase === 'failed' ? `Couldn't load ${kind}s — retry or enter an ID` :
+    phase === 'disconnected' ? `Connect ${provider} to pick a ${kind}` :
+    visible.length === 0 ? `No ${kind}s shared with your connection` :
     `Select a ${kind}…`
 
   return (
@@ -96,24 +125,28 @@ export function ResourcePicker({ provider, kind, id, value, onChange, placeholde
           onChange={onChange}
           options={[
             { value: '', label: placeholderLabel },
-            ...resources.map((r) => ({ value: r.id, label: r.name })),
+            ...visible.map((r) => ({ value: r.id, label: r.name })),
           ]}
         />
       )}
-      <button
-        type="button"
-        onClick={() => {
-          if (showInput) { setManual(false); if (valueIsForeign) onChange('') }
-          else setManual(true)
-        }}
-        className="self-start text-[10px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]"
-      >
-        {showInput ? `− Pick from your ${kind === 'team' ? 'teams' : kind + 's'}` : '+ Enter ID manually'}
-      </button>
-      {state === 'ready' && resources.length === 0 && (
+      {allowManual && (
+        <button
+          type="button"
+          onClick={() => {
+            if (showInput) { setManual(false); if (valueIsForeign) onChange('') }
+            else setManual(true)
+          }}
+          className="self-start text-[10px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]"
+        >
+          {showInput ? `− Pick from your ${kind === 'team' ? 'teams' : kind + 's'}` : '+ Enter ID manually'}
+        </button>
+      )}
+      {phase === 'ready' && !awaitingParent && visible.length === 0 && (
         <p className="text-[10px] leading-relaxed text-[var(--color-subtle)]">
           {provider === 'notion'
             ? `Your Notion connection has no ${kind}s shared with it — reconnect and pick ${kind === 'database' ? 'a database' : 'pages'} in the Notion popup.`
+            : provider === 'github'
+              ? 'No repositories are available to this GitHub App installation. Add repository access above, then refresh.'
             : 'No teams found on your Linear connection.'}
         </p>
       )}

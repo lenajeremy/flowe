@@ -9,7 +9,10 @@ import { FloweIcon } from '@/components/FloweIcon'
 
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
-  { category: 'Triggers', items: ['webhookTrigger', 'scheduledTrigger'] },
+  // App Trigger leads: "run when something happens in a tool I use" is the
+  // reason most people open this group, and the generic webhook URL is the
+  // fallback for everything that isn't a connected app.
+  { category: 'Triggers', items: ['integrationTrigger', 'scheduledTrigger', 'webhookTrigger'] },
   { category: 'Input/Output', items: ['textInput', 'imageInput', 'textOutput'] },
   { category: 'Actions', items: ['llm', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
   { category: 'Data', items: ['data'] },

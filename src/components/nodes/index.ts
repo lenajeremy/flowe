@@ -8,6 +8,7 @@ import { HttpRequestNode }      from './HttpRequestNode'
 import { EmailSendNode }        from './EmailSendNode'
 import { HumanApprovalNode }    from './HumanApprovalNode'
 import { WebhookTriggerNode }   from './WebhookTriggerNode'
+import { IntegrationTriggerNode } from './IntegrationTriggerNode'
 import { ScheduledTriggerNode } from './ScheduledTriggerNode'
 import { NotionNode }           from './NotionNode'
 import { LinearNode }           from './LinearNode'
@@ -61,6 +62,7 @@ export const nodeTypes = {
   emailSend:        EmailSendNode,
   humanApproval:    HumanApprovalNode,
   webhookTrigger:   WebhookTriggerNode,
+  integrationTrigger: IntegrationTriggerNode,
   scheduledTrigger: ScheduledTriggerNode,
   notion:           NotionNode,
   linear:           LinearNode,

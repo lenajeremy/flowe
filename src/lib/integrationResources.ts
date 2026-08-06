@@ -7,9 +7,13 @@ export interface IntegrationResource {
   type: string
 }
 
-// One in-flight/settled fetch per provider so several fields in the same
-// panel don't each hit the resources endpoint.
+// One in-flight/settled fetch per provider — and per parent, since a
+// repository's branches are a different list from the account's repositories —
+// so several fields in the same panel don't each hit the resources endpoint.
 const resourceCache = new Map<string, Promise<IntegrationResource[]>>()
+
+const cacheKey = (provider: string, parent?: string) =>
+  parent ? `${provider}\u0000${parent}` : provider
 
 export class ResourceFetchError extends Error {
   status: number
@@ -19,10 +23,18 @@ export class ResourceFetchError extends Error {
   }
 }
 
-export function fetchResources(provider: string): Promise<IntegrationResource[]> {
-  let cached = resourceCache.get(provider)
+/**
+ * List a provider's resources. `parent` scopes the request to what lives inside
+ * another resource — a repository's branches and collaborators — which is what
+ * turns "type the branch name" into a dropdown.
+ */
+export function fetchResources(provider: string, parent?: string): Promise<IntegrationResource[]> {
+  const key = cacheKey(provider, parent)
+  let cached = resourceCache.get(key)
   if (!cached) {
-    cached = apiFetch(`${API}/api/integrations/${provider}/resources`)
+    const url = `${API}/api/integrations/${provider}/resources` +
+      (parent ? `?parent=${encodeURIComponent(parent)}` : '')
+    cached = apiFetch(url)
       .then(async (r) => {
         if (r.ok) return r.json() as Promise<IntegrationResource[]>
         let message = `HTTP ${r.status}`
@@ -33,10 +45,10 @@ export function fetchResources(provider: string): Promise<IntegrationResource[]>
         throw new ResourceFetchError(r.status, message)
       })
       .catch((err) => {
-        resourceCache.delete(provider)
+        resourceCache.delete(key)
         throw err
       })
-    resourceCache.set(provider, cached)
+    resourceCache.set(key, cached)
   }
   return cached
 }
@@ -46,7 +58,12 @@ export const INTEGRATION_CHANGED_EVENT = 'flowe:integration-changed'
 
 /** Invalidate cached resources and notify listeners (e.g. open ResourcePickers). */
 export function clearResourceCache(provider?: string) {
-  if (provider) resourceCache.delete(provider)
-  else resourceCache.clear()
+  // Clearing a provider has to drop its scoped lists too, or reconnecting an
+  // account would refresh the repositories and leave stale branches beneath them.
+  if (provider) {
+    for (const key of resourceCache.keys()) {
+      if (key === provider || key.startsWith(`${provider}\u0000`)) resourceCache.delete(key)
+    }
+  } else resourceCache.clear()
   window.dispatchEvent(new CustomEvent(INTEGRATION_CHANGED_EVENT, { detail: provider }))
 }

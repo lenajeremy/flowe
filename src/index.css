@@ -198,6 +198,7 @@
   --na-emailSend:        #ffb74b;
   --na-humanApproval:    #f94b4b;
   --na-webhookTrigger:   #7ddb4f;
+  --na-integrationTrigger: #4fd6db;
   --na-scheduledTrigger: #ffd94d;
   --na-notion:           #e5e4e5;
   --na-linear:           #5e6ad2;
@@ -357,6 +358,7 @@
   --na-emailSend:        #bc6e0d;
   --na-humanApproval:    #d3312f;
   --na-webhookTrigger:   #47ae13;
+  --na-integrationTrigger: #0d8f96;
   --na-scheduledTrigger: #ae8d13;
   --na-notion:           #565664;
   --na-linear:           #4a55c4;

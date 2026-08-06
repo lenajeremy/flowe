@@ -12,6 +12,7 @@ export type NodeType =
   | 'emailSend'
   | 'humanApproval'
   | 'webhookTrigger'
+  | 'integrationTrigger'
   | 'scheduledTrigger'
   | 'notion'
   | 'linear'
@@ -219,6 +220,16 @@ export type FlowNodeData = {
   gmailCc?: string
   gmailSubject?: string
   gmailBody?: string
+  // integrationTrigger — the canvas's copy of what this node is subscribed to.
+  // The authoritative record is the integration_triggers row on the server (that
+  // is what the provider was registered against); these let the card render and
+  // a manual run produce a realistic placeholder without a round trip.
+  triggerProvider?: string
+  triggerEvent?: string
+  triggerResourceId?: string
+  triggerResourceLabel?: string
+  triggerFilters?: Record<string, string>
+
   gmailQuery?: string          // Gmail search syntax
   gmailMessageId?: string
   gmailLimit?: number

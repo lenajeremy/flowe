@@ -54,6 +54,7 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   emailSend:        icon('emailSend'),
   humanApproval:    icon('humanApproval'),
   webhookTrigger:   icon('webhookTrigger'),
+  integrationTrigger: icon('integrationTrigger'),
   scheduledTrigger: icon('scheduledTrigger'),
   data:             icon('data'),
 

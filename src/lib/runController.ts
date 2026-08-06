@@ -76,7 +76,7 @@ function prepareRunState(runId: string | null) {
 export function requestRun() {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
-  const hasWebhook = s.nodes.some((n) => n.data.nodeType === 'webhookTrigger')
+  const hasWebhook = s.nodes.some((n) => n.data.nodeType === 'webhookTrigger' || n.data.nodeType === 'integrationTrigger')
   if (hasWebhook) s.setWebhookRunPromptOpen(true)
   else startRun()
 }
@@ -97,7 +97,7 @@ export function startRun(opts?: { webhookPayload?: string }) {
     // the same slot the real ReceiveWebhook handler injects into.
     if (opts?.webhookPayload !== undefined) {
       ast.nodes = ast.nodes.map((n) =>
-        n.data.nodeType === 'webhookTrigger'
+        n.data.nodeType === 'webhookTrigger' || n.data.nodeType === 'integrationTrigger'
           ? { ...n, data: { ...n.data, defaultValue: opts.webhookPayload } }
           : n,
       )

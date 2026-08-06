@@ -11,7 +11,7 @@ import { FloweIcon } from '@/components/FloweIcon'
 import type { NodeType, WorkflowASTNode } from '@/types/workflow'
 
 // Node types the backend never exposes as tools (mirrors agentSkipNode)
-const NON_TOOL_TYPES = new Set<NodeType>(['branch', 'loop', 'textOutput', 'webhookTrigger', 'scheduledTrigger'])
+const NON_TOOL_TYPES = new Set<NodeType>(['branch', 'loop', 'textOutput', 'webhookTrigger', 'scheduledTrigger', 'integrationTrigger'])
 
 // ── Page ────────────────────────────────────────────────────────
 

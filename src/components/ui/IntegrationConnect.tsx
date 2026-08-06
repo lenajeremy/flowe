@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { API } from '@/lib/config'
 import { clearResourceCache } from '@/lib/integrationResources'
 import { apiFetch } from '@/lib/http'
+import {
+  GitHubInstallCard,
+} from '@/components/ui/GitHubInstallCard'
+import type { GitHubSetupSnapshot } from '@/lib/githubSetup'
 
 interface IntegrationStatus {
   provider: string
@@ -21,11 +25,19 @@ interface IntegrationStatus {
  * `manualField` renders the legacy token input — shown directly when the
  * server has no OAuth app configured, or behind a toggle as an override.
  */
-export function IntegrationConnect({ provider, label, hasManualToken, manualField }: {
+export function IntegrationConnect({
+  provider,
+  label,
+  hasManualToken,
+  manualField,
+  onGitHubSetupChange,
+}: {
   provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   hasManualToken: boolean
   manualField: ReactNode
+  /** Only emitted for GitHub, whose authorization and installation are separate. */
+  onGitHubSetupChange?: (snapshot: GitHubSetupSnapshot) => void
 }) {
   const navigate = useNavigate()
   const [status, setStatus] = useState<IntegrationStatus | null>(null)
@@ -188,6 +200,53 @@ export function IntegrationConnect({ provider, label, hasManualToken, manualFiel
             manage every connected account here
           </a>.
         </p>
+      </div>
+    )
+  }
+
+  // GitHub Apps have two independent grants: a user authorizes Fernary to act
+  // for them, then installs it on specific accounts/repositories. Collapsing
+  // those into the generic "Connected" card produces a dangerous false-ready
+  // state, so GitHub gets an explicit two-step status card.
+  if (!loading && provider === 'github' && status?.available !== false) {
+    return (
+      <div className="flex flex-col gap-2">
+        <GitHubInstallCard
+          onChange={onGitHubSetupChange}
+          onDisconnect={disconnect}
+        />
+
+        <p className="text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          Fernary stores the resulting GitHub user token{' '}
+          <span className="text-[var(--color-muted)]">encrypted at rest</span>. Repository access
+          stays controlled by the GitHub App installation, and you can{' '}
+          <a
+            href="/connections"
+            onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+            className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]"
+          >
+            manage the connection here
+          </a>.
+        </p>
+
+        {manualField && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowManual((value) => !value)}
+              className="self-start text-[10px] text-[var(--color-subtle)] transition-colors hover:text-[var(--color-text)]"
+            >
+              {showManual ? '− Hide manual token' : '+ Use a manual token for actions instead'}
+            </button>
+            {showManual && manualField}
+            {showManual && (
+              <p className="text-[10px] leading-relaxed text-[var(--color-subtle)]">
+                Manual tokens can run GitHub actions, but they cannot install the Fernary GitHub App
+                or enable app-trigger webhooks.
+              </p>
+            )}
+          </>
+        )}
       </div>
     )
   }
