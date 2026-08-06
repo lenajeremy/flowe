@@ -147,6 +147,8 @@ export function ResourcePicker({
             ? `Your Notion connection has no ${kind}s shared with it — reconnect and pick ${kind === 'database' ? 'a database' : 'pages'} in the Notion popup.`
             : provider === 'github'
               ? 'No repositories are available to this GitHub App installation. Add repository access above, then refresh.'
+            : provider === 'gitlab'
+              ? `No ${kind}s are available in this GitLab project.`
             : 'No teams found on your Linear connection.'}
         </p>
       )}

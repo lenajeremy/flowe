@@ -22,9 +22,9 @@ import { toast } from 'sonner'
 // Setting up "run this when something happens over there".
 //
 // Two things make this panel different from every other config block. First,
-// saving is not a local edit — it persists a listener against the centrally
-// installed GitHub App, so the panel distinguishes "configured on the canvas"
-// from "actually listening on the server". Second, nothing here should be typed
+// saving is not a local edit — it persists or verifies a listener at the
+// provider, so the panel distinguishes "configured on the canvas" from
+// "actually listening on the server". Second, nothing here should be typed
 // from memory: the account, the repository, the branch and the person are all
 // things the provider can enumerate, so they are all lists.
 
@@ -63,6 +63,7 @@ interface ServerTrigger {
 // when the answer is obviously a repository.
 const RESOURCE_LABEL: Record<string, string> = {
   repo: 'Repository',
+  project: 'Project',
   channel: 'Channel',
   branch: 'Branch',
   user: 'Person',
@@ -327,6 +328,13 @@ export function IntegrationTriggerConfig({ data, nodeId, updateNodeData }: {
               : 'This repository is not included in the Fernary GitHub App installation. Update the installation’s repository access, then refresh it above.'}
           </p>
         )}
+
+      {provider === 'gitlab' && resourceID && (
+        <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          Fernary creates a signed webhook on this project. GitLab requires your connected account
+          to have the Maintainer or Owner role.
+        </p>
+      )}
 
       {/* Filters narrow the event at the source. Doing it here rather than with
           a branch node is the difference between a busy repository costing
