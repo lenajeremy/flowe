@@ -5,7 +5,10 @@ import { clearResourceCache } from '@/lib/integrationResources'
 import {
   activeGitHubInstallations,
   fetchGitHubSetup,
+  githubMissingEventLabels,
+  isGitHubInstallationSettingsURL,
   isGitHubInstallURL,
+  readyGitHubInstallations,
   type GitHubSetupSnapshot,
   type GitHubSetupStatus,
 } from '@/lib/githubSetup'
@@ -103,12 +106,7 @@ export function GitHubInstallCard({
     if (popupPoll.current !== null) window.clearInterval(popupPoll.current)
   }, [])
 
-  function install() {
-    const url = snapshot.status?.install_url
-    if (!isGitHubInstallURL(url)) {
-      toast.error('The GitHub installation link is unavailable')
-      return
-    }
+  function openGitHubPopup(url: string) {
     popup.current = window.open(
       url,
       'install-fernary-github',
@@ -132,6 +130,26 @@ export function GitHubInstallCard({
     }, 800)
   }
 
+  function install() {
+    const url = snapshot.status?.install_url
+    if (!isGitHubInstallURL(url)) {
+      toast.error('The GitHub installation link is unavailable')
+      return
+    }
+    openGitHubPopup(url)
+  }
+
+  function reviewPermissions() {
+    const url = permissionApprovalInstallations[0]?.settings_url
+    if (!isGitHubInstallationSettingsURL(url)) {
+      toast.error('The GitHub permission settings link is unavailable', {
+        description: 'Refresh the installation status and try again.',
+      })
+      return
+    }
+    openGitHubPopup(url)
+  }
+
   async function disconnect() {
     await onDisconnect()
     void refresh()
@@ -145,8 +163,16 @@ export function GitHubInstallCard({
     ? status.installations.filter((installation) => installation.suspended === true)
     : []
   const installed = ready && status.installed && activeInstallations.length > 0
+  const permissionApprovalInstallations = ready
+    ? activeInstallations.filter((installation) => installation.permissions_configured !== true)
+    : []
+  const permissionsReady = ready && readyGitHubInstallations(status).length === activeInstallations.length &&
+    activeInstallations.length > 0
+  const permissionReviewURL = permissionApprovalInstallations[0]?.settings_url
+  const canReviewPermissions = isGitHubInstallationSettingsURL(permissionReviewURL)
   const legacyToken = ready && status.connected && !authorized
   const canInstall = ready && status.app_configured && isGitHubInstallURL(status.install_url)
+  const missingEventLabels = ready ? githubMissingEventLabels(status) : []
 
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3">
@@ -173,10 +199,12 @@ export function GitHubInstallCard({
         )}
       </div>
 
-      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+      <div className="mt-2.5 grid grid-cols-5 gap-1.5">
         <StatusStep label="Authorized" complete={authorized} loading={snapshot.phase === 'loading'} />
         <StatusStep label="Installed" complete={installed} loading={snapshot.phase === 'loading'} />
-        <StatusStep label="Webhooks" complete={ready && status.webhook_configured} loading={snapshot.phase === 'loading'} />
+        <StatusStep label="Permissions" complete={permissionsReady} loading={snapshot.phase === 'loading'} />
+        <StatusStep label="Webhook" complete={ready && status.webhook_configured} loading={snapshot.phase === 'loading'} />
+        <StatusStep label="Events" complete={ready && status.webhook_events_configured} loading={snapshot.phase === 'loading'} />
       </div>
 
       {ready && status.app_configured && !status.webhook_configured && (
@@ -186,10 +214,34 @@ export function GitHubInstallCard({
         </p>
       )}
 
+      {ready && status.app_configured && !status.webhook_events_configured && (
+        <p className="mt-2.5 text-[10px] leading-relaxed text-[var(--color-fail)]">
+          The GitHub App is missing Permissions &amp; events subscriptions
+          {missingEventLabels.length > 0 ? `: ${missingEventLabels.join(', ')}` : ''}. Enable them in
+          the GitHub App settings before starting triggers.
+        </p>
+      )}
+
       {ready && suspendedInstallations.length > 0 && (
         <p className="mt-2.5 text-[10px] leading-relaxed text-[var(--color-hold)]">
           {suspendedInstallations.length} GitHub installation{suspendedInstallations.length === 1 ? ' is' : 's are'}
           {' '}suspended. Restore access in GitHub before using repositories from that installation.
+        </p>
+      )}
+
+      {ready && permissionApprovalInstallations.length > 0 && (
+        <p className="mt-2.5 text-[10px] leading-relaxed text-[var(--color-hold)]">
+          GitHub permission approval is required for{' '}
+          {permissionApprovalInstallations.map((installation) => installation.account_login || 'an installation').join(', ')}
+          {permissionApprovalInstallations.some((installation) => installation.permissions_missing.length > 0)
+            ? `: ${Array.from(new Set(permissionApprovalInstallations.flatMap((installation) => installation.permissions_missing))).join(', ')}`
+            : ''}. Review and approve the updated GitHub App permissions before using those repositories.
+        </p>
+      )}
+
+      {ready && permissionApprovalInstallations.length > 0 && !canReviewPermissions && (
+        <p className="mt-2.5 text-[10px] leading-relaxed text-[var(--color-fail)]">
+          A valid GitHub installation settings link is unavailable. Refresh before approving permissions.
         </p>
       )}
 
@@ -208,11 +260,13 @@ export function GitHubInstallCard({
         <div className="mt-2.5 flex items-center gap-2">
           <button
             type="button"
-            onClick={install}
-            disabled={!canInstall}
+            onClick={permissionApprovalInstallations.length > 0 ? reviewPermissions : install}
+            disabled={permissionApprovalInstallations.length > 0 ? !canReviewPermissions : !canInstall}
             className="pressable rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {installed
+            {permissionApprovalInstallations.length > 0
+              ? 'Review permissions in GitHub'
+              : installed
               ? 'Add or update access'
               : suspendedInstallations.length > 0
                 ? 'Restore access in GitHub'

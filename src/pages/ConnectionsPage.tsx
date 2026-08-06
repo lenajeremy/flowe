@@ -13,7 +13,10 @@ import posthog from '@/lib/posthog'
 import {
   activeGitHubInstallations,
   fetchGitHubSetup,
+  githubMissingEventLabels,
+  isGitHubInstallationSettingsURL,
   isGitHubInstallURL,
+  readyGitHubInstallations,
   type GitHubSetupSnapshot,
 } from '@/lib/githubSetup'
 
@@ -120,6 +123,31 @@ export function ConnectionsPage() {
 
   function connect(provider: NodeType) {
     if (provider === 'shopify' && !shop.trim()) return
+    if (provider === 'github' && githubSetup.phase === 'ready' && githubSetup.status) {
+      const pendingInstallation = activeGitHubInstallations(githubSetup.status).find((installation) =>
+        installation.permissions_configured !== true)
+      if (pendingInstallation) {
+        if (!isGitHubInstallationSettingsURL(pendingInstallation.settings_url)) {
+          toast.error('The GitHub permission settings link is unavailable', {
+            description: 'Refresh the connection and try again.',
+          })
+          return
+        }
+        const settingsWindow = window.open(
+          pendingInstallation.settings_url,
+          'install-fernary-github',
+          'width=720,height=720,menubar=no,toolbar=no',
+        )
+        if (!settingsWindow) {
+          toast.error('Your browser blocked the GitHub window', {
+            description: 'Allow popups for Fernary, then try again.',
+          })
+        } else {
+          settingsWindow.focus()
+        }
+        return
+      }
+    }
     posthog.capture('integration_connection_started', { provider })
     // Opened synchronously inside the click so the popup blocker allows it; the
     // authorize URL needs our bearer token, so it arrives a moment later.
@@ -414,13 +442,37 @@ function getGitHubHealth(snapshot?: GitHubSetupSnapshot): {
       ? { label: 'Suspended', color: 'var(--color-hold)', detail: 'Restore the suspended GitHub App installation' }
       : { label: 'Install app', color: 'var(--color-hold)', detail: 'Install Fernary on a GitHub account and choose repository access' }
   }
-  if (!status.webhook_configured) {
-    return { label: 'Webhook setup', color: 'var(--color-fail)', detail: 'The GitHub webhook secret is missing on Fernary’s server' }
+  const permissionApproval = active.filter((installation) =>
+    installation.permissions_configured !== true)
+  if (permissionApproval.length > 0) {
+    const missing = Array.from(new Set(permissionApproval.flatMap((installation) =>
+      installation.permissions_missing)))
+    return {
+      label: 'Approval needed',
+      color: 'var(--color-hold)',
+      detail: missing.length > 0
+        ? `Approve updated GitHub App permissions: ${missing.join(', ')}`
+        : 'Approve the GitHub App’s updated permissions for this installation',
+    }
+  }
+  if (!status.webhook_configured || !status.webhook_events_configured) {
+    const missing = githubMissingEventLabels(status)
+    const problems = [
+      !status.webhook_configured ? 'The Fernary server webhook secret is missing' : '',
+      !status.webhook_events_configured
+        ? `Missing GitHub App Permissions & events subscriptions${missing.length > 0 ? `: ${missing.join(', ')}` : ''}`
+        : '',
+    ].filter(Boolean)
+    return {
+      label: !status.webhook_configured ? 'Webhook setup' : 'Event setup',
+      color: 'var(--color-fail)',
+      detail: problems.join(' · '),
+    }
   }
   return {
     label: 'Ready',
     color: 'var(--color-ok)',
-    detail: `${active.length} active installation${active.length === 1 ? '' : 's'} · ${status.repositories.length} repositories`,
+    detail: `${readyGitHubInstallations(status).length} ready installation${readyGitHubInstallations(status).length === 1 ? '' : 's'} · ${status.repositories.length} repositories`,
   }
 }
 

@@ -6,6 +6,8 @@ import { ResourcePicker } from '@/components/ui/ResourcePicker'
 import { IntegrationConnect } from '@/components/ui/IntegrationConnect'
 import {
   activeGitHubInstallations,
+  githubMissingEventLabels,
+  githubRepositoryInstallation,
   githubRepositoryIsInstalled,
   type GitHubSetupSnapshot,
 } from '@/lib/githubSetup'
@@ -120,17 +122,27 @@ export function IntegrationTriggerConfig({ data, nodeId, updateNodeData }: {
   const spec = entry?.events.find((e) => e.id === event)
   const resourceID = data.triggerResourceId ?? ''
   const providerLabel = NODE_LABELS[provider as NodeType] ?? provider
-  const githubRepositoryCovered = provider !== 'github' || (
+  const githubInfrastructureReady = provider !== 'github' || (
     githubSetup.phase === 'ready' &&
     githubSetup.status?.connected === true &&
     githubSetup.status.app_configured === true &&
     githubSetup.status.installed === true &&
     githubSetup.status.webhook_configured === true &&
+    githubSetup.status.webhook_events_configured === true &&
     githubSetup.status.token_kind === 'github_app' &&
     githubSetup.status.reconnect_required !== true &&
-    activeGitHubInstallations(githubSetup.status).length > 0 &&
+    activeGitHubInstallations(githubSetup.status).length > 0
+  )
+  const githubRepositoryCovered = provider !== 'github' || (
+    githubInfrastructureReady &&
+    githubSetup.status !== null &&
     githubRepositoryIsInstalled(githubSetup.status, resourceID)
   )
+  const githubRepositoryInstallationStatus = provider === 'github' && githubSetup.status
+    ? githubRepositoryInstallation(githubSetup.status, resourceID)
+    : undefined
+  const githubRepositoryNeedsPermissionApproval =
+    githubRepositoryInstallationStatus?.permissions_configured === false
 
   function setFilter(key: string, val: string) {
     updateNodeData(nodeId, {
@@ -152,8 +164,25 @@ export function IntegrationTriggerConfig({ data, nodeId, updateNodeData }: {
         toast.error('Install and authorize the Fernary GitHub App first')
       } else if (!githubSetup.status.installed) {
         toast.error('Install Fernary on the GitHub account first')
-      } else if (!githubSetup.status.webhook_configured) {
-        toast.error('GitHub webhook delivery is not configured on Fernary’s server')
+      } else if (!githubSetup.status.webhook_configured || !githubSetup.status.webhook_events_configured) {
+        const missing = githubMissingEventLabels(githubSetup.status)
+        const problems = [
+          !githubSetup.status.webhook_configured
+            ? 'The Fernary server webhook secret is missing.'
+            : '',
+          !githubSetup.status.webhook_events_configured
+            ? `The GitHub App is missing Permissions & events subscriptions${missing.length > 0 ? `: ${missing.join(', ')}` : ''}.`
+            : '',
+        ].filter(Boolean)
+        toast.error('GitHub App webhook setup is incomplete', {
+          description: problems.join(' '),
+        })
+      } else if (githubRepositoryNeedsPermissionApproval && githubRepositoryInstallationStatus) {
+        toast.error('Approve the GitHub App’s updated permissions', {
+          description: githubRepositoryInstallationStatus.permissions_missing.length > 0
+            ? githubRepositoryInstallationStatus.permissions_missing.join(', ')
+            : `Approval is required for ${githubRepositoryInstallationStatus.account_login || 'this installation'}.`,
+        })
       } else {
         toast.error('That repository is not included in the GitHub App installation')
       }
@@ -287,10 +316,11 @@ export function IntegrationTriggerConfig({ data, nodeId, updateNodeData }: {
       )}
 
       {provider === 'github' && resourceID && githubSetup.phase === 'ready' &&
-        githubSetup.status?.installed && !githubRepositoryCovered && (
+        githubInfrastructureReady && !githubRepositoryCovered && (
           <p className="-mt-2 text-[10px] leading-relaxed text-[var(--color-fail)]">
-            This repository is not included in the Fernary GitHub App installation. Update the
-            installation’s repository access, then refresh it above.
+            {githubRepositoryNeedsPermissionApproval && githubRepositoryInstallationStatus
+              ? `GitHub requires approval for the installation’s updated permissions${githubRepositoryInstallationStatus.permissions_missing.length > 0 ? `: ${githubRepositoryInstallationStatus.permissions_missing.join(', ')}` : ''}. Review them in GitHub, then refresh above.`
+              : 'This repository is not included in the Fernary GitHub App installation. Update the installation’s repository access, then refresh it above.'}
           </p>
         )}
 
