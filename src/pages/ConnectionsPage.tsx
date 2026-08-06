@@ -455,18 +455,26 @@ function getGitHubHealth(snapshot?: GitHubSetupSnapshot): {
         : 'Approve the GitHub App’s updated permissions for this installation',
     }
   }
-  if (!status.webhook_configured || !status.webhook_events_configured) {
-    const missing = githubMissingEventLabels(status)
-    const problems = [
-      !status.webhook_configured ? 'The Fernary server webhook secret is missing' : '',
-      !status.webhook_events_configured
-        ? `Missing GitHub App Permissions & events subscriptions${missing.length > 0 ? `: ${missing.join(', ')}` : ''}`
-        : '',
-    ].filter(Boolean)
+  if (!status.webhook_configured) {
     return {
-      label: !status.webhook_configured ? 'Webhook setup' : 'Event setup',
+      label: 'Webhook setup',
       color: 'var(--color-fail)',
-      detail: problems.join(' · '),
+      detail: 'The Fernary server webhook secret is missing',
+    }
+  }
+  if (status.webhook_events_error) {
+    return {
+      label: 'Check failed',
+      color: 'var(--color-fail)',
+      detail: status.webhook_events_error,
+    }
+  }
+  if (!status.webhook_events_configured) {
+    const missing = githubMissingEventLabels(status)
+    return {
+      label: 'Event setup',
+      color: 'var(--color-fail)',
+      detail: `Missing GitHub App Permissions & events subscriptions${missing.length > 0 ? `: ${missing.join(', ')}` : ''}`,
     }
   }
   return {

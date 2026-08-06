@@ -272,6 +272,14 @@ export function GitHubInstallCard({
       repair: 'refresh',
       tone: 'fail',
     }
+  } else if (ready && status.webhook_events_error) {
+    healthIssue = {
+      title: 'Couldn’t verify GitHub events',
+      description: status.webhook_events_error,
+      action: 'Try again',
+      repair: 'refresh',
+      tone: 'fail',
+    }
   } else if (ready && !status.webhook_events_configured) {
     healthIssue = {
       title: 'GitHub events aren’t enabled',
@@ -430,7 +438,11 @@ export function GitHubInstallCard({
                   <StatusDetail label="Installed" complete={installed} />
                   <StatusDetail label="Permissions approved" complete={permissionsReady} />
                   <StatusDetail label="Webhook configured" complete={status.webhook_configured} />
-                  <StatusDetail label="Events subscribed" complete={status.webhook_events_configured} />
+                  <StatusDetail
+                    label="Events subscribed"
+                    complete={status.webhook_events_configured}
+                    verificationFailed={Boolean(status.webhook_events_error)}
+                  />
                 </div>
               )}
             </div>
@@ -478,24 +490,33 @@ function HealthBadge({ state }: {
   )
 }
 
-function StatusDetail({ label, complete }: {
+function StatusDetail({ label, complete, verificationFailed = false }: {
   label: string
   complete: boolean
+  verificationFailed?: boolean
 }) {
+  const color = complete
+    ? 'var(--color-ok)'
+    : verificationFailed
+      ? 'var(--color-subtle)'
+      : 'var(--color-hold)'
+
   return (
     <div className="flex items-center gap-2 text-[9.5px]">
       <span
         aria-hidden="true"
         className="flex h-3.5 w-3.5 items-center justify-center rounded-full border text-[8px] font-semibold"
         style={{
-          borderColor: complete ? 'var(--color-ok)' : 'var(--color-hold)',
-          color: complete ? 'var(--color-ok)' : 'var(--color-hold)',
+          borderColor: color,
+          color,
         }}
       >
-        {complete ? '✓' : '—'}
+        {complete ? '✓' : verificationFailed ? '?' : '—'}
       </span>
       <span className={complete ? 'text-[var(--color-muted)]' : 'text-[var(--color-text)]'}>{label}</span>
-      <span className="ml-auto text-[var(--color-subtle)]">{complete ? 'Complete' : 'Needs attention'}</span>
+      <span className="ml-auto text-[var(--color-subtle)]">
+        {complete ? 'Complete' : verificationFailed ? 'Couldn’t verify' : 'Needs attention'}
+      </span>
     </div>
   )
 }

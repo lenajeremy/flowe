@@ -164,6 +164,10 @@ export function IntegrationTriggerConfig({ data, nodeId, updateNodeData }: {
         toast.error('Install and authorize the Fernary GitHub App first')
       } else if (!githubSetup.status.installed) {
         toast.error('Install Fernary on the GitHub account first')
+      } else if (githubSetup.status.webhook_events_error) {
+        toast.error('Couldn’t verify GitHub App event subscriptions', {
+          description: githubSetup.status.webhook_events_error,
+        })
       } else if (!githubSetup.status.webhook_configured || !githubSetup.status.webhook_events_configured) {
         const missing = githubMissingEventLabels(githubSetup.status)
         const problems = [

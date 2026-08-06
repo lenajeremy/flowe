@@ -35,6 +35,7 @@ export interface GitHubSetupStatus {
   webhook_configured: boolean
   webhook_events_configured: boolean
   webhook_events_missing: string[]
+  webhook_events_error?: string
   token_kind?: 'github_app' | 'oauth_app' | 'unknown' | string
   reconnect_required?: boolean
   app_slug?: string
@@ -108,6 +109,9 @@ export async function fetchGitHubSetup(): Promise<GitHubSetupStatus> {
         .map((event) => event.trim())
         .slice(0, 10)
       : [],
+    webhook_events_error: typeof body.webhook_events_error === 'string' && body.webhook_events_error.trim() !== ''
+      ? body.webhook_events_error.trim().slice(0, 300)
+      : undefined,
     token_kind: body.token_kind,
     reconnect_required: body.reconnect_required === true,
     app_slug: body.app_slug,
