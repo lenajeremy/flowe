@@ -38,7 +38,8 @@ const EVENT_LABELS: Record<string, string> = {
   'pull_request.opened': 'Pull request opened',
   'pull_request.merged': 'Pull request merged',
   'issues.opened': 'Issue opened',
-  'issue_comment.created': 'New comment',
+  'issues.edited': 'Issue edited',
+  'issue_comment.created': 'Comment added',
   push: 'Commits pushed',
   'release.published': 'Release published',
 }
