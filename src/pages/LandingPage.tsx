@@ -1289,7 +1289,13 @@ const HERO_ACCENT = {
 
 // The three objections a visitor arrives with. The last one is the claim a
 // chat-first competitor structurally cannot make.
-const HERO_PROOF = ['No drag-and-drop', 'No code', 'Nothing runs until you publish']
+//
+// NB: these say "required", and they have to. We *do* have a drag-and-drop
+// canvas — it is in the product shot directly below this line — so claiming
+// "no drag-and-drop" is both false and refuted by our own screenshot. The true
+// and better claim is that none of it is required: the builder wires the nodes,
+// and the canvas is there for when you want it.
+const HERO_PROOF = ['No wiring required', 'No code required', 'Nothing runs until you publish']
 
 // ─── Nav ──────────────────────────────────────────────────────
 export function Nav({ onOpen }: { onOpen: () => void }) {
@@ -1534,7 +1540,7 @@ export function LandingPage() {
       <NumberedSection
         index="1.0" name="Build"
         title={<>Say it once.<br />It&rsquo;s built.</>}
-        sub="The builder reads the tools you have connected, picks the steps, and tells you what it did. Thirteen nodes out of one sentence, and you never opened a node editor."
+        sub="The builder reads the tools you have connected, picks the steps, and tells you what it did. Thirteen nodes out of one sentence, and you wired none of them. The canvas is right there when you want to change something by hand."
         shot="/shot-build.jpg" alt="Building a workflow by describing it to Fernary AI"
       />
 
