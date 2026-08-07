@@ -78,7 +78,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         linearPriority: 3,
       }
     case 'github':
-      return { nodeType: 'github', label: 'GitHub', integrationOp: 'create_issue', githubRepo: '', githubState: 'open', githubLimit: 10 }
+      return { nodeType: 'github', label: 'GitHub', integrationOp: 'create_issue', githubRepo: '', githubState: 'open', githubLimit: 10, githubTreeLimit: 1000 }
     case 'gitlab':
       return { nodeType: 'gitlab', label: 'GitLab', integrationOp: 'create_issue', gitlabProjectId: '', gitlabState: 'opened', gitlabLimit: 10 }
     case 'gmail':
@@ -119,6 +119,10 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'calendly', label: 'Calendly', integrationOp: 'list_scheduled_events', calendlyScope: 'user', calendlyLimit: 25 }
     case 'clickup':
       return { nodeType: 'clickup', label: 'ClickUp', integrationOp: 'list_tasks', clickupLimit: 25 }
+    case 'monday':
+      return { nodeType: 'monday', label: 'monday.com', integrationOp: 'list_items', mondayLimit: 25 }
+    case 'asana':
+      return { nodeType: 'asana', label: 'Asana', integrationOp: 'list_tasks', asanaLimit: 50 }
     case 'airtable':
       return { nodeType: 'airtable', label: 'Airtable', integrationOp: 'list_records', airtableLimit: 25 }
     case 'kit':

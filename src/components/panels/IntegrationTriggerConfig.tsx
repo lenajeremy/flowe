@@ -69,6 +69,11 @@ const RESOURCE_LABEL: Record<string, string> = {
   user: 'Person',
   calendar: 'Calendar',
   folder: 'Folder',
+  board: 'Board',
+  group: 'Group',
+  column: 'Column',
+  section: 'Section',
+  task: 'Task',
 }
 
 // ResourcePicker accepts a fixed set of provider and kind strings; the registry
@@ -76,10 +81,10 @@ const RESOURCE_LABEL: Record<string, string> = {
 // of. Those fall back to a text field rather than crashing the panel.
 const PICKABLE_PROVIDERS = new Set(['github', 'gitlab', 'slack', 'notion', 'linear', 'gmail',
   'stripe', 'googlecalendar', 'googledrive', 'outlook', 'jira', 'confluence', 'bitbucket',
-  'airtable', 'clickup', 'supabase', 'googlesearchconsole'])
+  'airtable', 'clickup', 'monday', 'asana', 'supabase', 'googlesearchconsole'])
 const PICKABLE_KINDS = new Set(['database', 'page', 'team', 'project', 'repo', 'price', 'calendar',
   'folder', 'channel', 'user', 'label', 'space', 'board', 'tasklist', 'base', 'workspace',
-  'property', 'branch'])
+  'property', 'branch', 'group', 'column', 'section', 'task'])
 const canPick = (provider: string, kind?: string) =>
   !!kind && PICKABLE_PROVIDERS.has(provider) && PICKABLE_KINDS.has(kind)
 

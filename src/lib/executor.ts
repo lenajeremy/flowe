@@ -392,6 +392,8 @@ async function executeNode(
     case 'kit':
     case 'airtable':
     case 'clickup':
+    case 'monday':
+    case 'asana':
     case 'typeform':
     case 'calendly':
     case 'dropbox':

@@ -42,6 +42,8 @@ export type NodeType =
   | 'kit'
   | 'airtable'
   | 'clickup'
+  | 'monday'
+  | 'asana'
   | 'typeform'
   | 'calendly'
   | 'dropbox'
@@ -182,10 +184,11 @@ export type FlowNodeData = {
   githubLabels?: string        // comma-separated
   githubState?: string         // open | closed | all
   githubLimit?: number
+  githubTreeLimit?: number     // list_repo_tree: default 1000, max 5000
   githubBranch?: string
   githubBase?: string
   githubMergeMethod?: string
-  githubPath?: string
+  githubPath?: string          // file path, or optional list_repo_tree prefix
   githubContent?: string
   githubCommitMessage?: string
   githubRef?: string
@@ -617,6 +620,30 @@ export type FlowNodeData = {
   airtableWebhookId?: string
   airtableCursor?: string
   airtableLimit?: number
+
+  // monday.com
+  mondayBoardId?: string
+  mondayItemId?: string
+  mondayGroupId?: string
+  mondayItemName?: string
+  mondayColumnValues?: string
+  mondayUpdateBody?: string
+  mondayCursor?: string
+  mondayLimit?: number
+
+  // asana
+  asanaWorkspaceId?: string
+  asanaProjectId?: string
+  asanaSectionId?: string
+  asanaTaskId?: string
+  asanaParentTaskId?: string
+  asanaName?: string
+  asanaNotes?: string
+  asanaAssignee?: string
+  asanaDueOn?: string
+  asanaCompleted?: string
+  asanaComment?: string
+  asanaLimit?: number
 
   // clickup
   clickupWorkspaceId?: string

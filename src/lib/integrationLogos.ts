@@ -60,6 +60,8 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   kit:       'kit.com',
   airtable:  'airtable.com',
   clickup:   'clickup.com',
+  monday:    'monday.com',
+  asana:     'asana.com',
   typeform:  'typeform.com',
   calendly:  'calendly.com',
   dropbox:   'dropbox.com',

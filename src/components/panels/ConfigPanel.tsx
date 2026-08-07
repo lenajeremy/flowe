@@ -19,7 +19,7 @@ import {
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
   JiraConfig, ConfluenceConfig, BitbucketConfig,
   GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
-  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, TypeformConfig, CalendlyConfig, DropboxConfig, NetlifyConfig, SupabaseConfig, GumroadConfig,
+  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, MondayConfig, AsanaConfig, TypeformConfig, CalendlyConfig, DropboxConfig, NetlifyConfig, SupabaseConfig, GumroadConfig,
   GoogleSearchConsoleConfig, GoogleContactsConfig,
   HubSpotConfig, FrontConfig,
 } from '@/components/panels/integrationConfigs'
@@ -1002,6 +1002,8 @@ export function ConfigPanel() {
         {nodeType === 'kit' && <KitConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'airtable' && <AirtableConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'clickup' && <ClickUpConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'monday' && <MondayConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'asana' && <AsanaConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'typeform' && <TypeformConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'calendly' && <CalendlyConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'dropbox' && <DropboxConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}

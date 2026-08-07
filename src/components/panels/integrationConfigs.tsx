@@ -88,13 +88,14 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'airtable' | 'clickup' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
-type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property'
+type ResourceProvider = 'airtable' | 'clickup' | 'monday' | 'asana' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property' | 'group' | 'column' | 'section' | 'task'
 
-function ResourceField({ label, provider, kind, field, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind }) {
+function ResourceField({ label, provider, kind, field, parentField, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind; parentField?: string }) {
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
       <ResourcePicker provider={provider} kind={kind} id={`cfg-${nodeId}-${field}`} placeholder={placeholder}
+        parent={parentField ? (typeof data[parentField] === 'string' ? data[parentField] as string : '') : undefined}
         value={typeof data[field] === 'string' ? (data[field] as string) : ''}
         onChange={(val) => updateNodeData(nodeId, { [field]: val })} />
     </FormField>
@@ -214,7 +215,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -733,6 +734,8 @@ export function GithubConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           { value: 'list_pr_files', label: 'List PR Files' },
           { value: 'list_commits', label: 'List Commits' },
           { value: 'list_branches', label: 'List Branches' },
+          { value: 'get_repo_details', label: 'Repository Details' },
+          { value: 'list_repo_tree', label: 'List Repository Structure' },
           { value: 'get_file', label: 'Read File' },
           { value: 'create_or_update_file', label: 'Commit File' },
           { value: 'list_releases', label: 'List Releases' },
@@ -784,9 +787,13 @@ export function GithubConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
           <SelectField label="State" field="githubState" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback="open"
             options={[{ value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }, { value: 'all', label: 'All' }]} />
         )}
-        {(op === 'list_commits' || op === 'get_file') && (
+        {(op === 'list_commits' || op === 'list_repo_tree' || op === 'get_file') && (
           <TextField label="Branch/ref (optional)" field="githubRef" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="main" />
         )}
+        {op === 'list_repo_tree' && (<>
+          <TextField label="Directory prefix (optional)" field="githubPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="src/components" />
+          <NumField label="Maximum entries" field="githubTreeLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1000} />
+        </>)}
         {(op === 'get_file' || op === 'create_or_update_file') && (
           <TextField label="File path" field="githubPath" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="docs/report.md" />
         )}
@@ -1720,8 +1727,8 @@ export function ConfluenceConfig({ data, nodeId, updateNodeData }: ProviderConfi
         )}
 
         {needsPage && (
-          <TextField label={op === 'list_child_pages' ? 'Parent page ID' : 'Page ID'} field="confluencePageId"
-            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+          <ResourceField label={op === 'list_child_pages' ? 'Parent page' : 'Page'} provider="confluence" kind="page"
+            field="confluencePageId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
         )}
 
         {(op === 'create_page' || op === 'create_blog_post' || op === 'find_page_by_title') && (
@@ -1741,8 +1748,8 @@ export function ConfluenceConfig({ data, nodeId, updateNodeData }: ProviderConfi
         </>)}
 
         {op === 'create_page' && (
-          <TextField label="Parent page (optional)" field="confluenceParentId" data={data} nodeId={nodeId}
-            updateNodeData={updateNodeData} placeholder="page ID to nest under" />
+          <ResourceField label="Parent page (optional)" provider="confluence" kind="page" field="confluenceParentId"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="page ID to nest under" />
         )}
 
         {op === 'search_pages' && (
@@ -3392,6 +3399,155 @@ export function ClickUpConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
             ]} />
         )}
       </IntegrationSection>
+  )
+}
+
+export function MondayConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_items'
+  const needsBoard = ['get_board', 'list_items', 'create_item', 'update_item'].includes(op)
+  const needsItem = ['get_item', 'update_item', 'move_item_to_group', 'archive_item',
+    'delete_item', 'create_update', 'list_updates'].includes(op)
+  const needsGroup = ['create_item', 'move_item_to_group'].includes(op)
+  return (
+    <IntegrationSection
+      provider="monday" label="monday.com" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+      defaultOp="list_items" hideManual tokenPlaceholder="OAuth access token"
+      ops={[
+        { value: 'list_boards', label: 'List Boards' },
+        { value: 'get_board', label: 'Get Board' },
+        { value: 'list_items', label: 'List Items' },
+        { value: 'get_item', label: 'Get Item' },
+        { value: 'create_item', label: 'Create Item' },
+        { value: 'update_item', label: 'Update Item Columns' },
+        { value: 'move_item_to_group', label: 'Move Item to Group' },
+        { value: 'archive_item', label: 'Archive Item' },
+        { value: 'delete_item', label: 'Delete Item' },
+        { value: 'create_update', label: 'Add Update' },
+        { value: 'list_updates', label: 'List Updates' },
+        { value: 'list_users', label: 'List Users' },
+      ]}
+    >
+      {needsBoard && (
+        <ResourceField label="Board" provider="monday" kind="board" field="mondayBoardId"
+          data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {needsItem && (
+        <TextField label="Item ID" field="mondayItemId" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="from List Items or a trigger" />
+      )}
+      {needsGroup && (
+        <ResourceField label={op === 'create_item' ? 'Group (optional)' : 'Group'} provider="monday" kind="group"
+          field="mondayGroupId" parentField="mondayBoardId" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} />
+      )}
+      {op === 'create_item' && (
+        <TextField label="Item name" field="mondayItemName" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+      )}
+      {(op === 'create_item' || op === 'update_item') && (
+        <AreaField label={op === 'create_item' ? 'Column values (optional JSON)' : 'Column values (JSON)'}
+          field="mondayColumnValues" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+          placeholder={'{"status":{"label":"Done"},"date":{"date":"2026-08-06"}}'} />
+      )}
+      {op === 'create_update' && (
+        <AreaField label="Update" field="mondayUpdateBody" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+      )}
+      {op === 'list_items' && (
+        <TextField label="Cursor (optional)" field="mondayCursor" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="from a previous List Items response" />
+      )}
+      {['list_boards', 'list_items', 'list_updates', 'list_users'].includes(op) && (
+        <NumField label="Limit" field="mondayLimit" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback={25} />
+      )}
+      {(op === 'create_item' || op === 'update_item') && (
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          Use column IDs rather than their display titles. Open Get Board to see each board column and its ID.
+        </p>
+      )}
+    </IntegrationSection>
+  )
+}
+
+export function AsanaConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_tasks'
+  const needsWorkspace = ['list_projects', 'create_task'].includes(op)
+  const needsProject = ['list_sections', 'list_tasks', 'create_task', 'add_task_to_project'].includes(op)
+  const taskOps = ['get_task', 'update_task', 'delete_task', 'add_comment', 'list_comments',
+    'add_task_to_project'].includes(op)
+  const editing = ['create_task', 'create_subtask', 'update_task'].includes(op)
+  return (
+    <IntegrationSection
+      provider="asana" label="Asana" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+      defaultOp="list_tasks" hideManual tokenPlaceholder="OAuth access token"
+      ops={[
+        { value: 'list_workspaces', label: 'List Workspaces' },
+        { value: 'list_projects', label: 'List Projects' },
+        { value: 'list_sections', label: 'List Sections' },
+        { value: 'list_tasks', label: 'List Tasks' },
+        { value: 'get_task', label: 'Get Task' },
+        { value: 'create_task', label: 'Create Task' },
+        { value: 'create_subtask', label: 'Create Subtask' },
+        { value: 'update_task', label: 'Update Task' },
+        { value: 'delete_task', label: 'Delete Task' },
+        { value: 'add_comment', label: 'Add Comment' },
+        { value: 'list_comments', label: 'List Comments' },
+        { value: 'add_task_to_project', label: 'Add Task to Project' },
+      ]}
+    >
+      {needsWorkspace && (
+        <ResourceField label="Workspace" provider="asana" kind="workspace" field="asanaWorkspaceId"
+          data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {needsProject && (
+        <ResourceField label="Project" provider="asana" kind="project" field="asanaProjectId"
+          data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {taskOps && (
+        <ResourceField label="Task" provider="asana" kind="task" field="asanaTaskId"
+          parentField="asanaProjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+          placeholder="select a project above, or enter an ID manually" />
+      )}
+      {op === 'create_subtask' && (
+        <ResourceField label="Parent task" provider="asana" kind="task" field="asanaParentTaskId"
+          parentField="asanaProjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {op === 'create_task' && (
+        <ResourceField label="Section (optional)" provider="asana" kind="section" field="asanaSectionId"
+          parentField="asanaProjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {op === 'add_task_to_project' && (
+        <ResourceField label="Section (optional)" provider="asana" kind="section" field="asanaSectionId"
+          parentField="asanaProjectId" data={data} nodeId={nodeId} updateNodeData={updateNodeData} />
+      )}
+      {editing && (<>
+        <TextField label={op === 'update_task' ? 'Name (optional)' : 'Task name'} field="asanaName"
+          data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        <AreaField label="Notes (optional)" field="asanaNotes" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+        <TextField label="Assignee (optional)" field="asanaAssignee" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="user ID or me" />
+        <TextField label="Due date (optional)" field="asanaDueOn" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="YYYY-MM-DD" />
+      </>)}
+      {op === 'update_task' && (
+        <SelectField label="Completion" field="asanaCompleted" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback="" options={[
+            { value: '', label: 'Leave unchanged' },
+            { value: 'true', label: 'Completed' },
+            { value: 'false', label: 'Incomplete' },
+          ]} />
+      )}
+      {op === 'add_comment' && (
+        <AreaField label="Comment" field="asanaComment" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+      )}
+      {['list_workspaces', 'list_projects', 'list_sections', 'list_tasks', 'list_comments'].includes(op) && (
+        <NumField label="Limit" field="asanaLimit" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback={50} />
+      )}
+    </IntegrationSection>
   )
 }
 

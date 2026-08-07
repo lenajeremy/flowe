@@ -38,6 +38,8 @@ import { SendGridNode }         from './SendGridNode'
 import { KitNode }              from './KitNode'
 import { AirtableNode }         from './AirtableNode'
 import { ClickUpNode }          from './ClickUpNode'
+import { MondayNode }           from './MondayNode'
+import { AsanaNode }            from './AsanaNode'
 import { TypeformNode }         from './TypeformNode'
 import { CalendlyNode }         from './CalendlyNode'
 import { DropboxNode }          from './DropboxNode'
@@ -92,6 +94,8 @@ export const nodeTypes = {
   kit:              KitNode,
   airtable:         AirtableNode,
   clickup:          ClickUpNode,
+  monday:           MondayNode,
+  asana:            AsanaNode,
   typeform:         TypeformNode,
   calendly:         CalendlyNode,
   dropbox:          DropboxNode,
