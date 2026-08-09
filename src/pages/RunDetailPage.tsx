@@ -168,7 +168,7 @@ export function RunDetailPage() {
       {/* Header */}
       <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4 flex items-center gap-4">
         <Link
-          to={run.workflow_id ? `/workflow/${run.workflow_id}` : '/workflows'}
+          to={run.workflow_id ? `/workflows/${run.workflow_id}` : '/workflows'}
           className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

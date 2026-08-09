@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
@@ -91,10 +91,10 @@ export function InvitePage() {
               <p className="mt-1 text-[13px] text-[var(--color-subtle)]">
                 Invitations expire after 7 days. Ask whoever invited you to send a new one.
               </p>
-              <button onClick={() => navigate('/')}
-                className="pressable mt-6 h-10 w-full rounded-xl border border-[var(--color-border)] text-[13px] font-medium hover:border-[var(--color-border2)]">
+              <Link to="/"
+                className="pressable mt-6 flex h-10 w-full items-center justify-center rounded-xl border border-[var(--color-border)] text-[13px] font-medium hover:border-[var(--color-border2)]">
                 Go to Fernary
-              </button>
+              </Link>
             </>
           ) : !info ? (
             <div className="h-28 animate-pulse rounded-xl bg-[var(--color-hover)]" />
@@ -128,10 +128,10 @@ export function InvitePage() {
                     This invitation is for <strong className="text-[var(--color-text)]">{info.email}</strong>,
                     but you&rsquo;re signed in as {user.email}.
                   </p>
-                  <button onClick={() => navigate('/login')}
-                    className="pressable mt-4 h-10 w-full rounded-xl border border-[var(--color-border)] text-[13px] font-medium hover:border-[var(--color-border2)]">
+                  <Link to="/login"
+                    className="pressable mt-4 flex h-10 w-full items-center justify-center rounded-xl border border-[var(--color-border)] text-[13px] font-medium hover:border-[var(--color-border2)]">
                     Switch account
-                  </button>
+                  </Link>
                 </>
               ) : (
                 <button onClick={accept} disabled={busy}

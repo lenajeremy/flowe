@@ -1,8 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { FloweIcon } from '@/components/FloweIcon'
-import { UserMenu } from '@/components/ui/UserMenu'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { JsonView } from '@/components/ui/JsonView'
 import {
@@ -333,7 +330,6 @@ function TextEditor({ store, value, reload }: { store: DataStore; value: string;
 
 // ── Page ─────────────────────────────────────────────────────
 export function DataPage() {
-  const navigate = useNavigate()
   const [stores, setStores] = useState<DataStore[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -390,32 +386,10 @@ export function DataPage() {
   }, [stores])
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
-      <div className="mx-auto max-w-[1280px] px-8 py-12">
-        {/* Header */}
+    <>
+      <div className="mx-auto max-w-[1280px] px-8 py-10">
         <div className="mb-7 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/')} className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border2)]" title="Home">
-              <FloweIcon size={18} />
-            </button>
-            <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Data</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/workflows')}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
-                <rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
-                <rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
-                <rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
-                <rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
-              </svg>
-              Workflows
-            </button>
-            <span className="h-5 w-px bg-[var(--color-border)]" />
-            <UserMenu />
-          </div>
+          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Data</h1>
         </div>
 
         <p className="mb-6 max-w-[640px] text-[13px] leading-relaxed text-[var(--color-muted)]">
@@ -529,6 +503,6 @@ export function DataPage() {
           </div>
         )}
       </div>
-    </div>
+    </>
   )
 }

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { SettingsTabs } from '@/components/SettingsTabs'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
-import { FloweIcon } from '@/components/FloweIcon'
-import { UserMenu } from '@/components/ui/UserMenu'
 import { MembersSection } from '@/components/MembersSection'
 
 // The in-app billing screen: what plan you're on, what you've used, and the way
@@ -48,7 +47,6 @@ const longDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
 
 export function BillingPage() {
-  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [data, setData] = useState<Billing | null>(null)
   const [busy, setBusy] = useState(false)
@@ -96,29 +94,15 @@ export function BillingPage() {
   const nearLimit = (u?.used_percent ?? 0) >= 80
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
-      {/* The same measure as Usage. These two are one screen split in half — each is
-          reached from a link on the other — and content changing width on arrival
-          reads as a different site rather than the next page of this one. */}
-      <div className="mx-auto max-w-[860px] px-8 py-12">
+    <>
+      {/* The same measure as Usage. Billing and Usage are one screen split in
+          half, reached from the tab row below, and content changing width on
+          arrival reads as a different site rather than the next page. */}
+      <div className="mx-auto max-w-[860px] px-8 py-10">
 
-        <div className="mb-7 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/')}
-              className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border2)]"
-              title="Home">
-              <FloweIcon size={18} />
-            </button>
-            <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Billing</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/workflows')}
-              className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]">
-              Workflows
-            </button>
-            <span className="h-5 w-px bg-[var(--color-border)]" />
-            <UserMenu />
-          </div>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Billing</h1>
+          <SettingsTabs />
         </div>
 
         {!data ? (
@@ -168,10 +152,10 @@ export function BillingPage() {
                       {busy ? 'Opening…' : 'Manage billing'}
                     </button>
                   )}
-                  <button onClick={() => navigate('/pricing')}
-                    className="pressable h-10 rounded-xl bg-[var(--color-accent)] px-4 text-[13px] font-semibold text-[var(--fern-forest)] hover:opacity-90">
+                  <Link to="/pricing"
+                    className="pressable flex h-10 items-center rounded-xl bg-[var(--color-accent)] px-4 text-[13px] font-semibold text-[var(--fern-forest)] hover:opacity-90">
                     {data.plan === 'free' ? 'Upgrade' : 'Change plan'}
-                  </button>
+                  </Link>
                 </div>
               </div>
             </section>
@@ -181,10 +165,10 @@ export function BillingPage() {
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-[14px] font-semibold">AI usage this period</h3>
                 <div className="flex items-baseline gap-3">
-                  <button onClick={() => navigate('/settings/usage')}
+                  <Link to="/settings/usage"
                     className="text-[12.5px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]">
                     See every charge
-                  </button>
+                  </Link>
                   <span className="font-mono text-[12px] text-[var(--color-muted)]">{u!.used_percent}% used</span>
                 </div>
               </div>
@@ -249,7 +233,7 @@ export function BillingPage() {
           </>
         )}
       </div>
-    </div>
+    </>
   )
 }
 

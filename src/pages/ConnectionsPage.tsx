@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { clearResourceCache } from '@/lib/integrationResources'
-import { FloweIcon } from '@/components/FloweIcon'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
-import { UserMenu } from '@/components/ui/UserMenu'
 import { NODE_LABELS, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 import type { NodeType } from '@/types/workflow'
 import posthog from '@/lib/posthog'
@@ -41,7 +38,6 @@ const shortDate = (iso?: string) =>
 const needsAttention = (c: Connection) => c.connected && c.expired === true
 
 export function ConnectionsPage() {
-  const navigate = useNavigate()
   const [rows, setRows] = useState<Connection[] | null>(null)
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
@@ -214,30 +210,11 @@ export function ConnectionsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
-      <div className="mx-auto max-w-[1280px] px-8 py-12">
+    <>
+      <div className="mx-auto max-w-[1280px] px-8 py-10">
 
         <div className="mb-7 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border2)]"
-              title="Home"
-            >
-              <FloweIcon size={18} />
-            </button>
-            <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Connections</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/workflows')}
-              className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              Workflows
-            </button>
-            <span className="h-5 w-px bg-[var(--color-border)]" />
-            <UserMenu />
-          </div>
+          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Connections</h1>
         </div>
 
         <p className="mb-8 max-w-2xl text-[13.5px] leading-relaxed text-[var(--color-muted)]">
@@ -336,7 +313,7 @@ export function ConnectionsPage() {
           onClose={() => setAdding(false)}
         />
       )}
-    </div>
+    </>
   )
 }
 
