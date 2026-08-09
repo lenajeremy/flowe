@@ -217,7 +217,7 @@ export function WebhookTriggerPage() {
                 <div className="flex flex-col gap-2">
                   {workflowId && (
                     <Link
-                      to={`/workflow/${workflowId}?runId=${runId ?? ''}`}
+                      to={`/workflows/${workflowId}?runId=${runId ?? ''}`}
                       className="pressable flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90"
                       style={{ boxShadow: '0 4px 24px color-mix(in srgb, var(--color-accent) 35%, transparent)' }}
                     >

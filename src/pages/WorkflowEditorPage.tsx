@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { reportApiError } from '@/lib/limitToast'
 import { throwApiError } from '@/lib/apiError'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -354,25 +354,20 @@ export function WorkflowEditorPage() {
           position: 'relative',
         }}
       >
-        {/* Left: brand icon + home */}
-        <div className="flex items-center gap-1" style={{ minWidth: 160 }}>
-          <button
-            onClick={() => navigate('/workflows')}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-[var(--color-hover)]"
-            title="All Workflows"
+        {/* Left: the way back up, named.
+            This was two unlabelled icon buttons — one to the workflow list, one
+            to the marketing site — and nothing on them said which was which. The
+            second is gone entirely: a control on every screen that reads "home"
+            should not throw you out of the app. */}
+        <div className="flex items-center" style={{ minWidth: 160 }}>
+          <Link
+            to="/workflows"
+            className="pressable flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 text-[var(--color-text)] hover:bg-[var(--color-hover)]"
           >
             <FloweIcon size={20} />
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-hover)]"
-            title="Home"
-          >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-              <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            <span className="text-[13px] font-medium text-[var(--color-muted)]">Workflows</span>
+            <span aria-hidden className="text-[13px] text-[var(--color-subtle)]">/</span>
+          </Link>
         </div>
 
         {/* Center: workflow name (editable in place) + chevron */}
@@ -405,12 +400,12 @@ export function WorkflowEditorPage() {
             <div className="flex items-center gap-1.5 text-[11px]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-ok)] flex-shrink-0" />
               <span className="text-[var(--color-muted)]">Last run {formatRunTime(lastRun.createdAt)}</span>
-              <button
-                onClick={() => navigate(`/run/${lastRun.id}`)}
+              <Link
+                to={`/run/${lastRun.id}`}
                 className="font-medium text-[var(--color-accent)] transition-opacity hover:opacity-80"
               >
                 View logs
-              </button>
+              </Link>
             </div>
           )}
 

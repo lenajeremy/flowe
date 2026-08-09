@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { serializeToAST } from '@/lib/executor'
@@ -268,7 +268,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
       })
       const wf = await res.json() as SavedWorkflow
       setTabsOpen(false)
-      navigate(`/workflow/${wf.id}`)
+      navigate(`/workflows/${wf.id}`)
     } catch {
       // ignore
     } finally {
@@ -377,7 +377,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                   onClick={() => {
                     if (tab.dbId) {
                       // URL-backed workflow: navigate to its route
-                      navigate(`/workflow/${tab.dbId}`)
+                      navigate(`/workflows/${tab.dbId}`)
                     } else {
                       switchTab(tab.id)
                     }
@@ -425,7 +425,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                     key={wf.id}
                     className="group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors hover:bg-[var(--color-surface2)]"
                     onClick={() => {
-                      navigate(`/workflow/${wf.id}`)
+                      navigate(`/workflows/${wf.id}`)
                       setTabsOpen(false)
                     }}
                   >
@@ -631,8 +631,9 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                   </svg>
                   Export
                 </button>
-                <button
-                  onClick={() => { navigate('/workflows'); setMoreOpen(false) }}
+                <Link
+                  to="/workflows"
+                  onClick={() => setMoreOpen(false)}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface2)]"
                 >
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -640,7 +641,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
                     <path d="M8 9.5h4M10 7.5l2 2-2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   All Workflows
-                </button>
+                </Link>
                 <button
                   onClick={() => { setVersionsOpen(!versionsOpen); setMoreOpen(false) }}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-[var(--color-surface2)] ${versionsOpen ? 'text-[var(--color-accent)]' : 'text-[var(--color-text)]'}`}

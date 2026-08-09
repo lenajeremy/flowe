@@ -135,7 +135,7 @@ export function PricingPage() {
 
   return (
     <div style={{ background: '#050508', color: '#fff', minHeight: '100vh' }}>
-      <Nav onOpen={() => navigate(user ? '/workflows' : '/login')} isAuthed={Boolean(user)} />
+      <Nav isAuthed={Boolean(user)} />
 
       <main className="mx-auto max-w-6xl px-6">
         <section className="pt-16 pb-12 text-center sm:pt-24 sm:pb-16">
@@ -183,7 +183,7 @@ export function PricingPage() {
         <FaqSection />
       </main>
 
-      <Footer onGetStarted={() => navigate(user ? '/workflows' : '/login')} />
+      <Footer onGetStarted={() => navigate(user ? '/workflows' : '/login')} isAuthed={Boolean(user)} />
     </div>
   )
 }

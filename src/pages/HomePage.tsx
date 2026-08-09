@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { listWorkflows, deleteWorkflow, type WorkflowSummary } from '@/lib/workflowApi'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { NODE_ACCENT_HEX, NODE_LABELS } from '@/lib/nodeColors'
 import { FloweIcon } from '@/components/FloweIcon'
-import { UserMenu } from '@/components/ui/UserMenu'
-import { PlanBadge } from '@/components/PlanBadge'
 import type { NodeType } from '@/types/workflow'
 
 // The workflows dashboard: searchable, filterable grid of workflow cards plus
 // a "Build with Fernary AI" tile that opens the full-screen prompt page.
+
+// The AI tile is a destination, so it is a link that happens to animate rather
+// than a button that navigates — middle-click opens it in a tab like any link.
+const MotionLink = motion.create(Link)
 
 function Spinner() {
   return (
@@ -201,43 +203,13 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
-      <div className="mx-auto max-w-[1280px] px-8 py-12">
+    <>
+      <div className="mx-auto max-w-[1280px] px-8 py-10">
 
-        {/* Title row */}
+        {/* Title row. The section links and the account menu that used to sit
+            here belong to AppShell now, so every page carries the same ones. */}
         <div className="mb-7 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-border2)]"
-              title="Home"
-            >
-              <FloweIcon size={18} />
-            </button>
-            <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Workflows</h1>
-            <PlanBadge />
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/data')}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              <span className="h-3.5 w-3.5 [&>svg]:h-full [&>svg]:w-full">{NODE_ICONS.data}</span>
-              Data
-            </button>
-            <button
-              onClick={() => navigate('/connections')}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M6.5 9.5L9.5 6.5M5 11l-1 1a2.5 2.5 0 01-3.5-3.5l2-2A2.5 2.5 0 015 6.5M11 5l1-1a2.5 2.5 0 013.5 3.5l-2 2A2.5 2.5 0 0111 9.5"
-                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              Connections
-            </button>
-            <span className="h-5 w-px bg-[var(--color-border)]" />
-            <UserMenu />
-          </div>
+          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Workflows</h1>
         </div>
 
         {/* Toolbar: search · filters · new */}
@@ -314,15 +286,15 @@ export function HomePage() {
 
           <div className="flex-1" />
 
-          <button
-            onClick={() => navigate('/build')}
+          <Link
+            to="/workflows/new"
             className="pressable flex h-11 items-center gap-2 rounded-xl bg-[var(--color-text)] px-4 text-[13px] font-semibold text-[var(--color-canvas)] hover:opacity-90"
           >
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
               <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
             New Workflow
-          </button>
+          </Link>
         </div>
 
         {/* Grid */}
@@ -337,16 +309,15 @@ export function HomePage() {
                 key={wf.id}
                 wf={wf}
                 index={i}
-                onOpen={() => navigate(`/workflow/${wf.id}`)}
+                onOpen={() => navigate(`/workflows/${wf.id}`)}
                 onDelete={() => void handleDelete(wf.id)}
                 deleting={deletingId === wf.id}
               />
             ))}
 
             {/* Build with Fernary AI tile */}
-            <motion.button
-              type="button"
-              onClick={() => navigate('/build')}
+            <MotionLink
+              to="/workflows/new"
               className="flex min-h-[172px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[var(--color-border2)] px-6 py-8 text-center transition-colors hover:border-[var(--color-accent)] hover:bg-[var(--color-hover)]"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -361,7 +332,7 @@ export function HomePage() {
                 <span className="text-[14px] font-semibold text-[var(--color-text)]">Build with Fernary AI</span>
                 <span className="text-[12px] text-[var(--color-subtle)]">Send a message to create a flow</span>
               </span>
-            </motion.button>
+            </MotionLink>
           </div>
         )}
 
@@ -371,6 +342,6 @@ export function HomePage() {
           </p>
         )}
       </div>
-    </div>
+    </>
   )
 }

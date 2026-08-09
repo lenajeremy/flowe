@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import type { SavedWorkflow } from '@/lib/workflowApi'
 import type { NodeType } from '@/types/workflow'
@@ -1244,47 +1244,115 @@ const HERO_ACCENT = {
 const HERO_PROOF = ['Built from one sentence', 'Draft until you publish', 'Approval before action']
 
 // ─── Nav ──────────────────────────────────────────────────────
-export function Nav({ onGetStarted, onOpen, isAuthed }: {
-  onGetStarted?: () => void
-  onOpen: () => void
-  isAuthed?: boolean
-}) {
+
+// Sections of this page, as opposed to other pages. Keeping the two kinds in
+// separate groups is the whole point of the layout below: the middle group
+// scrolls, the right group navigates, and you can tell which is which before
+// clicking.
+const NAV_SECTIONS = [
+  { id: 'how-it-works', label: 'How it works' },
+  { id: 'examples', label: 'Examples' },
+  { id: 'integrations', label: 'Integrations' },
+]
+
+export function Nav({ isAuthed }: { isAuthed?: boolean }) {
   const navigate = useNavigate()
-  const start = onGetStarted ?? onOpen
-  const go = (to: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // These were bare href="/#id" with no handler, so from /pricing — which uses
+  // this same nav — every one of them triggered a full page load while the link
+  // beside them client-navigated. Same styling, two different behaviours.
+  const goToSection = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault()
-    navigate(to)
+    setMenuOpen(false)
+    if (pathname === '/') {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    navigate('/', { state: { scrollTo: id } })
   }
+
+  const sectionClass = 'text-[13px] text-white/50 transition-colors duration-200 hover:text-white'
 
   return (
     <header style={{ position:'sticky', top:0, zIndex:50, backdropFilter:'blur(20px) saturate(160%)', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(5,5,8,0.72)' }}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <a href="/" onClick={go('/')} aria-label="Fernary home"
+        <Link to="/" aria-label="Fernary home"
           className="flex items-center gap-2.5 text-[15px] font-semibold leading-none text-white">
           <span aria-hidden="true">
             <FloweIcon size={22} />
           </span>
           <span style={{ letterSpacing:'-0.01em' }}>Fernary</span>
-        </a>
+        </Link>
 
-        <nav aria-label="Landing page" className="hidden items-center gap-6 md:flex">
-          <a href="/#how-it-works" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">How it works</a>
-          <a href="/#examples" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Examples</a>
-          <a href="/#integrations" className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Integrations</a>
-          <a href="/pricing" onClick={go('/pricing')} className="text-[13px] text-white/50 transition-colors duration-200 hover:text-white">Pricing</a>
+        <nav aria-label="On this page" className="hidden items-center gap-6 md:flex">
+          {NAV_SECTIONS.map((s) => (
+            <a key={s.id} href={`/#${s.id}`} onClick={goToSection(s.id)} className={sectionClass}>
+              {s.label}
+            </a>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2.5">
-          <button onClick={isAuthed ? onOpen : () => navigate('/login')}
-            className="hidden px-3 py-2 text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white sm:block">
-            {isAuthed ? 'Open app' : 'Sign in'}
-          </button>
-          <button onClick={start}
-            className="pressable rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black hover:opacity-90 sm:px-5">
-            {isAuthed ? 'New workflow' : 'Start free'}
+          <Link to="/pricing" className={`hidden sm:block ${sectionClass}`}>Pricing</Link>
+          <span aria-hidden className="hidden h-4 w-px bg-white/10 sm:block" />
+
+          {/* One primary action. Signed in, this used to be two — "Open app" and
+              "New workflow" — where the second silently POSTed a workflow from
+              the marketing page and dropped you in the editor. Creating things
+              belongs in the app, where that button already exists. */}
+          {isAuthed ? (
+            <Link to="/workflows"
+              className="pressable rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black hover:opacity-90 sm:px-5">
+              Open Fernary
+            </Link>
+          ) : (
+            <>
+              <Link to="/login"
+                className="hidden px-3 py-2 text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white sm:block">
+                Sign in
+              </Link>
+              <Link to="/login"
+                className="pressable rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black hover:opacity-90 sm:px-5">
+                Start free
+              </Link>
+            </>
+          )}
+
+          {/* Below md the section links used to vanish with nothing in their
+              place, so half the page was unreachable from the nav on a phone. */}
+          <button type="button" onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen} aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            className="pressable flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:text-white md:hidden">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              {menuOpen
+                ? <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                : <path d="M2.5 5h11M2.5 11h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />}
+            </svg>
           </button>
         </div>
       </div>
+
+      {/* aria-label "Menu", distinct from the desktop row: two navs sharing one
+          name is ambiguous to a screen reader listing landmarks. */}
+      {menuOpen && (
+        <nav aria-label="Menu" className="flex flex-col gap-1 border-t border-white/[0.06] px-6 py-3 md:hidden">
+          {NAV_SECTIONS.map((s) => (
+            <a key={s.id} href={`/#${s.id}`} onClick={goToSection(s.id)} className="py-1.5 text-[14px] text-white/60 hover:text-white">
+              {s.label}
+            </a>
+          ))}
+          <Link to="/pricing" onClick={() => setMenuOpen(false)} className="py-1.5 text-[14px] text-white/60 hover:text-white">
+            Pricing
+          </Link>
+          {!isAuthed && (
+            <Link to="/login" onClick={() => setMenuOpen(false)} className="py-1.5 text-[14px] text-white/60 hover:text-white">
+              Sign in
+            </Link>
+          )}
+        </nav>
+      )}
     </header>
   )
 }
@@ -1324,7 +1392,7 @@ function FooterLink({ children, href, onClick }: {
   )
 }
 
-export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
+export function Footer({ onGetStarted, isAuthed }: { onGetStarted: () => void; isAuthed?: boolean }) {
   const navigate = useNavigate()
   // Real hrefs so the links are crawlable and middle-clickable; the click
   // handler keeps the SPA from doing a full reload.
@@ -1362,10 +1430,18 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
             <FooterLink href="/pricing" onClick={go('/pricing')}>Pricing</FooterLink>
           </FooterCol>
 
+          {/* One set or the other. Listing "Open app", "Sign in" and "Start
+              free" together asked the reader to work out which of three applied
+              to them. */}
           <FooterCol title="Account">
-            <FooterLink href="/workflows" onClick={go('/workflows')}>Open app</FooterLink>
-            <FooterLink href="/login" onClick={go('/login')}>Sign in</FooterLink>
-            <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Start free</FooterLink>
+            {isAuthed ? (
+              <FooterLink href="/workflows" onClick={go('/workflows')}>Open Fernary</FooterLink>
+            ) : (
+              <>
+                <FooterLink href="/login" onClick={go('/login')}>Sign in</FooterLink>
+                <FooterLink href="/login" onClick={(e) => { e.preventDefault(); onGetStarted() }}>Start free</FooterLink>
+              </>
+            )}
           </FooterCol>
 
           <FooterCol title="Legal">
@@ -1386,8 +1462,20 @@ export function Footer({ onGetStarted }: { onGetStarted: () => void }) {
 // ─── Main ─────────────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const authStatus = useAuthStore((s) => s.status)
   const [creating, setCreating] = useState(false)
+
+  // A section link clicked from /pricing routes here and asks for that section.
+  // Scrolling has to wait for this page to actually render the target.
+  useEffect(() => {
+    const target = (location.state as { scrollTo?: string } | null)?.scrollTo
+    if (!target) return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [location.state])
 
   async function handleCreate() {
     if (authStatus !== 'authed') {
@@ -1401,7 +1489,7 @@ export function LandingPage() {
         body:JSON.stringify({ name:'New Workflow', nodes:[], edges:[] }),
       })
       const wf = await res.json() as SavedWorkflow
-      navigate(`/workflow/${wf.id}`)
+      navigate(`/workflows/${wf.id}`)
     } catch {
       navigate('/workflows')
     } finally {
@@ -1411,11 +1499,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen text-white" style={{ fontFamily:'var(--font-sans)', background:'#050507' }}>
-      <Nav
-        onGetStarted={handleCreate}
-        onOpen={() => navigate('/workflows')}
-        isAuthed={authStatus === 'authed'}
-      />
+      <Nav isAuthed={authStatus === 'authed'} />
 
       {/* ── Hero — one voice: the headline ── */}
       <section className="relative overflow-hidden">
@@ -1560,7 +1644,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <Footer onGetStarted={handleCreate} />
+      <Footer onGetStarted={handleCreate} isAuthed={authStatus === 'authed'} />
     </div>
   )
 }

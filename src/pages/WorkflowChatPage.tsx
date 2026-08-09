@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { getWorkflow } from '@/lib/workflowApi'
 import { listChatSessions, deleteChatSession, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
@@ -84,14 +84,17 @@ export function WorkflowChatPage() {
     <div className="flex h-screen bg-[var(--color-canvas)] text-[var(--color-text)]">
       {/* ── Sidebar — tinted, borderless, plain rows ─────────── */}
       <aside className="flex w-[260px] flex-shrink-0 flex-col bg-[var(--color-surface)]">
-        <div className="flex h-14 items-center px-4">
-          <button
-            onClick={() => navigate('/workflows')}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text)] hover:bg-[var(--color-hover)]"
-            title="All Workflows"
+        {/* Named, not a bare glyph: the only way out of this page used to be an
+            unlabelled icon. */}
+        <div className="flex h-14 items-center px-3">
+          <Link
+            to="/workflows"
+            className="pressable flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 text-[var(--color-text)] hover:bg-[var(--color-hover)]"
           >
             <FloweIcon size={20} />
-          </button>
+            <span className="text-[13px] font-medium text-[var(--color-muted)]">Workflows</span>
+            <span aria-hidden className="text-[13px] text-[var(--color-subtle)]">/</span>
+          </Link>
         </div>
 
         <div className="px-2.5">
@@ -105,8 +108,8 @@ export function WorkflowChatPage() {
             </svg>
             New chat
           </button>
-          <button
-            onClick={() => navigate(`/workflow/${workflowId}`)}
+          <Link
+            to={`/workflows/${workflowId}`}
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--color-text)] hover:bg-[var(--color-hover)]"
           >
             <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
@@ -115,7 +118,7 @@ export function WorkflowChatPage() {
               <path d="M6 3.75h4.25v3.5M9 11.25H4.75v-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Editor
-          </button>
+          </Link>
         </div>
 
         <div className="px-5 pb-1 pt-5 text-[11px] font-medium text-[var(--color-subtle)]">

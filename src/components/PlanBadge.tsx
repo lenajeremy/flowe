@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { usePlanStore } from '@/store/planStore'
 
 /**
@@ -11,7 +11,6 @@ import { usePlanStore } from '@/store/planStore'
  * is the thing people actually want to see after paying.
  */
 export function PlanBadge() {
-  const navigate = useNavigate()
   const plan = usePlanStore((s) => s.plan)
   const planName = usePlanStore((s) => s.planName)
   const cancelling = usePlanStore((s) => s.cancelAtPeriodEnd)
@@ -22,8 +21,8 @@ export function PlanBadge() {
   if (!plan || plan === 'free') return null
 
   return (
-    <button
-      onClick={() => navigate('/settings/billing')}
+    <Link
+      to="/settings/billing"
       title={cancelling ? `${planName} — ends at the end of this period` : `${planName} plan`}
       className="pressable flex h-6 items-center rounded-full px-2 font-mono text-[10.5px] uppercase tracking-wider transition-opacity hover:opacity-80"
       style={{
@@ -36,6 +35,6 @@ export function PlanBadge() {
       }}
     >
       {planName}
-    </button>
+    </Link>
   )
 }

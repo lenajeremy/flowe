@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { SettingsTabs } from '@/components/SettingsTabs'
 import { toast } from 'sonner'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { getToken } from '@/lib/tokenStore'
-import { FloweIcon } from '@/components/FloweIcon'
-import { UserMenu } from '@/components/ui/UserMenu'
 
 // The usage report.
 //
@@ -122,7 +121,6 @@ const when = (iso: string) =>
   })
 
 export function UsagePage() {
-  const navigate = useNavigate()
   const [period, setPeriod] = useState<string>('current')
   const [kind, setKind] = useState<string>('')
   const [person, setPerson] = useState<string>('')
@@ -252,30 +250,12 @@ export function UsagePage() {
   const pageEnd = Math.min((data?.offset ?? 0) + (data?.rows.length ?? 0), data?.total_rows ?? 0)
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
-      <div className="mx-auto max-w-[860px] px-8 py-12">
+    <>
+      <div className="mx-auto max-w-[860px] px-8 py-10">
 
-        <div className="mb-7 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/')}
-              className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border2)]"
-              title="Home">
-              <FloweIcon size={18} />
-            </button>
-            <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Usage</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/settings/billing"
-              className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]">
-              Billing
-            </Link>
-            <Link to="/workflows"
-              className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]">
-              Workflows
-            </Link>
-            <span className="h-5 w-px bg-[var(--color-border)]" />
-            <UserMenu />
-          </div>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">Usage</h1>
+          <SettingsTabs />
         </div>
 
         <p className="mb-7 max-w-2xl text-[13.5px] leading-relaxed text-[var(--color-muted)]">
@@ -509,7 +489,7 @@ export function UsagePage() {
           nothing, so they never appear here.
         </p>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -540,7 +520,7 @@ function LedgerRow({ row: r, showMember }: { row: Row; showMember: boolean }) {
       )}
       <Td>
         {r.workflow_id ? (
-          <Link to={`/workflow/${r.workflow_id}`}
+          <Link to={`/workflows/${r.workflow_id}`}
             className="text-[var(--color-text)] underline decoration-[var(--color-border2)] underline-offset-2 hover:decoration-[var(--color-text)]">
             {r.workflow_name || 'Workflow'}
           </Link>

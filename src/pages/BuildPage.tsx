@@ -6,8 +6,6 @@ import { reportApiError } from '@/lib/limitToast'
 import { createWorkflow } from '@/lib/workflowApi'
 import { setPendingPrompt } from '@/lib/pendingPrompt'
 import { NODE_ICON_PATHS } from '@/lib/nodeColors'
-import { FloweIcon } from '@/components/FloweIcon'
-import { UserMenu } from '@/components/ui/UserMenu'
 import type { NodeType } from '@/types/workflow'
 
 // "Build with Fernary AI" — a focused, full-screen prompt. Submitting creates a
@@ -60,7 +58,7 @@ export function BuildPage() {
     try {
       const wf = await createWorkflow({ description: text })
       setPendingPrompt(wf.id, text)
-      navigate(`/workflow/${wf.id}`)
+      navigate(`/workflows/${wf.id}`)
     } catch (e) {
       // Silently resetting the button was the worst version of this: on a plan
       // that has run out of workflows, the only feedback was that nothing
@@ -76,7 +74,7 @@ export function BuildPage() {
     setCreatingBlank(true)
     try {
       const wf = await createWorkflow()
-      navigate(`/workflow/${wf.id}`)
+      navigate(`/workflows/${wf.id}`)
     } catch (e) {
       reportApiError(e, navigate, 'Could not create the workflow')
       setCreatingBlank(false)
@@ -88,8 +86,10 @@ export function BuildPage() {
     inputRef.current?.focus()
   }
 
+  // min-h, not min-h-screen: the shell's bar sits above this page, so a full
+  // viewport here would leave it permanently scrollable by the height of the bar.
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--color-canvas)] font-sans text-[var(--color-text)]">
+    <div className="relative overflow-hidden bg-[var(--color-canvas)]" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
       {/* ── Backdrop: faint glyphs + two soft glows ── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         {PATTERN.map((p, i) => (
@@ -115,20 +115,8 @@ export function BuildPage() {
         />
       </div>
 
-      {/* ── Chrome ── */}
-      <div className="relative flex items-center justify-between px-6 py-5">
-        <button
-          onClick={() => navigate('/workflows')}
-          className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-border2)]"
-          title="Back to workflows"
-        >
-          <FloweIcon size={18} />
-        </button>
-        <UserMenu />
-      </div>
-
       {/* ── Hero ── */}
-      <div className="relative mx-auto flex w-full max-w-[760px] flex-col items-center px-6 pt-[16vh]">
+      <div className="relative mx-auto flex w-full max-w-[760px] flex-col items-center px-6 pt-[12vh]">
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 10 }}

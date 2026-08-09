@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { API } from '@/lib/config'
 import { clearResourceCache } from '@/lib/integrationResources'
 import { apiFetch } from '@/lib/http'
@@ -39,7 +39,6 @@ export function IntegrationConnect({
   /** Only emitted for GitHub, whose authorization and installation are separate. */
   onGitHubSetupChange?: (snapshot: GitHubSetupSnapshot) => void
 }) {
-  const navigate = useNavigate()
   const [status, setStatus] = useState<IntegrationStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [showManual, setShowManual] = useState(hasManualToken)
@@ -194,11 +193,10 @@ export function IntegrationConnect({
           The key is checked against {label} before it's saved, then stored{' '}
           <span className="text-[var(--color-muted)]">encrypted at rest</span>. You can remove it at any
           time, and{' '}
-          <a href="/connections"
-            onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+          <Link to="/connections"
             className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]">
             manage every connected account here
-          </a>.
+          </Link>.
         </p>
       </div>
     )
@@ -220,13 +218,12 @@ export function IntegrationConnect({
           Fernary stores the resulting GitHub user token{' '}
           <span className="text-[var(--color-muted)]">encrypted at rest</span>. Repository access
           stays controlled by the GitHub App installation, and you can{' '}
-          <a
-            href="/connections"
-            onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+          <Link
+            to="/connections"
             className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]"
           >
             manage the connection here
-          </a>.
+          </Link>.
         </p>
 
         {manualField && (
@@ -316,13 +313,12 @@ export function IntegrationConnect({
         Fernary stores an access token for {label}, {' '}
         <span className="text-[var(--color-muted)]">encrypted at rest</span> — never your password.
         You can remove it at any time, and{' '}
-        <a
-          href="/connections"
-          onClick={(e) => { e.preventDefault(); navigate('/connections') }}
+        <Link
+          to="/connections"
           className="text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-2 hover:decoration-[var(--color-accent)]"
         >
           manage every connected account here
-        </a>.
+        </Link>.
       </p>
 
       {/* Manual token override */}
