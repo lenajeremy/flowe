@@ -11,6 +11,8 @@ import { WebhookTriggerPage } from '@/pages/WebhookTriggerPage'
 import { RunDetailPage } from '@/pages/RunDetailPage'
 import { LegalPage } from '@/pages/LegalPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
+import { AgentsPage } from '@/pages/AgentsPage'
+import { AgentDetailPage } from '@/pages/AgentDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -72,6 +74,8 @@ function App() {
         <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
           <Route path="/workflows" element={<HomePage />} />
           <Route path="/workflows/new" element={<BuildPage />} />
+          <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/agents/:id" element={<AgentDetailPage />} />
           <Route path="/data" element={<DataPage />} />
           <Route path="/connections" element={<ConnectionsPage />} />
           {/* Settings is two pages, so its index goes straight to the first one
