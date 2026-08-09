@@ -160,7 +160,21 @@ export function getAgentHostConnectURL(): Promise<{ url: string }> {
   return apiJSON(`/api/agent-hosts/slack/connect?origin=${origin}`)
 }
 
-export function listAgentHostChannels(hostId: string): Promise<AgentHostChannel[]> {
+/**
+ * The channels this user may deploy to.
+ *
+ * Scoped server-side to the caller's own Slack membership — the shared host bot
+ * sits in channels that have nothing to do with whoever is asking. `scope` is
+ * "public" when their Slack identity could not be matched, in which case
+ * `notice` explains why private channels are missing.
+ */
+export interface AgentHostChannelInventory {
+  channels: AgentHostChannel[]
+  scope: 'member' | 'public'
+  notice?: string
+}
+
+export function listAgentHostChannels(hostId: string): Promise<AgentHostChannelInventory> {
   return apiJSON(`/api/agent-hosts/${hostId}/channels`)
 }
 

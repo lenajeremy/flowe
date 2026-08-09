@@ -57,6 +57,10 @@ interface SlackDestinationState {
   channels: AgentHostChannel[]
   selectedChannels: string[]
   channelsLoading: boolean
+  /** Set when the list is public-only because the caller's Slack identity
+   *  could not be matched. Shown, not swallowed: an unexplained short list
+   *  reads as "the channel is missing" rather than "we could not see it". */
+  channelsNotice?: string
   loadVersion: number
 }
 
@@ -105,7 +109,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [loading, setLoading] = useState(false)
   const [hosts, setHosts] = useState<AgentHostInstallation[]>([])
   const [destination, setDestination] = useState<SlackDestinationState>({
-    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, loadVersion: 0,
+    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', loadVersion: 0,
   })
   const [capabilities, setCapabilities] = useState<AgentNodeCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
@@ -122,13 +126,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const analyzeInFlightRef = useRef(false)
   const deployInFlightRef = useRef(false)
 
-  const { hostId, channels, selectedChannels, channelsLoading, loadVersion } = destination
+  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, loadVersion } = destination
 
   const refreshHosts = useCallback(async () => {
     // OAuth may replace the workspace. Invalidate the old host/channel pair
     // before the network request so it can never be submitted during refresh.
     setDestination((current) => ({
-      hostId: '', channels: [], selectedChannels: [], channelsLoading: true,
+      hostId: '', channels: [], selectedChannels: [], channelsLoading: true, channelsNotice: '',
       loadVersion: current.loadVersion + 1,
     }))
     const next = await listAgentHosts()
@@ -157,7 +161,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     setName(workflowName || 'Workflow agent')
     setAlias(slugAgentName(workflowName))
     setDestination((current) => ({
-      ...current, channels: [], selectedChannels: [], channelsLoading: false,
+      ...current, channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '',
     }))
     setAnalysis(null)
     setPolicy(null)
@@ -212,8 +216,9 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
           if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
           return {
             ...current,
-            channels: [...next].sort((a, b) => a.name.localeCompare(b.name)),
+            channels: [...(next.channels ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
             channelsLoading: false,
+            channelsNotice: next.notice ?? '',
           }
         })
       })
@@ -221,7 +226,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
         if (!active) return
         setDestination((current) => {
           if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
-          return { ...current, channels: [], selectedChannels: [], channelsLoading: false }
+          return { ...current, channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '' }
         })
         toast.error('Could not load Slack channels', { description: errorMessage(error) })
       })
@@ -615,10 +620,17 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                       <span className="flex items-center gap-1 text-[10.5px] text-[var(--color-subtle)]"><LockKeyhole size={11} /> Starts closed</span>
                     </div>
                     <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-1.5">
+                      {!channelsLoading && channelsNotice && channels.length > 0 && (
+                        <p className="px-2.5 pb-1.5 pt-1 text-[11px] leading-relaxed text-[var(--color-subtle)]">
+                          {channelsNotice}
+                        </p>
+                      )}
                       {channelsLoading ? (
                         <div className="flex h-20 items-center justify-center"><LoaderCircle className="animate-spin text-[var(--color-muted)]" size={17} /></div>
                       ) : channels.length === 0 ? (
-                        <p className="px-3 py-6 text-center text-[11.5px] text-[var(--color-muted)]">No channels are available. Invite Fernary to a private channel before selecting it.</p>
+                        <p className="px-3 py-6 text-center text-[11.5px] text-[var(--color-muted)]">
+                          {channelsNotice || 'No channels are available. Invite Fernary to a private channel before selecting it.'}
+                        </p>
                       ) : channels.map((channel) => {
                         const checked = selectedChannels.includes(channel.id)
                         return (
