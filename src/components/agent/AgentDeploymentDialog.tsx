@@ -415,7 +415,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[88vh] w-[min(920px,calc(100vw-2rem))] max-w-none grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden bg-[var(--color-surface)] p-0">
+      <DialogContent className="grid max-h-[88vh] w-[calc(100vw-2rem)] max-w-[920px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden bg-[var(--color-surface)] p-0 sm:max-w-[920px]">
         <DialogHeader className="border-b border-[var(--color-border)] px-6 py-5">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
