@@ -86,11 +86,11 @@ function humanizeField(field: string) {
 
 function clonePolicy(policy: AgentCapabilityPolicy): AgentCapabilityPolicy {
   return {
-    version: policy.version,
-    nodes: policy.nodes.map((node) => ({
+    version: Number.isInteger(policy.version) ? policy.version : 1,
+    nodes: (Array.isArray(policy.nodes) ? policy.nodes : []).map((node) => ({
       nodeId: node.nodeId,
-      allowedOperations: [...node.allowedOperations],
-      allowedOverrideFields: [...node.allowedOverrideFields],
+      allowedOperations: Array.isArray(node.allowedOperations) ? [...node.allowedOperations] : [],
+      allowedOverrideFields: Array.isArray(node.allowedOverrideFields) ? [...node.allowedOverrideFields] : [],
     })),
   }
 }
