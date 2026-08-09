@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bot,
   Check,
@@ -115,10 +115,20 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [deploying, setDeploying] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [managingId, setManagingId] = useState<string | null>(null)
+  const oauthPopupRef = useRef<Window | null>(null)
+  const oauthCallbackReceivedRef = useRef(false)
+  const analyzeInFlightRef = useRef(false)
+  const deployInFlightRef = useRef(false)
 
   const { hostId, channels, selectedChannels, channelsLoading, loadVersion } = destination
 
   const refreshHosts = useCallback(async () => {
+    // OAuth may replace the workspace. Invalidate the old host/channel pair
+    // before the network request so it can never be submitted during refresh.
+    setDestination((current) => ({
+      hostId: '', channels: [], selectedChannels: [], channelsLoading: true,
+      loadVersion: current.loadVersion + 1,
+    }))
     const next = await listAgentHosts()
     setHosts(next)
     setDestination((current) => {
@@ -149,6 +159,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     }))
     setAnalysis(null)
     setPolicy(null)
+    setConnecting(false)
     setLoading(true)
     Promise.all([
       listAgentHosts(),
@@ -177,6 +188,15 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
       })
     return () => { active = false }
   }, [open, workflowId, workflowName])
+
+  useEffect(() => {
+    if (open) return
+    oauthPopupRef.current?.close()
+    oauthPopupRef.current = null
+    oauthCallbackReceivedRef.current = false
+    analyzeInFlightRef.current = false
+    deployInFlightRef.current = false
+  }, [open])
 
   useEffect(() => {
     if (!open || !hostId) return
@@ -213,19 +233,40 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
       : window.location.origin
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== apiOrigin) return
+      if (!oauthPopupRef.current || event.source !== oauthPopupRef.current) return
       const data = event.data as { type?: string; provider?: string; status?: string; error?: string } | null
       if (data?.type !== 'integration-oauth' || data.provider !== 'slack') return
-      setConnecting(false)
+      oauthCallbackReceivedRef.current = true
       if (data.status === 'connected') {
+        // Keep deployment disabled until the replacement installation and its
+        // channels have displaced every bit of the previous destination state.
         void refreshHosts()
-        toast.success('Slack connected')
+          .then(() => toast.success('Slack connected'))
+          .catch((error) => toast.error('Could not refresh Slack', { description: errorMessage(error) }))
+          .finally(() => {
+            oauthPopupRef.current = null
+            setConnecting(false)
+          })
       } else {
+        oauthPopupRef.current = null
+        setConnecting(false)
         toast.error('Slack connection failed', { description: data.error || 'Try connecting again.' })
       }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [open, refreshHosts])
+
+  useEffect(() => {
+    if (!connecting || !oauthPopupRef.current) return
+    const timer = window.setInterval(() => {
+      if (!oauthPopupRef.current?.closed || oauthCallbackReceivedRef.current) return
+      oauthPopupRef.current = null
+      setConnecting(false)
+      toast.error('Slack connection was cancelled', { description: 'The authorization window was closed.' })
+    }, 400)
+    return () => window.clearInterval(timer)
+  }, [connecting])
 
   const policySummary = useMemo(() => {
     const byNode = new Map(capabilities.map((capability) => [capability.nodeId, capability]))
@@ -273,17 +314,25 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }, [analysis, capabilities, policy])
 
   const selectedHost = hosts.find((host) => host.id === hostId)
+  const readyHosts = hosts.filter(hostReady)
   const reconnectHost = hosts.find((host) => !hostReady(host))
+  const validName = name.trim().length > 0 && name.trim().length <= 80
   const validAlias = /^[a-z0-9][a-z0-9_-]{1,31}$/.test(alias)
   const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
     channels.some((channel) => channel.id === channelId && channel.is_member))
   const canDeploy = Boolean(
-    analysis && policy && policy.nodes.length > 0 && name.trim() && validAlias &&
+    analysis && policy && policy.nodes.length > 0 && validName && validAlias &&
     selectedHost && validChannelSelection && !channelsLoading && !connecting && !deploying,
   )
 
   async function connectSlack() {
+    if (oauthPopupRef.current && !oauthPopupRef.current.closed) {
+      oauthPopupRef.current.focus()
+      return
+    }
     const popup = window.open('about:blank', 'connect-slack-agent', 'width=560,height=720,menubar=no,toolbar=no')
+    oauthPopupRef.current = popup
+    oauthCallbackReceivedRef.current = false
     setConnecting(true)
     try {
       const result = await getAgentHostConnectURL()
@@ -294,12 +343,15 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
       popup.focus()
     } catch (error) {
       popup?.close()
+      oauthPopupRef.current = null
       setConnecting(false)
       toast.error('Could not connect Slack', { description: errorMessage(error) })
     }
   }
 
   async function analyze() {
+    if (analyzeInFlightRef.current) return
+    analyzeInFlightRef.current = true
     setAnalyzing(true)
     try {
       const result = await analyzeAgentDeployment(workflowId)
@@ -308,21 +360,38 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     } catch (error) {
       toast.error('Could not analyze agent access', { description: errorMessage(error) })
     } finally {
+      analyzeInFlightRef.current = false
       setAnalyzing(false)
     }
   }
 
   function toggleChannel(channelId: string) {
+    if (!selectedChannels.includes(channelId) && selectedChannels.length >= 20) {
+      toast.error('A deployment can allow at most 20 channels')
+      return
+    }
     setDestination((current) => {
       const channel = current.channels.find((item) => item.id === channelId)
       if (!channel?.is_member) return current
+      const alreadySelected = current.selectedChannels.includes(channelId)
+      if (!alreadySelected && current.selectedChannels.length >= 20) return current
       return {
         ...current,
-        selectedChannels: current.selectedChannels.includes(channelId)
+        selectedChannels: alreadySelected
           ? current.selectedChannels.filter((id) => id !== channelId)
           : [...current.selectedChannels, channelId],
       }
     })
+  }
+
+  function selectHost(nextHostId: string) {
+    setDestination((current) => ({
+      hostId: nextHostId,
+      channels: [],
+      selectedChannels: [],
+      channelsLoading: Boolean(nextHostId),
+      loadVersion: current.loadVersion + 1,
+    }))
   }
 
   function toggleOperation(nodeId: string, operationId: string) {
@@ -356,11 +425,12 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }
 
   async function deploy() {
-    if (!analysis || !policy || !selectedHost || channelsLoading || connecting) return
+    if (!canDeploy || deployInFlightRef.current || !analysis || !policy || !selectedHost) return
     const selected = channels
       .filter((channel) => selectedChannels.includes(channel.id) && channel.is_member)
       .map((channel) => ({ id: channel.id, name: channel.name }))
-    if (selected.length === 0 || selected.length !== selectedChannels.length) return
+    if (selected.length === 0 || selected.length > 20 || selected.length !== selectedChannels.length) return
+    deployInFlightRef.current = true
     setDeploying(true)
     try {
       await createAgentDeployment(workflowId, {
@@ -381,6 +451,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     } catch (error) {
       toast.error('Could not deploy agent', { description: errorMessage(error) })
     } finally {
+      deployInFlightRef.current = false
       setDeploying(false)
     }
   }
@@ -519,6 +590,23 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                   )}
                 </div>
 
+                {readyHosts.length > 1 && (
+                  <div className="mt-3 space-y-1.5">
+                    <Label htmlFor="agent-slack-workspace" className="text-[11.5px]">Slack workspace</Label>
+                    <select
+                      id="agent-slack-workspace"
+                      value={hostId}
+                      disabled={connecting}
+                      onChange={(event) => selectHost(event.target.value)}
+                      className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-[12px] outline-none focus:border-[var(--color-accent)]"
+                    >
+                      {readyHosts.map((host) => (
+                        <option key={host.id} value={host.id}>{host.external_workspace_name || host.external_workspace_id}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {selectedHost && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between">
@@ -544,7 +632,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                         )
                       })}
                     </div>
-                    <p className="mt-1.5 text-[10.5px] text-[var(--color-subtle)]">A channel can host one workflow agent in this release.</p>
+                    <p className="mt-1.5 text-[10.5px] text-[var(--color-subtle)]">A channel can host one workflow agent in this release. Everyone in an allowed channel can ask it to read using your connected accounts and see the answer; writes still require the requesting teammate’s approval.</p>
                   </div>
                 )}
               </section>
