@@ -50,6 +50,14 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
+interface SlackDestinationState {
+  hostId: string
+  channels: AgentHostChannel[]
+  selectedChannels: string[]
+  channelsLoading: boolean
+  loadVersion: number
+}
+
 const REQUIRED_SLACK_SCOPES = [
   'app_mentions:read', 'chat:write', 'chat:write.customize',
   'channels:read', 'channels:history', 'groups:read', 'groups:history',
@@ -94,10 +102,9 @@ function errorMessage(error: unknown) {
 export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false)
   const [hosts, setHosts] = useState<AgentHostInstallation[]>([])
-  const [hostId, setHostId] = useState('')
-  const [channels, setChannels] = useState<AgentHostChannel[]>([])
-  const [channelsLoading, setChannelsLoading] = useState(false)
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([])
+  const [destination, setDestination] = useState<SlackDestinationState>({
+    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, loadVersion: 0,
+  })
   const [capabilities, setCapabilities] = useState<AgentNodeCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
   const [name, setName] = useState(workflowName || 'Workflow agent')
@@ -109,13 +116,23 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [connecting, setConnecting] = useState(false)
   const [managingId, setManagingId] = useState<string | null>(null)
 
+  const { hostId, channels, selectedChannels, channelsLoading, loadVersion } = destination
+
   const refreshHosts = useCallback(async () => {
     const next = await listAgentHosts()
     setHosts(next)
-    const current = next.find((host) => host.id === hostId && hostReady(host))
-    const fallback = next.find(hostReady)
-    setHostId(current?.id || fallback?.id || '')
-  }, [hostId])
+    setDestination((current) => {
+      const retained = next.find((host) => host.id === current.hostId && hostReady(host))
+      const nextHostId = retained?.id || next.find(hostReady)?.id || ''
+      return {
+        hostId: nextHostId,
+        channels: [],
+        selectedChannels: [],
+        channelsLoading: Boolean(nextHostId),
+        loadVersion: current.loadVersion + 1,
+      }
+    })
+  }, [])
 
   const refreshDeployments = useCallback(async () => {
     const records = await listAgentDeployments(workflowId)
@@ -124,9 +141,12 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
 
   useEffect(() => {
     if (!open) return
+    let active = true
     setName(workflowName || 'Workflow agent')
     setAlias(slugAgentName(workflowName))
-    setSelectedChannels([])
+    setDestination((current) => ({
+      ...current, channels: [], selectedChannels: [], channelsLoading: false,
+    }))
     setAnalysis(null)
     setPolicy(null)
     setLoading(true)
@@ -136,29 +156,55 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
       listAgentDeployments(workflowId),
     ])
       .then(([nextHosts, capabilityResult, nextDeployments]) => {
+        if (!active) return
         setHosts(nextHosts)
         setCapabilities(capabilityResult.capabilities)
         setDeployments(nextDeployments.filter((record) => record.deployment.status !== 'revoked'))
-        setHostId(nextHosts.find(hostReady)?.id || '')
+        const nextHostId = nextHosts.find(hostReady)?.id || ''
+        setDestination((current) => ({
+          hostId: nextHostId,
+          channels: [],
+          selectedChannels: [],
+          channelsLoading: Boolean(nextHostId),
+          loadVersion: current.loadVersion + 1,
+        }))
       })
-      .catch((error) => toast.error('Could not load agent deployment', { description: errorMessage(error) }))
-      .finally(() => setLoading(false))
+      .catch((error) => {
+        if (active) toast.error('Could not load agent deployment', { description: errorMessage(error) })
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
   }, [open, workflowId, workflowName])
 
   useEffect(() => {
-    if (!open || !hostId) {
-      setChannels([])
-      return
-    }
-    setChannelsLoading(true)
-    listAgentHostChannels(hostId)
-      .then((next) => setChannels([...next].sort((a, b) => a.name.localeCompare(b.name))))
+    if (!open || !hostId) return
+    let active = true
+    const requestedHostId = hostId
+    const requestedLoadVersion = loadVersion
+    listAgentHostChannels(requestedHostId)
+      .then((next) => {
+        if (!active) return
+        setDestination((current) => {
+          if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
+          return {
+            ...current,
+            channels: [...next].sort((a, b) => a.name.localeCompare(b.name)),
+            channelsLoading: false,
+          }
+        })
+      })
       .catch((error) => {
-        setChannels([])
+        if (!active) return
+        setDestination((current) => {
+          if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
+          return { ...current, channels: [], selectedChannels: [], channelsLoading: false }
+        })
         toast.error('Could not load Slack channels', { description: errorMessage(error) })
       })
-      .finally(() => setChannelsLoading(false))
-  }, [hostId, open])
+    return () => { active = false }
+  }, [hostId, loadVersion, open])
 
   useEffect(() => {
     if (!open) return
@@ -229,9 +275,11 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const selectedHost = hosts.find((host) => host.id === hostId)
   const reconnectHost = hosts.find((host) => !hostReady(host))
   const validAlias = /^[a-z0-9][a-z0-9_-]{1,31}$/.test(alias)
+  const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
+    channels.some((channel) => channel.id === channelId && channel.is_member))
   const canDeploy = Boolean(
     analysis && policy && policy.nodes.length > 0 && name.trim() && validAlias &&
-    selectedHost && selectedChannels.length > 0 && !deploying,
+    selectedHost && validChannelSelection && !channelsLoading && !deploying,
   )
 
   async function connectSlack() {
@@ -265,9 +313,16 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }
 
   function toggleChannel(channelId: string) {
-    setSelectedChannels((current) => current.includes(channelId)
-      ? current.filter((id) => id !== channelId)
-      : [...current, channelId])
+    setDestination((current) => {
+      const channel = current.channels.find((item) => item.id === channelId)
+      if (!channel?.is_member) return current
+      return {
+        ...current,
+        selectedChannels: current.selectedChannels.includes(channelId)
+          ? current.selectedChannels.filter((id) => id !== channelId)
+          : [...current.selectedChannels, channelId],
+      }
+    })
   }
 
   function toggleOperation(nodeId: string, operationId: string) {
@@ -301,12 +356,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }
 
   async function deploy() {
-    if (!analysis || !policy || !selectedHost) return
+    if (!analysis || !policy || !selectedHost || channelsLoading) return
+    const selected = channels
+      .filter((channel) => selectedChannels.includes(channel.id) && channel.is_member)
+      .map((channel) => ({ id: channel.id, name: channel.name }))
+    if (selected.length === 0 || selected.length !== selectedChannels.length) return
     setDeploying(true)
     try {
-      const selected = channels
-        .filter((channel) => selectedChannels.includes(channel.id))
-        .map((channel) => ({ id: channel.id, name: channel.name }))
       await createAgentDeployment(workflowId, {
         name: name.trim(),
         alias,
@@ -316,7 +372,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
         channels: selected,
       })
       await refreshDeployments()
-      setSelectedChannels([])
+      setDestination((current) => ({ ...current, selectedChannels: [] }))
       setAnalysis(null)
       setPolicy(null)
       toast.success(`${name.trim()} is live in Slack`, {
