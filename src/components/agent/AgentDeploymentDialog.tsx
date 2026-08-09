@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Bot,
   Check,
@@ -10,6 +11,7 @@ import {
   Pause,
   Play,
   ShieldCheck,
+  Settings2,
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -530,14 +532,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                                 : 'No active channels'}
                             </p>
                           </div>
-                          {(record.deployment.status === 'active' || record.deployment.status === 'paused') && (
+                          {record.can_manage && (record.deployment.status === 'active' || record.deployment.status === 'paused') && (
                             <Button variant="ghost" size="icon-sm" disabled={busy} title={record.deployment.status === 'active' ? 'Pause' : 'Resume'} onClick={() => void changeStatus(record)}>
                               {busy ? <LoaderCircle className="animate-spin" /> : record.deployment.status === 'active' ? <Pause /> : <Play />}
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon-sm" disabled={busy} title="Revoke" className="text-[var(--color-fail)]" onClick={() => void revoke(record)}>
-                            <Trash2 />
-                          </Button>
+                          <Link to={`/agents/${record.deployment.id}`} title="Manage agent" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"><Settings2 size={14} /></Link>
+                          {record.can_manage && <Button variant="ghost" size="icon-sm" disabled={busy} title="Revoke" className="text-[var(--color-fail)]" onClick={() => void revoke(record)}><Trash2 /></Button>}
                         </div>
                       )
                     })}

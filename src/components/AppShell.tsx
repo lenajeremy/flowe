@@ -37,6 +37,13 @@ const CONNECTIONS_ICON = (
   </svg>
 )
 
+const AGENTS_ICON = (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+    <rect x="2" y="3.5" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M7 1.3v2.2M4.5 7h.01M9.5 7h.01M5 9.2h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+)
+
 const SETTINGS_ICON = (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
     <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
@@ -54,6 +61,7 @@ const SETTINGS_ICON = (
  */
 const SECTIONS = [
   { to: '/workflows', label: 'Workflows', icon: WORKFLOWS_ICON },
+  { to: '/agents', label: 'Agents', icon: AGENTS_ICON },
   { to: '/data', label: 'Data', icon: NODE_ICONS.data },
   { to: '/connections', label: 'Connections', icon: CONNECTIONS_ICON },
   { to: '/settings', label: 'Settings', icon: SETTINGS_ICON },
