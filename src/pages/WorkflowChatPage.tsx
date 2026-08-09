@@ -4,9 +4,11 @@ import { getWorkflow } from '@/lib/workflowApi'
 import { listChatSessions, deleteChatSession, type ChatSessionSummary } from '@/lib/agentChat'
 import { useAgentChat } from '@/components/agent/useAgentChat'
 import { AgentBubble, Composer } from '@/components/agent/AgentMessages'
+import { AgentDeploymentDialog } from '@/components/agent/AgentDeploymentDialog'
 import { NODE_ACCENT_HEX, NODE_LABELS } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { UserMenu } from '@/components/ui/UserMenu'
+import { Button } from '@/components/ui/button'
 import { FloweIcon } from '@/components/FloweIcon'
 import type { NodeType, WorkflowASTNode } from '@/types/workflow'
 
@@ -25,6 +27,7 @@ export function WorkflowChatPage() {
   const [toolNodes, setToolNodes] = useState<WorkflowASTNode[]>([])
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [input, setInput] = useState('')
+  const [deployOpen, setDeployOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, isStreaming, send, stop } = useAgentChat({
@@ -162,7 +165,16 @@ export function WorkflowChatPage() {
             <span className="text-[14px] font-semibold">{workflowName || '…'}</span>
             <span className="text-[11px] text-[var(--color-subtle)]">chat</span>
           </div>
-          <UserMenu />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDeployOpen(true)}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 1.5v8M4.8 4.7L8 1.5l3.2 3.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 8.5v4A1.5 1.5 0 004.5 14h7a1.5 1.5 0 001.5-1.5v-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              Deploy agent
+            </Button>
+            <UserMenu />
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto">
@@ -194,6 +206,15 @@ export function WorkflowChatPage() {
           </p>
         </div>
       </main>
+
+      {workflowId && (
+        <AgentDeploymentDialog
+          open={deployOpen}
+          workflowId={workflowId}
+          workflowName={workflowName}
+          onOpenChange={setDeployOpen}
+        />
+      )}
     </div>
   )
 }
