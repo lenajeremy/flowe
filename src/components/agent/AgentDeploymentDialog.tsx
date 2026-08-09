@@ -279,7 +279,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     channels.some((channel) => channel.id === channelId && channel.is_member))
   const canDeploy = Boolean(
     analysis && policy && policy.nodes.length > 0 && name.trim() && validAlias &&
-    selectedHost && validChannelSelection && !channelsLoading && !deploying,
+    selectedHost && validChannelSelection && !channelsLoading && !connecting && !deploying,
   )
 
   async function connectSlack() {
@@ -356,7 +356,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }
 
   async function deploy() {
-    if (!analysis || !policy || !selectedHost || channelsLoading) return
+    if (!analysis || !policy || !selectedHost || channelsLoading || connecting) return
     const selected = channels
       .filter((channel) => selectedChannels.includes(channel.id) && channel.is_member)
       .map((channel) => ({ id: channel.id, name: channel.name }))
