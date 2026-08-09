@@ -59,17 +59,25 @@ export type NodeType =
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
 export type LLMModel =
-  | 'gpt-4o'
-  | 'gpt-4o-mini'
-  | 'o4-mini'
-  | 'claude-opus-4-5'
-  | 'claude-sonnet-4-5'
-  | 'claude-haiku-4-5'
-  | 'gemini-2.5-pro'
-  | 'gemini-3-flash'
+  | 'gemini-3.5-flash'
+  | 'gemini-3-flash-preview'
   | 'gemini-3.1-pro-preview'
-  | 'gemini-3.1-flash'
-  | 'gemini-3.1-flash-lite'
+  | 'gpt-5.4-mini'
+  | 'gpt-5.5'
+  | 'claude-haiku-4-5-20251001'
+  | 'claude-sonnet-4-6'
+  | 'claude-opus-4-8'
+  | 'grok-4.3'
+  | 'grok-4.5'
+
+/**
+ * What an LLM node runs when nothing was chosen.
+ *
+ * Google's Flash tier: workflow runs are the volume in this product, and it is
+ * priced at a quarter of gpt-4o per credit. Mirrors DefaultLLMModel on the
+ * server, which is authoritative — this is only what the editor shows.
+ */
+export const DEFAULT_LLM_MODEL: LLMModel = 'gemini-3.5-flash'
 
 /**
  * Flat node data type that satisfies Record<string, unknown> for @xyflow/react.

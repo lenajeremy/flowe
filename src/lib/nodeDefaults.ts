@@ -1,4 +1,5 @@
 import type { NodeType, FlowNodeData } from '@/types/workflow'
+import { DEFAULT_LLM_MODEL } from '@/types/workflow'
 
 export function getDefaultNodeData(type: NodeType): FlowNodeData {
   switch (type) {
@@ -10,7 +11,7 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return {
         nodeType: 'llm',
         label: 'LLM',
-        model: 'gpt-4o',
+        model: DEFAULT_LLM_MODEL,
         systemPrompt: 'You are a helpful assistant.',
         userPrompt: '{{previousNode.output}}',
         temperature: 0.7,

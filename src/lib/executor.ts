@@ -8,6 +8,7 @@ import type {
   WorkflowASTNode,
   WorkflowASTEdge,
 } from '@/types/workflow'
+import { DEFAULT_LLM_MODEL } from '@/types/workflow'
 import { getApiKeys, isAnthropicModel } from '@/lib/apiKeys'
 
 export interface ExecutorStore {
@@ -269,7 +270,7 @@ async function executeNode(
         : '(no image)'
 
     case 'llm': {
-      const model = typeof data.model === 'string' ? data.model : 'gpt-4o'
+      const model = typeof data.model === 'string' ? data.model : DEFAULT_LLM_MODEL
       const systemPrompt = substituteTemplates(
         typeof data.systemPrompt === 'string' ? data.systemPrompt : '',
         outputs,
