@@ -66,6 +66,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   calendly:  'calendly.com',
   dropbox:   'dropbox.com',
   netlify:   'netlify.com',
+  vercel:    'vercel.com',
   supabase:  'supabase.com',
   gumroad:   'gumroad.com',
   hubspot:   'hubspot.com',
@@ -127,8 +128,13 @@ export const INLINE_LOGOS: Partial<Record<NodeType, InlineLogo>> = {
  * mark each brand prescribes for dark backgrounds. Measured mean luminance over
  * opaque pixels: github 23/255, resend 22/255. Every other logo either carries
  * its own tile or is coloured brightly enough to read on both themes.
+ *
+ * Vercel belongs here for the same reason and by its own rule: the triangle is
+ * pure black on transparent, and Vercel's brand guidance is an inverted white
+ * mark on dark. Without this it renders as an invisible black shape on the dark
+ * canvas.
  */
-export const INVERT_ON_DARK: ReadonlySet<NodeType> = new Set<NodeType>(['github'])
+export const INVERT_ON_DARK: ReadonlySet<NodeType> = new Set<NodeType>(['github', 'vercel'])
 
 export function isIntegration(type: NodeType): boolean {
   return type in GOOGLE_PRODUCTS || type in GOOGLE_PRODUCT_ICONS ||

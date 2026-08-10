@@ -32,7 +32,7 @@ export function IntegrationConnect({
   manualField,
   onGitHubSetupChange,
 }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   hasManualToken: boolean
   manualField: ReactNode
