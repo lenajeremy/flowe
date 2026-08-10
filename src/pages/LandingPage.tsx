@@ -687,7 +687,7 @@ function TriggerMock() {
       </div>
 
       <p className="mt-4 font-mono text-[10.5px] text-white/35">
-        Dropped at the trigger · a run that never starts costs nothing
+        Filtered out · no run starts · nothing spent
       </p>
     </div>
   )
@@ -701,13 +701,12 @@ function TriggerBand() {
           <div>
             <span className={`mb-5 block ${EYEBROW}`}>Triggers</span>
             <h2 className={H2} style={H2_STYLE}>
-              It starts when<br />the work appears.
+              A pull request<br />can start the run.
             </h2>
             <p className={`mt-6 max-w-md ${LEAD}`}>
-              A clock is one way in. A workflow can also start the moment a pull request
-              opens, an issue is filed, a task is completed, or a board changes — 22 events
-              across GitHub, GitLab, Asana and monday.com. Narrow it with a filter and the
-              runs you didn&rsquo;t want never happen.
+              Twenty-two events can start a run across GitHub, GitLab, Asana, and
+              monday.com. A pull request, issue, task, or item arrives. Your filter checks
+              it first. If it fails, no run starts, so nothing is spent.
             </p>
           </div>
         </Reveal>
@@ -1008,16 +1007,20 @@ function MemoryBand() {
 
 // ─── Deployed agents — the workflow, answering in Slack.
 // Framed around authority rather than conversation: per BRAND.md §9 a chat window
-// is not the promise. What the mock has to show is the split the deployer
-// configured — the read happens on its own, the write stops and waits for the
-// person who asked. Steps arrive on a loop; reduced motion gets the settled state
-// with the approval already pending.
+// is not the promise.
+// The gate is deliberately NOT sold as "every write waits". Someone buying this
+// wants work taken off them, and a promise that they will approve everything their
+// team asks for reads as a second job. The product agrees: operations are graded
+// read / write / destructive and the default policy grants reads only, so the
+// honest frame is that reading is free and the agent stops before it creates
+// something or does something that cannot be taken back.
+// Steps arrive on a loop; reduced motion gets the settled state, already asking.
 const SLACK_TINT = '#36c5f0'
 const WAIT_TINT = '#F5A524'
 
 const AGENT_STEPS = [
-  { label:'shopify · list_orders', note:'Allowed to read' },
-  { label:'gmail · send_email × 4', note:'Needs approval' },
+  { label:'shopify · list_orders', note:'Allowed read' },
+  { label:'gmail · send_email × 4', note:'Stopped to ask' },
 ]
 
 function AgentMock() {
@@ -1141,13 +1144,12 @@ function AgentBand() {
                 Your team asks.<br />You still decide.
               </h2>
               <p className={`mt-6 max-w-md ${LEAD}`}>
-                Put a workflow into a Slack channel and your teammates can put it to work by
-                mentioning it — with no Fernary account and no access to your connected
-                accounts. You choose step by step what it may read on its own and what it may
-                never do unasked. Every write waits for a yes from the person who asked for it.
+                Put a workflow in Slack. Teammates ask in the channel. Allowed reads answer on
+                their own. Before it creates, sends, deletes, cancels, or refunds, it stops,
+                explains why, and asks the person who asked.
               </p>
               <p className="mt-5 max-w-md font-mono text-[11.5px] leading-relaxed text-white/35">
-                Revoke a deployment and it stops answering, but the record of what it did stays.
+                No Fernary account · no shared connections
               </p>
             </div>
           </Reveal>
