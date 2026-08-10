@@ -478,9 +478,7 @@ function Glyph({ d, size = 20 }: { d: string; size?: number }) {
   )
 }
 
-// Marks for claims no single node owns: a quiet check for the hero's trust
-// statements, and a gauge that stops short of the end for metering.
-const CHECK_PATH = 'M2.5 8.2l3.2 3.1 7.8-7.5'
+// A gauge that stops short of the end, for the metering claim — no node owns it.
 const GAUGE_PATH = 'M2.5 12a5.5 5.5 0 1111 0M8 12l3.3-3.5'
 
 // Brand accents — the dark-theme --na-* values, fixed here because the
@@ -703,10 +701,13 @@ function TriggerBand() {
             <h2 className={H2} style={H2_STYLE}>
               A pull request<br />can start the run.
             </h2>
+            {/* Short on purpose: the mock beside this already shows the GitHub event,
+                the filter and an event being dropped, so a paragraph walking through
+                that sequence is a caption narrating a picture. What it cannot show is
+                the count and the four providers. */}
             <p className={`mt-6 max-w-md ${LEAD}`}>
-              Twenty-two events can start a run across GitHub, GitLab, Asana, and
-              monday.com. A pull request, issue, task, or item arrives. Your filter checks
-              it first. If it fails, no run starts, so nothing is spent.
+              Twenty-two events across GitHub, GitLab, Asana, and monday.com can start a
+              run. Failed filters cost nothing.
             </p>
           </div>
         </Reveal>
@@ -1018,9 +1019,11 @@ function MemoryBand() {
 const SLACK_TINT = '#36c5f0'
 const WAIT_TINT = '#F5A524'
 
+// The labels say what kind of moment each row was, not what the operation was —
+// the row already carries the operation on the left.
 const AGENT_STEPS = [
-  { label:'shopify · list_orders', note:'Allowed read' },
-  { label:'gmail · send_email × 4', note:'Stopped to ask' },
+  { label:'shopify · list_orders', note:'Kept going' },
+  { label:'gmail · send_email × 4', note:'Paused to ask' },
 ]
 
 function AgentMock() {
@@ -1120,7 +1123,7 @@ function AgentMock() {
           style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}>
           Deny
         </span>
-        <span className="font-mono text-[10.5px] text-white/35">Dara asked · Dara decides</span>
+        <span className="font-mono text-[10.5px] text-white/35">Dara asked · Dara approves</span>
       </div>
     </div>
   )
@@ -1139,17 +1142,17 @@ function AgentBand() {
         <div className="order-1 lg:order-2">
           <Reveal>
             <div>
-              <span className={`mb-5 block ${EYEBROW}`}>Deployed agents</span>
+              <span className={`mb-5 block ${EYEBROW}`}>Agents</span>
               <h2 className={H2} style={H2_STYLE}>
-                Your team asks.<br />You still decide.
+                You build it once,<br />the team runs it.
               </h2>
+              {/* One sentence, because the mock carries the whole scene: the channel, the
+                  teammate, the question, the operation that ran, the one that paused, the
+                  buttons. The only thing a picture of one question in one channel cannot
+                  say is how far this reaches. */}
               <p className={`mt-6 max-w-md ${LEAD}`}>
-                Put a workflow in Slack. Teammates ask in the channel. Allowed reads answer on
-                their own. Before it creates, sends, deletes, cancels, or refunds, it stops,
-                explains why, and asks the person who asked.
-              </p>
-              <p className="mt-5 max-w-md font-mono text-[11.5px] leading-relaxed text-white/35">
-                No Fernary account · no shared connections
+                Deploy any workflow you built to your whole team, across every app you
+                connected.
               </p>
             </div>
           </Reveal>
@@ -1520,10 +1523,6 @@ const HERO_ACCENT = {
   color: 'transparent',
 } as const
 
-// Three positive trust claims: how it starts, when it becomes live, and where
-// human judgement stays in control.
-const HERO_PROOF = ['Built from one sentence', 'Draft until you publish', 'Approval before action']
-
 // ─── Nav ──────────────────────────────────────────────────────
 
 // Sections of this page, as opposed to other pages. Keeping the two kinds in
@@ -1827,10 +1826,6 @@ export function LandingPage() {
           style={{ background:'linear-gradient(to bottom, rgba(5,5,7,0.2), rgba(5,5,7,0.6) 60%, #050507)' }} />
 
         <div className="relative mx-auto max-w-6xl px-6 pb-14 pt-20 sm:pt-24 lg:pb-16 lg:pt-32">
-          <p className="rise-in mb-6 font-mono text-[11px] uppercase tracking-[0.15em] text-white/45"
-            style={{ animationDelay:'20ms' }}>
-            AI workflow automation for recurring work
-          </p>
           <h1 className="max-w-5xl text-[clamp(2.45rem,7vw,4.6rem)] font-bold"
             style={{ lineHeight:1.02, letterSpacing:'-0.035em' }}>
             <span className="rise-in block" style={{ animationDelay:'80ms' }}>{HERO_LEAD}</span>{' '}
@@ -1858,14 +1853,6 @@ export function LandingPage() {
               </a>
               <span className="w-full pt-1 text-[12px] text-white/30">Free plan · no card required</span>
             </div>
-            <ul className="rise-in mt-6 flex flex-wrap items-center gap-x-5 gap-y-2" style={{ animationDelay:'400ms' }}>
-              {HERO_PROOF.map((claim) => (
-                <li key={claim} className="flex items-center gap-1.5 text-[12.5px] text-white/45">
-                  <span aria-hidden style={{ color:ACCENT }}><Glyph d={CHECK_PATH} size={11} /></span>
-                  {claim}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
