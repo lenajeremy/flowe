@@ -44,6 +44,7 @@ import { TypeformNode }         from './TypeformNode'
 import { CalendlyNode }         from './CalendlyNode'
 import { DropboxNode }          from './DropboxNode'
 import { NetlifyNode }          from './NetlifyNode'
+import { VercelNode }           from './VercelNode'
 import { SupabaseNode }         from './SupabaseNode'
 import { GumroadNode }          from './GumroadNode'
 import { GoogleSearchConsoleNode } from './GoogleSearchConsoleNode'
@@ -100,6 +101,7 @@ export const nodeTypes = {
   calendly:         CalendlyNode,
   dropbox:          DropboxNode,
   netlify:          NetlifyNode,
+  vercel:           VercelNode,
   supabase:         SupabaseNode,
   gumroad:          GumroadNode,
   googlesearchconsole: GoogleSearchConsoleNode,

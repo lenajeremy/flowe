@@ -93,6 +93,7 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   calendly:         logo('calendly'),
   dropbox:          logo('dropbox'),
   netlify:          logo('netlify'),
+  vercel:           logo('vercel'),
   supabase:         logo('supabase'),
   gumroad:          logo('gumroad'),
   googlesearchconsole: logo('googlesearchconsole'),

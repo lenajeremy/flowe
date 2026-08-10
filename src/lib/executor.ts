@@ -398,6 +398,7 @@ async function executeNode(
     case 'calendly':
     case 'dropbox':
     case 'netlify':
+    case 'vercel':
     case 'supabase':
     case 'gumroad':
     case 'googlesearchconsole':

@@ -215,7 +215,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -4163,6 +4163,220 @@ export function NetlifyConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
           <NumField label="Page (optional)" field="netlifyPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={1} />
           <NumField label="Per page (optional)" field="netlifyPerPage" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={50} />
         </>)}
+      </IntegrationSection>
+  )
+}
+
+export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_deployments'
+
+  // Which fields an op actually reads. Grouped rather than tested inline so the
+  // JSX below stays a list of fields instead of a list of conditions.
+  const needsProject = [
+    'get_runtime_logs', 'get_project', 'update_project', 'promote_deployment',
+    'rollback_deployment', 'list_env_vars', 'get_env_var_value', 'create_env_var',
+    'update_env_var', 'delete_env_var', 'list_project_domains', 'add_project_domain',
+    'verify_project_domain', 'remove_project_domain',
+  ].includes(op)
+  const needsDeployment = [
+    'get_deployment', 'get_deployment_events', 'get_runtime_logs', 'redeploy',
+    'cancel_deployment', 'delete_deployment', 'list_deployment_aliases',
+    'assign_alias', 'promote_deployment', 'rollback_deployment',
+  ].includes(op)
+  const envOp = op.includes('env_var')
+  const envWriteOp = ['create_env_var', 'update_env_var'].includes(op)
+  const domainOp = ['get_domain', 'add_project_domain', 'verify_project_domain',
+    'remove_project_domain'].includes(op)
+  const changesProduction = ['promote_deployment', 'rollback_deployment'].includes(op)
+
+  return (
+      <IntegrationSection
+        provider="vercel" label="Vercel" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+        defaultOp="list_deployments"
+        ops={[
+          { value: 'list_deployments', label: 'List Deployments' },
+          { value: 'get_deployment', label: 'Get Deployment' },
+          { value: 'get_deployment_events', label: 'Get Build Logs' },
+          { value: 'get_runtime_logs', label: 'Get Runtime Logs' },
+          { value: 'redeploy', label: 'Redeploy' },
+          { value: 'cancel_deployment', label: 'Cancel Deployment' },
+          { value: 'delete_deployment', label: 'Delete Deployment' },
+          { value: 'list_deployment_aliases', label: 'List Deployment Aliases' },
+          { value: 'assign_alias', label: 'Assign Alias' },
+          { value: 'list_projects', label: 'List Projects' },
+          { value: 'get_project', label: 'Get Project' },
+          { value: 'update_project', label: 'Update Project' },
+          { value: 'promote_deployment', label: 'Promote to Production' },
+          { value: 'rollback_deployment', label: 'Roll Back Production' },
+          { value: 'list_env_vars', label: 'List Env Vars' },
+          { value: 'get_env_var_value', label: 'Get Env Var Value' },
+          { value: 'create_env_var', label: 'Create Env Var' },
+          { value: 'update_env_var', label: 'Update Env Var' },
+          { value: 'delete_env_var', label: 'Delete Env Var' },
+          { value: 'list_domains', label: 'List Domains' },
+          { value: 'get_domain', label: 'Get Domain' },
+          { value: 'list_project_domains', label: 'List Project Domains' },
+          { value: 'add_project_domain', label: 'Add Project Domain' },
+          { value: 'verify_project_domain', label: 'Verify Project Domain' },
+          { value: 'remove_project_domain', label: 'Remove Project Domain' },
+          { value: 'list_teams', label: 'List Teams' },
+          { value: 'get_current_user', label: 'Get Current User' },
+        ]}
+        tokenPlaceholder="Vercel token"
+        hideManual
+      >
+        {/* Team first, and on every op, because a missing team is the failure
+            people actually hit: the request silently runs against the token
+            owner's personal scope and a team project comes back 404. */}
+        {op !== 'get_current_user' && (<>
+          <TextField label="Team ID (optional)" field="vercelTeamId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="team_… — from List Teams" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Leave blank only for a personal account. For anything owned by a team this is
+            required, and without it Vercel answers{' '}
+            <span className="text-[var(--color-muted)]">404</span> as though the project did
+            not exist.
+          </p>
+        </>)}
+
+        {needsProject && (
+          <TextField label="Project" field="vercelProjectId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="project name or ID" />
+        )}
+        {op === 'list_deployments' && (
+          <TextField label="Project (optional)" field="vercelProjectId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="all projects when blank" />
+        )}
+
+        {needsDeployment && (
+          <TextField label="Deployment" field="vercelDeploymentId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="dpl_… or a deployment URL" />
+        )}
+        {changesProduction && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            This changes what production serves, immediately. Put a Human Approval step in
+            front of it unless the workflow is meant to ship unattended.
+          </p>
+        )}
+        {op === 'redeploy' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Copies every setting from that deployment and forces a fresh build, so it never
+            silently returns the existing one.
+          </p>
+        )}
+        {op === 'get_deployment_events' && (<>
+          <TextField label="Build ID (optional)" field="vercelBuildId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="narrows to one build" />
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Build logs, kept from the end — a failed build is mostly install noise followed by
+            the error. For per-request logs use Get Runtime Logs.
+          </p>
+        </>)}
+
+        {op === 'list_deployments' && (<>
+          <SelectField label="Environment" field="vercelTarget" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Any' },
+              { value: 'production', label: 'Production' },
+              { value: 'preview', label: 'Preview' },
+              { value: 'development', label: 'Development' },
+            ]} />
+          <SelectField label="State" field="vercelState" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Any' },
+              { value: 'READY', label: 'Ready' },
+              { value: 'ERROR', label: 'Error' },
+              { value: 'BUILDING', label: 'Building' },
+              { value: 'QUEUED', label: 'Queued' },
+              { value: 'INITIALIZING', label: 'Initializing' },
+              { value: 'CANCELED', label: 'Canceled' },
+              { value: 'BLOCKED', label: 'Blocked' },
+            ]} />
+          <TextField label="Branch (optional)" field="vercelBranch" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="main" />
+        </>)}
+
+        {op === 'redeploy' && (
+          <SelectField label="Environment (optional)" field="vercelTarget" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback=""
+            options={[
+              { value: '', label: 'Same as the original' },
+              { value: 'production', label: 'Production' },
+              { value: 'preview', label: 'Preview' },
+            ]} />
+        )}
+
+        {op === 'assign_alias' && (
+          <TextField label="Alias" field="vercelAlias" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="staging.example.com" />
+        )}
+
+        {envOp && op !== 'list_env_vars' && (
+          <TextField label="Variable ID" field="vercelEnvVarId" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="from List Env Vars — not the name" />
+        )}
+        {op === 'get_env_var_value' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+            Returns the decrypted secret into the run output, where it is stored with the run.
+            List Env Vars returns values encrypted and is enough for most checks.
+          </p>
+        )}
+        {envWriteOp && (<>
+          <TextField label={op === 'create_env_var' ? 'Name' : 'Name (optional)'} field="vercelEnvKey"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="API_URL" />
+          <TextField label={op === 'create_env_var' ? 'Value' : 'Value (optional)'} field="vercelEnvValue"
+            data={data} nodeId={nodeId} updateNodeData={updateNodeData} placeholder="{{prev-node.output}}" />
+          <SelectField label="Applies to" field="vercelEnvTarget" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback={op === 'create_env_var' ? 'production' : ''}
+            options={[
+              ...(op === 'update_env_var' ? [{ value: '', label: 'Leave unchanged' }] : []),
+              { value: 'production', label: 'Production' },
+              { value: 'preview', label: 'Preview' },
+              { value: 'development', label: 'Development' },
+              { value: 'production,preview', label: 'Production + Preview' },
+              { value: 'production,preview,development', label: 'All environments' },
+            ]} />
+          <SelectField label="Type" field="vercelEnvType" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="encrypted"
+            options={[
+              { value: 'encrypted', label: 'Encrypted' },
+              { value: 'plain', label: 'Plain' },
+              { value: 'sensitive', label: 'Sensitive (write-only)' },
+            ]} />
+        </>)}
+        {op === 'update_env_var' && (
+          <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+            Only the fields you fill in are sent, so anything left blank keeps its current value.
+          </p>
+        )}
+
+        {domainOp && (
+          <TextField label="Domain" field="vercelDomain" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="www.example.com" />
+        )}
+        {op === 'add_project_domain' && (<>
+          <TextField label="Git branch (optional)" field="vercelGitBranch" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="locks the domain to one branch" />
+          <TextField label="Redirect to (optional)" field="vercelRedirect" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="example.com" />
+        </>)}
+
+        {op === 'update_project' && (
+          <AreaField label="Settings" field="vercelProjectConfig" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder='{"framework": "nextjs", "buildCommand": "pnpm build"}' />
+        )}
+
+        {op === 'list_projects' && (
+          <TextField label="Search (optional)" field="vercelSearch" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} placeholder="filter by name" />
+        )}
+
+        {(op.startsWith('list') || op === 'get_deployment_events') && (
+          <NumField label="Limit" field="vercelLimit" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback={op === 'get_deployment_events' ? 100 : 20} />
+        )}
       </IntegrationSection>
   )
 }

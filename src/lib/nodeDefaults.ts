@@ -111,6 +111,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'supabase', label: 'Supabase', integrationOp: 'list_projects' }
     case 'netlify':
       return { nodeType: 'netlify', label: 'Netlify', integrationOp: 'list_sites' }
+    case 'vercel':
+      return { nodeType: 'vercel', label: 'Vercel', integrationOp: 'list_deployments', vercelLimit: 20 }
     case 'dropbox':
       return { nodeType: 'dropbox', label: 'Dropbox', integrationOp: 'list_folder', dropboxLimit: 100 }
     case 'typeform':

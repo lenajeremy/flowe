@@ -51,6 +51,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   calendly:         'var(--na-calendly)',
   dropbox:          'var(--na-dropbox)',
   netlify:          'var(--na-netlify)',
+  vercel:           'var(--na-vercel)',
   supabase:         'var(--na-supabase)',
   gumroad:          'var(--na-gumroad)',
   googlesearchconsole: 'var(--na-googlesearchconsole)',
@@ -110,6 +111,9 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   calendly:         'M11.5 4.5A4 4 0 108 12.5',
   dropbox:          'M5 2.5L2 5l3 2.5L8 5zM11 2.5L8 5l3 2.5L14 5zM5 8.5L2 11l3 2.5L8 11zM11 8.5L8 11l3 2.5L14 11z',
   netlify:          'M8 2l5.5 6L8 14 2.5 8z',
+  // Vercel's mark is a single upward triangle. Only used as the stroke fallback
+  // when the fetched logo fails; the real logo comes from logo.dev.
+  vercel:           'M8 2.5l5.5 10.5h-11z',
   supabase:         'M8.5 2L4 9h4l-.5 5L12 7H8z',
   gumroad:          'M11 6a3 3 0 10-3 5h3V8.5H9.5',
   googlesearchconsole: 'M7 3a4 4 0 104 4M10 10l3.5 3.5M2.5 13.5h5',
@@ -166,6 +170,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   calendly:         'Calendly',
   dropbox:          'Dropbox',
   netlify:          'Netlify',
+  vercel:           'Vercel',
   supabase:         'Supabase',
   gumroad:          'Gumroad',
   googlesearchconsole: 'Search Console',
@@ -222,6 +227,7 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   calendly:         'Scheduling & bookings',
   dropbox:          'Files & sharing',
   netlify:          'Sites & deploys',
+  vercel:           'Deployments & logs',
   supabase:         'Projects & database',
   gumroad:          'Products & sales',
   googlesearchconsole: 'Search performance',
