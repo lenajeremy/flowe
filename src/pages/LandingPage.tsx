@@ -497,14 +497,18 @@ const NODE_TINTS: Partial<Record<NodeType, string>> = {
   typeform:'#e5e4e5', calendly:'#4c9aff', dropbox:'#3d8bff', netlify:'#32e6e2', supabase:'#3ecf8e', gumroad:'#ff90e8',
   googlesearchconsole:'#4c9aff', googlecontacts:'#4c9aff',
   hubspot:'#ff7a59', front:'#e5e4e5',
+  monday:'#ffcb55', asana:'#ff8c8c',
 }
 
 // ─── Integrations — the tools Fernary can drive, one quiet wall ──
+// Kept in step with the server: every entry here has a node in the executor and
+// an op enum in the AI catalogue, so the count below is the real one.
 const INTEGRATIONS: NodeType[] = [
   'gmail', 'googlecalendar', 'googledrive', 'googledocs', 'googlesheets', 'googleslides',
   'googleforms', 'googlemeet', 'googlechat', 'googletasks', 'googlekeep', 'outlook',
   'slack', 'notion', 'linear', 'github', 'gitlab', 'jira',
   'confluence', 'bitbucket', 'stripe', 'shopify', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'typeform', 'calendly', 'dropbox', 'netlify', 'supabase', 'gumroad', 'googlesearchconsole', 'googlecontacts', 'hubspot', 'front',
+  'monday', 'asana',
 ]
 
 // Sixteen familiar tools trigger recognition faster than a 38-logo wall. The
@@ -557,9 +561,10 @@ function Integrations() {
           </h2>
           <div className="flex flex-col gap-6 lg:pt-2">
             <p className={LEAD}>
-              {INTEGRATIONS.length} connected apps and more than 800 read-and-write actions.
+              {INTEGRATIONS.length} connected apps and more than 850 read-and-write actions.
               One workflow can read a Stripe charge, update a Sheet, file a Linear issue,
-              and post the result to Slack. Connect an account once, then use it anywhere.
+              and post the result to Slack. Connect an account once, then use it anywhere —
+              or share the connection with your team.
             </p>
             <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-white/35">
               A few you can put to work today
@@ -587,6 +592,129 @@ function Integrations() {
           </a>
         </div>
       </Reveal>
+    </section>
+  )
+}
+
+// ─── Triggers — the workflow starts because something happened.
+// The interesting half is the filter: a run that never happens costs nothing, so
+// the mock shows one event being dropped at the trigger rather than branched away
+// inside a run. Events arrive on a loop; reduced motion gets the settled feed.
+const TRIGGER_TINT = '#F5A524'
+
+const TRIGGER_EVENTS = [
+  { ref:'#412', branch:'main', ran:true },
+  { ref:'#413', branch:'dev', ran:false },
+  { ref:'#414', branch:'main', ran:true },
+]
+
+function TriggerMock() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+  const [shown, setShown] = useState(() => (reducedMotion() ? TRIGGER_EVENTS.length : 0))
+  const [flat, setFlat] = useState(false)
+  const [poses] = useState(() => finePointer() && !reducedMotion())
+
+  useEffect(() => {
+    if (!inView || reducedMotion()) return
+    let i = 0
+    const id = setInterval(() => {
+      i += 1
+      // Fills the feed, holds it two beats, then starts over
+      setShown(Math.min(i % (TRIGGER_EVENTS.length + 3), TRIGGER_EVENTS.length))
+    }, 1100)
+    return () => clearInterval(id)
+  }, [inView])
+
+  return (
+    <div ref={ref}
+      onMouseEnter={() => setFlat(true)}
+      onMouseLeave={() => setFlat(false)}
+      className="rounded-2xl p-5 sm:p-6"
+      style={{
+        border:'1px solid rgba(255,255,255,0.08)', background:'#0a0a0d', boxShadow:'0 40px 120px rgba(0,0,0,0.5)',
+        transform: poses && !flat ? 'perspective(1400px) rotateY(-5deg) rotateX(2deg)' : 'none',
+        transition:'transform 600ms var(--ease-out)',
+      }}>
+      <div className="mb-4 flex items-center gap-2.5 border-b border-white/[0.06] pb-4">
+        <span className="flex h-4 w-4 items-center justify-center">
+          <IntegrationLogo type="github" size={16} onDark />
+        </span>
+        <span className="text-[12px] font-semibold text-white/80">Pull request opened</span>
+        <span className="ml-auto flex items-center gap-1.5 font-mono text-[10.5px] text-white/35">
+          <span className="pulse-dot" style={{ width:6, height:6, borderRadius:999, background:TRIGGER_TINT }} />
+          Listening
+        </span>
+      </div>
+
+      {/* The filter is the point: stated once, at the trigger */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-white/30">Only if</span>
+        <span className="rounded-full px-2.5 py-1 font-mono text-[10.5px] text-white"
+          style={{
+            border:`1px solid color-mix(in srgb, ${TRIGGER_TINT} 45%, transparent)`,
+            background:`color-mix(in srgb, ${TRIGGER_TINT} 10%, transparent)`,
+          }}>
+          target branch = main
+        </span>
+      </div>
+
+      <div className="overflow-hidden rounded-xl" style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.02)' }}>
+        {TRIGGER_EVENTS.map((e, i) => {
+          const on = i < shown
+          return (
+            <div key={e.ref} className="flex items-center gap-3 px-3.5 py-2.5"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                opacity: on ? 1 : 0,
+                transform: on ? 'none' : 'translateY(6px)',
+                transition:'opacity 420ms var(--ease-out), transform 420ms var(--ease-out)',
+              }}>
+              <span className="font-mono text-[11.5px] text-white/45">{e.ref}</span>
+              <span className="font-mono text-[11px] text-white/30">→ {e.branch}</span>
+              {e.ran ? (
+                <span className="ml-auto flex items-center gap-1.5 font-mono text-[11px] text-white">
+                  <svg width="12" height="12" viewBox="0 0 13 13" fill="none" aria-hidden>
+                    <path d="M2.5 7l3 3 5-6.5" stroke="#3dd68c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Ran
+                </span>
+              ) : (
+                <span className="ml-auto font-mono text-[11px] text-white/30">Filtered out</span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-4 font-mono text-[10.5px] text-white/35">
+        Dropped at the trigger · a run that never starts costs nothing
+      </p>
+    </div>
+  )
+}
+
+function TriggerBand() {
+  return (
+    <section id="triggers" className={`${SECTION} scroll-mt-20`} style={RULE}>
+      <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <Reveal>
+          <div>
+            <span className={`mb-5 block ${EYEBROW}`}>Triggers</span>
+            <h2 className={H2} style={H2_STYLE}>
+              It starts when<br />the work appears.
+            </h2>
+            <p className={`mt-6 max-w-md ${LEAD}`}>
+              A clock is one way in. A workflow can also start the moment a pull request
+              opens, an issue is filed, a task is completed, or a board changes — 22 events
+              across GitHub, GitLab, Asana and monday.com. Narrow it with a filter and the
+              runs you didn&rsquo;t want never happen.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={120} y={34}>
+          <TriggerMock />
+        </Reveal>
+      </div>
     </section>
   )
 }
@@ -878,12 +1006,163 @@ function MemoryBand() {
   )
 }
 
+// ─── Deployed agents — the workflow, answering in Slack.
+// Framed around authority rather than conversation: per BRAND.md §9 a chat window
+// is not the promise. What the mock has to show is the split the deployer
+// configured — the read happens on its own, the write stops and waits for the
+// person who asked. Steps arrive on a loop; reduced motion gets the settled state
+// with the approval already pending.
+const SLACK_TINT = '#36c5f0'
+const WAIT_TINT = '#F5A524'
+
+const AGENT_STEPS = [
+  { label:'shopify · list_orders', note:'Allowed to read' },
+  { label:'gmail · send_email × 4', note:'Needs approval' },
+]
+
+function AgentMock() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+  // 0 reading · 1 read done, write pending · 2 the gate is up (then holds)
+  //
+  // The gate is the whole claim, so it holds for most of the loop: someone
+  // scrolling past should land on the pending state, not on a half-built card.
+  const [step, setStep] = useState(() => (reducedMotion() ? 2 : 0))
+  const [flat, setFlat] = useState(false)
+  const [poses] = useState(() => finePointer() && !reducedMotion())
+
+  useEffect(() => {
+    if (!inView || reducedMotion()) return
+    let i = 0
+    const id = setInterval(() => {
+      i += 1
+      // Two quick phases, then seven beats parked on the approval
+      setStep(Math.min(i % 9, 2))
+    }, 1150)
+    return () => clearInterval(id)
+  }, [inView])
+
+  return (
+    <div ref={ref}
+      onMouseEnter={() => setFlat(true)}
+      onMouseLeave={() => setFlat(false)}
+      className="rounded-2xl p-5 sm:p-6"
+      style={{
+        border:'1px solid rgba(255,255,255,0.08)', background:'#0a0a0d', boxShadow:'0 40px 120px rgba(0,0,0,0.5)',
+        // Leans opposite the chat mock it sits across the page from
+        transform: poses && !flat ? 'perspective(1400px) rotateY(5deg) rotateX(2deg)' : 'none',
+        transition:'transform 600ms var(--ease-out)',
+      }}>
+      <div className="mb-4 flex items-center gap-2.5 border-b border-white/[0.06] pb-4">
+        <span className="flex h-4 w-4 items-center justify-center">
+          <IntegrationLogo type="slack" size={16} onDark />
+        </span>
+        <span className="font-mono text-[12px] font-semibold text-white/80">#ops</span>
+        <span className="ml-auto font-mono text-[10.5px] text-white/35">Order chaser</span>
+      </div>
+
+      {/* A teammate asks — no Fernary account, no access to the connections */}
+      <div className="mb-4 flex items-start gap-2.5">
+        <span className="mt-px flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md font-mono text-[10.5px] font-semibold text-white/70"
+          style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.09)' }}>
+          D
+        </span>
+        <p className="text-[13px] leading-relaxed text-white/70">
+          <span className="font-semibold" style={{ color:SLACK_TINT }}>@Fernary</span>{' '}
+          which orders haven&rsquo;t shipped yet?
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-xl" style={{ border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.02)' }}>
+        {AGENT_STEPS.map((s, i) => {
+          // The read is on screen from the start; the write is what arrives
+          const on = i === 0 || step >= 1
+          const done = i === 0 && step >= 1
+          const running = i === 0 && step === 0
+          return (
+            <div key={s.label} className="flex items-center gap-3 px-3.5 py-2.5"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                background: i === 1 && on ? `color-mix(in srgb, ${WAIT_TINT} 6%, transparent)` : 'transparent',
+                opacity: on ? 1 : 0,
+                transform: on ? 'none' : 'translateY(6px)',
+                transition:'opacity 420ms var(--ease-out), transform 420ms var(--ease-out), background 420ms var(--ease-out)',
+              }}>
+              <span className="font-mono text-[11.5px] text-white/60">{s.label}</span>
+              <span className="ml-auto flex items-center gap-1.5 font-mono text-[10.5px]"
+                style={{ color: i === 1 ? WAIT_TINT : 'rgba(255,255,255,0.4)' }}>
+                {done && (
+                  <svg width="12" height="12" viewBox="0 0 13 13" fill="none" aria-hidden>
+                    <path d="M2.5 7l3 3 5-6.5" stroke="#3dd68c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+                {running && <span className="pulse-dot" style={{ width:6, height:6, borderRadius:999, background:ACCENT }} />}
+                {i === 1 && <span className="pulse-dot" style={{ width:6, height:6, borderRadius:999, background:WAIT_TINT }} />}
+                {s.note}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* The gate, in Slack, aimed at the person who asked — not at the owner */}
+      <div className="mt-4 flex flex-wrap items-center gap-2.5"
+        style={{
+          opacity: step >= 2 ? 1 : 0,
+          transition:'opacity 500ms var(--ease-out)',
+        }}>
+        <span className="rounded-md px-3 py-1.5 text-[11.5px] font-semibold text-black" style={{ background:'#fff' }}>
+          Approve
+        </span>
+        <span className="rounded-md px-3 py-1.5 text-[11.5px] font-medium text-white/60"
+          style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}>
+          Deny
+        </span>
+        <span className="font-mono text-[10.5px] text-white/35">Dara asked · Dara decides</span>
+      </div>
+    </div>
+  )
+}
+
+function AgentBand() {
+  return (
+    <section id="agents" className={`${SECTION} scroll-mt-20`} style={RULE}>
+      <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center lg:gap-16">
+        {/* Mock second on a phone so the claim is read before the evidence */}
+        <div className="order-2 lg:order-1">
+          <Reveal delay={120} y={34}>
+            <AgentMock />
+          </Reveal>
+        </div>
+        <div className="order-1 lg:order-2">
+          <Reveal>
+            <div>
+              <span className={`mb-5 block ${EYEBROW}`}>Deployed agents</span>
+              <h2 className={H2} style={H2_STYLE}>
+                Your team asks.<br />You still decide.
+              </h2>
+              <p className={`mt-6 max-w-md ${LEAD}`}>
+                Put a workflow into a Slack channel and your teammates can put it to work by
+                mentioning it — with no Fernary account and no access to your connected
+                accounts. You choose step by step what it may read on its own and what it may
+                never do unasked. Every write waits for a yes from the person who asked for it.
+              </p>
+              <p className="mt-5 max-w-md font-mono text-[11.5px] leading-relaxed text-white/35">
+                Revoke a deployment and it stops answering, but the record of what it did stays.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Capabilities — the breadth, at a glance. Each icon wears the
 // accent of the node that owns the capability inside the app.
 const CAPABILITIES: Array<{ icon: string; tint: string; title: string; body: string }> = [
   { icon: NODE_ICON_PATHS.llm, tint:'#70f17b', title:'Any frontier model', body:'Claude, GPT, Gemini and Grok. Choose per step, switch whenever.' },
-  { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Reads the live web', body:'Steps search and read today’s pages, so an answer is never last month’s.' },
-  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Runs on your clock', body:'On a schedule you set, or the moment a webhook hits it.' },
+  { icon: NODE_ICON_PATHS.httpRequest, tint:'#51b4fb', title:'Researches the web', body:'A step searches, reads, and follows the trail until it has the answer.' },
+  { icon: NODE_ICON_PATHS.scheduledTrigger, tint:'#F5A524', title:'Runs on your clock', body:'On a schedule, on a webhook, or when a connected app says something changed.' },
   { icon: NODE_ICON_PATHS.humanApproval, tint:'#f94b4b', title:'Waits for your yes', body:'One tap approves. Anything you ignore simply never ships.' },
   { icon: NODE_ICON_PATHS.branch, tint:'#64f4bf', title:'Branches and loops', body:'Real control flow. Fork on a condition, iterate across a list.' },
   { icon: GAUGE_PATH, tint:'#0FA3A3', title:'It stops, it doesn’t bill', body:'Every charge itemised, and no overage, ever. It stops instead.' },
@@ -1249,11 +1528,19 @@ const HERO_PROOF = ['Built from one sentence', 'Draft until you publish', 'Appro
 // separate groups is the whole point of the layout below: the middle group
 // scrolls, the right group navigates, and you can tell which is which before
 // clicking.
-const NAV_SECTIONS = [
-  { id: 'how-it-works', label: 'How it works' },
-  { id: 'examples', label: 'Examples' },
-  { id: 'integrations', label: 'Integrations' },
+// Every anchored section, in the order it appears, so the header, the footer and
+// scrolling all agree and a renamed id cannot go stale in one of the three.
+// `topBar: false` keeps an entry out of the header: four links is what fits
+// beside the logo and the account actions at the md breakpoint.
+const NAV_SECTIONS_ALL = [
+  { id: 'how-it-works', label: 'How it works', topBar: true },
+  { id: 'triggers', label: 'Triggers', topBar: false },
+  { id: 'integrations', label: 'Integrations', topBar: true },
+  { id: 'examples', label: 'Examples', topBar: true },
+  { id: 'agents', label: 'Agents', topBar: true },
 ]
+
+const NAV_SECTIONS = NAV_SECTIONS_ALL.filter((s) => s.topBar)
 
 export function Nav({ isAuthed }: { isAuthed?: boolean }) {
   const navigate = useNavigate()
@@ -1394,11 +1681,24 @@ function FooterLink({ children, href, onClick }: {
 
 export function Footer({ onGetStarted, isAuthed }: { onGetStarted: () => void; isAuthed?: boolean }) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   // Real hrefs so the links are crawlable and middle-clickable; the click
   // handler keeps the SPA from doing a full reload.
   const go = (to: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
     navigate(to)
+  }
+
+  // The Product column points at sections of the landing page, but this footer is
+  // also rendered on /pricing, where a bare "#id" only rewrote the hash and
+  // scrolled nowhere. Same routing the nav does.
+  const goToSection = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    if (pathname === '/') {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    navigate('/', { state: { scrollTo: id } })
   }
 
   return (
@@ -1424,9 +1724,11 @@ export function Footer({ onGetStarted, isAuthed }: { onGetStarted: () => void; i
           </div>
 
           <FooterCol title="Product">
-            <FooterLink href="#how-it-works">How it works</FooterLink>
-            <FooterLink href="#examples">Examples</FooterLink>
-            <FooterLink href="#integrations">Integrations</FooterLink>
+            {NAV_SECTIONS_ALL.map((s) => (
+              <FooterLink key={s.id} href={`/#${s.id}`} onClick={goToSection(s.id)}>
+                {s.label}
+              </FooterLink>
+            ))}
             <FooterLink href="/pricing" onClick={go('/pricing')}>Pricing</FooterLink>
           </FooterCol>
 
@@ -1467,14 +1769,26 @@ export function LandingPage() {
   const [creating, setCreating] = useState(false)
 
   // A section link clicked from /pricing routes here and asks for that section.
-  // Scrolling has to wait for this page to actually render the target.
+  // Scrolling has to wait for this page to actually render the target — and then
+  // has to be re-aimed, because the product shots above it are lazy and have no
+  // intrinsic size, so they take their height while the smooth scroll is already
+  // in flight and push the target below where the animation was headed. One shot
+  // at it left "Examples" stranded thousands of pixels short.
   useEffect(() => {
     const target = (location.state as { scrollTo?: string } | null)?.scrollTo
     if (!target) return
-    const frame = requestAnimationFrame(() => {
-      document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
-    })
-    return () => cancelAnimationFrame(frame)
+    let frame = 0
+    const aim = () => {
+      frame = requestAnimationFrame(() => {
+        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
+      })
+    }
+    aim()
+    const timers = [400, 1000, 1800].map((delay) => window.setTimeout(aim, delay))
+    return () => {
+      cancelAnimationFrame(frame)
+      timers.forEach(clearTimeout)
+    }
   }, [location.state])
 
   async function handleCreate() {
@@ -1526,8 +1840,9 @@ export function LandingPage() {
           <div className="mt-8 max-w-2xl">
             <p className="rise-in max-w-xl text-[16px] leading-relaxed text-white/60 sm:text-[18px]"
               style={{ animationDelay:'240ms' }}>
-              Describe one recurring job. Fernary builds the workflow, runs it on your
-              schedule, and waits for your approval wherever judgement matters.
+              Describe one recurring job. Fernary builds the workflow, runs it on a schedule
+              or the moment something happens in your tools, and waits for your approval
+              wherever judgement matters.
             </p>
             <div className="rise-in mt-7 flex flex-wrap items-center gap-3" style={{ animationDelay:'320ms' }}>
               <button onClick={handleCreate} disabled={creating}
@@ -1593,11 +1908,17 @@ export function LandingPage() {
         shot="/shot-approve.jpg" alt="A run paused for human approval"
       />
 
+      {/* ── Triggers — what starts a run, besides the clock ── */}
+      <TriggerBand />
+
       {/* ── Integrations — the tools Fernary drives ── */}
       <Integrations />
 
       {/* ── Example work, by role — prompt to outcome ── */}
       <DayInTheLife onGetStarted={handleCreate} />
+
+      {/* ── Deployed agents — the workflow, answering in Slack ── */}
+      <AgentBand />
 
       {/* ── Build by chat — the AI builder ── */}
       <ChatBand />
