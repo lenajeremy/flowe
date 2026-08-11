@@ -48,6 +48,7 @@ export type NodeType =
   | 'calendly'
   | 'dropbox'
   | 'netlify'
+  | 'vercel'
   | 'supabase'
   | 'gumroad'
   | 'googlesearchconsole'
@@ -793,6 +794,33 @@ export type FlowNodeData = {
   netlifyLogType?: string
   netlifyPage?: number    // 1-based
   netlifyPerPage?: number    // capped at 100
+
+  // vercel
+  // Team scoping is sent on every call. Without it the token resolves to its
+  // owner's personal scope and a team project returns 404, not a 403.
+  vercelTeamId?: string
+  vercelTeamSlug?: string
+  vercelProjectId?: string    // id OR name
+  vercelDeploymentId?: string    // id OR a deployment URL
+  vercelName?: string    // project name; redeploy reads it back when unset
+  vercelTarget?: string    // production|preview|development
+  vercelState?: string    // READY, ERROR, BUILDING, … (CSV allowed)
+  vercelBranch?: string
+  vercelSha?: string
+  vercelAlias?: string
+  vercelDomain?: string
+  vercelRedirect?: string
+  vercelGitBranch?: string    // branch-scoped env var, or a branch-locked domain
+  vercelEnvKey?: string
+  vercelEnvValue?: string
+  vercelEnvVarId?: string    // from list_env_vars
+  vercelEnvTarget?: string    // CSV: production,preview,development
+  vercelEnvType?: string    // encrypted|plain|sensitive
+  vercelProjectConfig?: string    // raw JSON body for update_project
+  vercelUrl?: string
+  vercelSearch?: string
+  vercelBuildId?: string    // narrows build logs to one build
+  vercelLimit?: number
 
   // supabase
   supabaseAllowWrite?: string    // "true" is required before run_sql will execute

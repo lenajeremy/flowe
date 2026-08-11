@@ -19,7 +19,7 @@ import {
   GoogleDriveConfig, GoogleDocsConfig, GoogleSheetsConfig,
   JiraConfig, ConfluenceConfig, BitbucketConfig,
   GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
-  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, MondayConfig, AsanaConfig, TypeformConfig, CalendlyConfig, DropboxConfig, NetlifyConfig, SupabaseConfig, GumroadConfig,
+  GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, MondayConfig, AsanaConfig, TypeformConfig, CalendlyConfig, DropboxConfig, NetlifyConfig, VercelConfig, SupabaseConfig, GumroadConfig,
   GoogleSearchConsoleConfig, GoogleContactsConfig,
   HubSpotConfig, FrontConfig,
 } from '@/components/panels/integrationConfigs'
@@ -1008,6 +1008,7 @@ export function ConfigPanel() {
         {nodeType === 'calendly' && <CalendlyConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'dropbox' && <DropboxConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'netlify' && <NetlifyConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'vercel' && <VercelConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'supabase' && <SupabaseConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'gumroad' && <GumroadConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'googlesearchconsole' && <GoogleSearchConsoleConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
