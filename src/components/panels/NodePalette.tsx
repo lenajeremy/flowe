@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import type { NodeType } from '@/types/workflow'
-import { NODE_LABELS, NODE_ACCENT_HEX } from '@/lib/nodeColors'
+import { NODE_LABELS, NODE_ACCENT_HEX, NODE_DESCRIPTIONS } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { isIntegration } from '@/lib/integrationLogos'
 import { ChatPanel } from '@/components/panels/ChatPanel'
@@ -39,7 +39,7 @@ function PaletteItem({ type }: { type: NodeType }) {
       transition={{ type: 'spring', stiffness: 700, damping: 40 }}
       className="group flex cursor-grab items-center bg-[var(--color-surface)] transition-colors duration-150 hover:border-[var(--color-border2)] hover:bg-[var(--color-surface2)] active:cursor-grabbing"
       style={{
-        height: 46,
+        minHeight: 58,
         borderRadius: 10,
         gap: 10,
         padding: 8,
@@ -62,9 +62,14 @@ function PaletteItem({ type }: { type: NodeType }) {
       >
         {NODE_ICONS[type]}
       </div>
-      <span className="truncate text-[12px] font-medium leading-tight text-[var(--color-text)]">
-        {NODE_LABELS[type]}
-      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[12px] font-medium leading-tight text-[var(--color-text)]">
+          {NODE_LABELS[type]}
+        </p>
+        <p className="mt-1 line-clamp-2 text-[10px] leading-[13px] text-[var(--color-muted)]">
+          {NODE_DESCRIPTIONS[type]}
+        </p>
+      </div>
     </motion.div>
   )
 }
@@ -92,6 +97,7 @@ export function NodePalette({ onCollapse, tab, onTabChange }: {
         ...g,
         items: g.items.filter((t) =>
           NODE_LABELS[t].toLowerCase().includes(query) ||
+          NODE_DESCRIPTIONS[t].toLowerCase().includes(query) ||
           g.category.toLowerCase().includes(query)
         ),
       }))
