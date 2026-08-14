@@ -162,17 +162,21 @@ export function Canvas({ theme }: CanvasProps) {
     (_event: React.MouseEvent, edge: Edge) => {
       setSelectedEdgeId(edge.id)
       setSelectedNodeId(null)
+      setConfigPanelOpen(false)
     },
-    [setSelectedEdgeId, setSelectedNodeId],
+    [setSelectedEdgeId, setSelectedNodeId, setConfigPanelOpen],
   )
 
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: Node[] }) => {
       const ids = selectedNodes.map((n) => n.id)
       setSelectedNodeIds(ids)
-      if (ids.length !== 1) setSelectedNodeId(null)
+      if (ids.length !== 1) {
+        setSelectedNodeId(null)
+        setConfigPanelOpen(false)
+      }
     },
-    [setSelectedNodeIds, setSelectedNodeId],
+    [setSelectedNodeIds, setSelectedNodeId, setConfigPanelOpen],
   )
 
   const onPaneClick = useCallback(
@@ -180,8 +184,9 @@ export function Canvas({ theme }: CanvasProps) {
       setSelectedNodeId(null)
       setSelectedEdgeId(null)
       setSelectedNodeIds([])
+      setConfigPanelOpen(false)
     },
-    [setSelectedNodeId, setSelectedEdgeId, setSelectedNodeIds],
+    [setSelectedNodeId, setSelectedEdgeId, setSelectedNodeIds, setConfigPanelOpen],
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
