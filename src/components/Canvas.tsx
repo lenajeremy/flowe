@@ -46,7 +46,7 @@ export function Canvas({ theme }: CanvasProps) {
   const {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
-    setSelectedNodeId, selectedNodeId,
+    setSelectedNodeId, selectedNodeId, selectedNodeIds,
     selectedEdgeId, setSelectedEdgeId,
     setSelectedNodeIds,
     addNode, deleteNodesById, deleteEdgesById,
@@ -63,6 +63,7 @@ export function Canvas({ theme }: CanvasProps) {
       onConnect: s.onConnect,
       setSelectedNodeId: s.setSelectedNodeId,
       selectedNodeId: s.selectedNodeId,
+      selectedNodeIds: s.selectedNodeIds,
       selectedEdgeId: s.selectedEdgeId,
       setSelectedEdgeId: s.setSelectedEdgeId,
       setSelectedNodeIds: s.setSelectedNodeIds,
@@ -117,17 +118,20 @@ export function Canvas({ theme }: CanvasProps) {
         deleteEdgesById([selectedEdgeId])
         return
       }
-      if (!selectedNodeId) return
-      if (e.shiftKey) {
-        deleteNodesById(getDownstreamIds(selectedNodeId, edges))
+      const ids = selectedNodeIds.length > 0
+        ? selectedNodeIds
+        : selectedNodeId ? [selectedNodeId] : []
+      if (ids.length === 0) return
+      if (e.shiftKey && ids.length === 1) {
+        deleteNodesById(getDownstreamIds(ids[0], edges))
       } else {
-        deleteNodesById([selectedNodeId])
+        deleteNodesById(ids)
       }
     }
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [edges, selectedNodeId, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo, setActiveTool])
+  }, [edges, selectedNodeId, selectedNodeIds, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo, setActiveTool])
 
   // ── Gradient edges — Figma frames 161-168: fade into the target's accent ──
   const animatedEdges = useMemo(
