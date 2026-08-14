@@ -14,6 +14,10 @@ import { resolveDataStoreProposal } from '@/lib/dataApi'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import { ToolActivityRow } from '@/components/agent/AgentMessages'
 import type { ToolChip } from '@/components/agent/useAgentChat'
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 // ── Types ───────────────────────────────────────────────────────
 
 // A data-store proposal from the AI's create_data_store tool. The store does
@@ -110,6 +114,8 @@ export function ChatPanel() {
   )
   const [inputWidth, setInputWidth] = useState(0)
   const [inputHeight, setInputHeight] = useState(0)
+  const [restartOpen, setRestartOpen] = useState(false)
+  const [restarting, setRestarting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const inputContainerRef = useRef<HTMLDivElement>(null)
@@ -483,14 +489,26 @@ export function ChatPanel() {
     setIsGenerating(false)
   }
 
-  function handleClear() {
-    setMessages([])
-    if (dbId) {
-      void apiFetch(`${API}/api/workflows/${dbId}/chat`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [] }),
+  async function handleClear() {
+    if (restarting) return
+    setRestarting(true)
+    try {
+      if (dbId) {
+        const response = await apiFetch(`${API}/api/workflows/${dbId}/chat`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [] }),
+        })
+        if (!response.ok) throw new Error(`Server error ${response.status}`)
+      }
+      setMessages([])
+      setRestartOpen(false)
+    } catch {
+      toast.error('Could not restart the chat', {
+        description: 'Your existing conversation has not been cleared. Try again.',
       })
+    } finally {
+      setRestarting(false)
     }
   }
 
@@ -521,7 +539,7 @@ export function ChatPanel() {
               <div className="flex justify-center pt-1 pb-2">
                 <button
                   type="button"
-                  onClick={handleClear}
+                  onClick={() => setRestartOpen(true)}
                   className="flex items-center gap-1.5 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--color-hover)]"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -616,12 +634,36 @@ export function ChatPanel() {
           </div>
         </div>
 
-        {!dbId && (
+      {!dbId && (
           <p className="text-[10px] text-[var(--color-subtle)]">
             Save the workflow first to persist this conversation.
           </p>
         )}
       </div>
+
+      <Dialog open={restartOpen} onOpenChange={(open) => { if (!restarting) setRestartOpen(open) }}>
+        <DialogContent className="bg-[var(--color-elevated)] sm:max-w-[430px]">
+          <DialogHeader>
+            <DialogTitle className="text-[15px] font-semibold">Restart this chat?</DialogTitle>
+            <DialogDescription className="text-[12px] leading-relaxed">
+              This permanently deletes the current AI Builder conversation and it cannot be recovered.
+              Your workflow and its nodes will not be changed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2">
+            <DialogClose render={<Button variant="outline" className="rounded-xl text-[12px]" disabled={restarting} />}>
+              Keep chat
+            </DialogClose>
+            <Button
+              onClick={() => void handleClear()}
+              disabled={restarting}
+              className="rounded-xl bg-[var(--color-fail)] text-[12px] font-semibold text-white hover:bg-[var(--color-fail)]/85"
+            >
+              {restarting ? 'Restarting…' : 'Restart chat'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
