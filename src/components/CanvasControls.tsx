@@ -11,7 +11,7 @@ const btnStyle: React.CSSProperties = {
 }
 
 export function CanvasControls() {
-  const { zoomIn, zoomOut } = useReactFlow()
+  const { zoomIn, zoomOut, fitView } = useReactFlow()
   const { zoom } = useViewport()
   const activeTool = useWorkflowStore((s) => s.activeTool)
   const setActiveTool = useWorkflowStore((s) => s.setActiveTool)
@@ -44,6 +44,20 @@ export function CanvasControls() {
           </svg>
         </button>
       </div>
+
+      {/* Fit every node into the visible canvas */}
+      <button
+        type="button"
+        onClick={() => void fitView({ padding: 0.2, duration: 250 })}
+        title="Fit all nodes"
+        aria-label="Fit all nodes"
+        className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-dim)] transition-colors hover:text-[var(--color-text)]"
+        style={btnStyle}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M1.5 4V1.5H4M9 1.5h2.5V4M11.5 9v2.5H9M4 11.5H1.5V9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
       {/* Cursor tool */}
       <button
