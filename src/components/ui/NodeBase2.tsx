@@ -2,7 +2,7 @@ import { useEffect, useState, isValidElement, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNodeId } from '@xyflow/react'
 import { useWorkflowStore } from '@/store/workflowStore'
-import { requestRun, stopRun } from '@/lib/runController'
+import { requestRun, stopRun, testNode } from '@/lib/runController'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
 import type { ExecutionStatus } from '@/types/workflow'
 
@@ -36,7 +36,6 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
   // instead of threading a flag through all 13 integration node components.
   const isLogo = isValidElement(icon) && icon.type === IntegrationLogo
   const isRunning = useWorkflowStore((s) => s.executionState === 'running')
-  const setLogPanelOpen = useWorkflowStore((s) => s.setLogPanelOpen)
   const setConfigPanelOpen = useWorkflowStore((s) => s.setConfigPanelOpen)
 
   // Success styling is a moment, not a permanent state: the green outline
@@ -205,14 +204,16 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
           </button>
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); setLogPanelOpen(true) }}
-            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)]"
+            onClick={(e) => { e.stopPropagation(); if (!isRunning && nodeId) testNode(nodeId) }}
+            disabled={isRunning || !nodeId}
+            title="Test only this node using its latest upstream outputs"
+            className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
             style={toolBtnStyle}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M4.5 1.5h3v2h-3zM6 3.5v2M3 8l1.5-2.5h3L9 8M2.5 8a3.5 3.5 0 1 0 7 0" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Test
+            Test node
           </button>
           <button
             type="button"

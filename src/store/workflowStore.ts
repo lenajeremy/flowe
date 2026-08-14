@@ -101,7 +101,7 @@ interface WorkflowStore {
     status: 'idle' | 'running' | 'completed' | 'error' | 'waiting',
     output?: string,
   ) => void
-  resetNodeExecutionStatuses: () => void
+  resetNodeExecutionStatuses: (nodeIds?: string[]) => void
 
   isLogPanelOpen: boolean
   setLogPanelOpen: (open: boolean) => void
@@ -428,12 +428,15 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       ),
     })),
 
-  resetNodeExecutionStatuses: () =>
+  resetNodeExecutionStatuses: (nodeIds) =>
     set((state) => ({
-      nodes: state.nodes.map((n) => ({
-        ...n,
-        data: { ...n.data, executionStatus: 'idle' as const, executionOutput: undefined },
-      })),
+      nodes: state.nodes.map((n) => {
+        if (nodeIds && !nodeIds.includes(n.id)) return n
+        return {
+          ...n,
+          data: { ...n.data, executionStatus: 'idle' as const, executionOutput: undefined },
+        }
+      }),
     })),
 
   isLogPanelOpen: false,

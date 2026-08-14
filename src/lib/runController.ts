@@ -7,6 +7,9 @@ import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
 import { apiFetch } from '@/lib/http'
 import posthog from '@/lib/posthog'
+import { latestOutputs, upstreamOf } from '@/lib/nodeInputs'
+import { toast } from 'sonner'
+import type { FlowNode } from '@/types/workflow'
 
 // Run orchestration extracted from the old BottomToolDock so the canvas
 // (node Run buttons, zoom controls) can trigger runs without the dock UI.
@@ -82,9 +85,9 @@ function makeEventHandler(initialFallback: string): (event: ExecutionEvent) => v
   }
 }
 
-function prepareRunState(runId: string | null) {
+function prepareRunState(runId: string | null, nodeIds?: string[]) {
   const s = useWorkflowStore.getState()
-  s.resetNodeExecutionStatuses()
+  s.resetNodeExecutionStatuses(nodeIds)
   s.clearExecutionLog()
   s.setExecutionState('running')
   s.setLogPanelOpen(true)
@@ -108,17 +111,71 @@ export function requestRun(nodeId?: string) {
   else startRun({ nodeId })
 }
 
-export function startRun(opts?: { webhookPayload?: string; nodeId?: string }) {
+function requiredOutputIds(node: FlowNode, edges: Array<{ source: string; target: string }>): string[] {
+  const required = new Set<string>()
+  const config = { ...node.data }
+  delete config.executionOutput
+  delete config.executionStatus
+  for (const match of JSON.stringify(config).matchAll(/\{\{([\w-]+)\.output(?:\.[\w-]+)*\}\}/g)) {
+    if (match[1] !== node.id) required.add(match[1])
+  }
+  if (node.data.nodeType === 'branch' || node.data.nodeType === 'loop' || node.data.nodeType === 'textOutput') {
+    const incoming = edges.find((edge) => edge.target === node.id)
+    if (incoming) required.add(incoming.source)
+  }
+  return [...required]
+}
+
+/** Execute one node using the most recent outputs of its upstream ancestors.
+ * Missing required values block locally before any credits or side effects. */
+export function testNode(nodeId: string) {
+  const s = useWorkflowStore.getState()
+  if (s.executionState === 'running') return
+  const target = s.nodes.find((node) => node.id === nodeId)
+  if (!target) return
+
+  const liveOutputs = latestOutputs(s.executionLog)
+  const initialOutputs: Record<string, string> = {}
+  const upstream = upstreamOf(nodeId, s.nodes, s.edges)
+  for (const node of upstream) {
+    if (liveOutputs.has(node.id)) {
+      initialOutputs[node.id] = liveOutputs.get(node.id)!
+    } else if (typeof node.data.executionOutput === 'string') {
+      initialOutputs[node.id] = node.data.executionOutput
+    }
+  }
+
+  const missing = requiredOutputIds(target, s.edges).filter((id) => !(id in initialOutputs))
+  if (missing.length > 0) {
+    const labels = missing.map((id) => s.nodes.find((node) => node.id === id)?.data.label || id)
+    toast.error('Run this graph first', {
+      description: `${labels.join(', ')} ${labels.length === 1 ? 'has' : 'have'} no previous output for this test.`,
+    })
+    return
+  }
+
+  startRun({ onlyNodeId: nodeId, initialOutputs })
+}
+
+export function startRun(opts?: {
+  webhookPayload?: string
+  nodeId?: string
+  onlyNodeId?: string
+  initialOutputs?: Record<string, string>
+}) {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
   const nodeId = opts?.nodeId ?? pendingRunNodeId
   pendingRunNodeId = undefined
-  prepareRunState(null)
+  const resetNodeIds = opts?.onlyNodeId
+    ? [opts.onlyNodeId]
+    : nodeId ? [...connectedNodeIds(nodeId, s.edges)] : undefined
+  prepareRunState(null, resetNodeIds)
   posthog.capture('workflow_run_started', {
     workflow_id: s.dbId ?? null,
     trigger: opts?.webhookPayload === undefined ? 'manual' : 'webhook_simulation',
-    scope: nodeId ? 'connected_graph' : 'workflow',
-    source_node_id: nodeId ?? null,
+    scope: opts?.onlyNodeId ? 'single_node' : nodeId ? 'connected_graph' : 'workflow',
+    source_node_id: opts?.onlyNodeId ?? nodeId ?? null,
   })
 
   const controller = new AbortController()
@@ -143,13 +200,23 @@ export function startRun(opts?: { webhookPayload?: string; nodeId?: string }) {
     }
     const startTime = Date.now()
     try {
-      const response = await apiFetch(`${API}/api/run`, {
+      const endpoint = opts?.onlyNodeId ? `${API}/api/run/node` : `${API}/api/run`
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),
+        body: JSON.stringify({
+          workflow: ast,
+          workflowId: dbId ?? '',
+          onlyNodeId: opts?.onlyNodeId,
+          initialOutputs: opts?.onlyNodeId ? opts.initialOutputs : undefined,
+        }),
         signal: controller.signal,
       })
-      if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null) as { error?: string } | null
+        throw new Error(detail?.error || `Server error ${response.status}`)
+      }
+      if (!response.body) throw new Error('Server returned no run stream')
       await consumeRunStream(response.body.getReader(), makeEventHandler(''))
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
