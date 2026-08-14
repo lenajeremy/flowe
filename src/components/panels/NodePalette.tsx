@@ -6,6 +6,7 @@ import { NODE_ICONS } from '@/lib/nodeIcons'
 import { isIntegration } from '@/lib/integrationLogos'
 import { ChatPanel } from '@/components/panels/ChatPanel'
 import { FloweIcon } from '@/components/FloweIcon'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 
 const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
@@ -26,51 +27,53 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
 
 function PaletteItem({ type }: { type: NodeType }) {
   return (
-    <motion.div
-      draggable
-      // NB: framer-motion intercepts onDragStart for its own gesture system —
-      // the capture-phase handler reaches the DOM, so native HTML5 drag works.
-      onDragStartCapture={(e) => {
-        e.dataTransfer.setData('application/flowe-node-type', type)
-        e.dataTransfer.effectAllowed = 'copy'
-      }}
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 700, damping: 40 }}
-      className="group flex cursor-grab items-center bg-[var(--color-surface)] transition-colors duration-150 hover:border-[var(--color-border2)] hover:bg-[var(--color-surface2)] active:cursor-grabbing"
-      style={{
-        minHeight: 58,
-        borderRadius: 10,
-        gap: 10,
-        padding: 8,
-        border: '1px solid var(--color-border)',
-      }}
-    >
-      <div
-        className="flex flex-shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:overflow-visible"
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: 8,
-          // Brand logos carry their own internal margins — see NodeBase2.
-          padding: isIntegration(type) ? 2 : 7,
-          border: '1px solid var(--color-border2)',
-          background: 'var(--color-elevated)',
-          overflow: 'visible',
-          color: NODE_ACCENT_HEX[type],
-        }}
-      >
-        {NODE_ICONS[type]}
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-[12px] font-medium leading-tight text-[var(--color-text)]">
-          {NODE_LABELS[type]}
-        </p>
-        <p className="mt-1 line-clamp-2 text-[10px] leading-[13px] text-[var(--color-muted)]">
-          {NODE_DESCRIPTIONS[type]}
-        </p>
-      </div>
-    </motion.div>
+    <Tooltip>
+      <TooltipTrigger
+        render={<motion.div
+          draggable
+          tabIndex={0}
+          // NB: framer-motion intercepts onDragStart for its own gesture system —
+          // the capture-phase handler reaches the DOM, so native HTML5 drag works.
+          onDragStartCapture={(e) => {
+            e.dataTransfer.setData('application/flowe-node-type', type)
+            e.dataTransfer.effectAllowed = 'copy'
+          }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 700, damping: 40 }}
+          className="group flex h-[46px] cursor-grab items-center bg-[var(--color-surface)] transition-colors duration-150 hover:border-[var(--color-border2)] hover:bg-[var(--color-surface2)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)] active:cursor-grabbing"
+          style={{
+            borderRadius: 10,
+            gap: 10,
+            padding: 8,
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <div
+            className="flex flex-shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:overflow-visible"
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              // Brand logos carry their own internal margins — see NodeBase2.
+              padding: isIntegration(type) ? 2 : 7,
+              border: '1px solid var(--color-border2)',
+              background: 'var(--color-elevated)',
+              overflow: 'visible',
+              color: NODE_ACCENT_HEX[type],
+            }}
+          >
+            {NODE_ICONS[type]}
+          </div>
+          <span className="truncate text-[12px] font-medium leading-tight text-[var(--color-text)]">
+            {NODE_LABELS[type]}
+          </span>
+        </motion.div>}
+      />
+      <TooltipContent side="right" sideOffset={8} className="max-w-[240px] text-[11px] leading-relaxed">
+        {NODE_DESCRIPTIONS[type]}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -105,6 +108,7 @@ export function NodePalette({ onCollapse, tab, onTabChange }: {
   }, [isSearching, query])
 
   return (
+    <TooltipProvider delay={350}>
     <aside className="flex h-full w-full flex-col bg-[var(--color-canvas)]" style={{ overflow: 'clip' }}>
       {/* Tab bar */}
       <div className="flex items-center gap-2 px-3 py-3">
@@ -205,5 +209,6 @@ export function NodePalette({ onCollapse, tab, onTabChange }: {
         <ChatPanel />
       )}
     </aside>
+    </TooltipProvider>
   )
 }
