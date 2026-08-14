@@ -113,15 +113,16 @@ export function requestRun(nodeId?: string) {
 
 function requiredOutputIds(node: FlowNode, edges: Array<{ source: string; target: string }>): string[] {
   const required = new Set<string>()
+  const incomingNodeId = edges.find((edge) => edge.target === node.id)?.source
   const config = { ...node.data }
   delete config.executionOutput
   delete config.executionStatus
   for (const match of JSON.stringify(config).matchAll(/\{\{([\w-]+)\.output(?:\.[\w-]+)*\}\}/g)) {
-    if (match[1] !== node.id) required.add(match[1])
+    const referencedNodeId = match[1] === 'previousNode' ? incomingNodeId ?? match[1] : match[1]
+    if (referencedNodeId !== node.id) required.add(referencedNodeId)
   }
   if (node.data.nodeType === 'branch' || node.data.nodeType === 'loop' || node.data.nodeType === 'textOutput') {
-    const incoming = edges.find((edge) => edge.target === node.id)
-    if (incoming) required.add(incoming.source)
+    if (incomingNodeId) required.add(incomingNodeId)
   }
   return [...required]
 }
