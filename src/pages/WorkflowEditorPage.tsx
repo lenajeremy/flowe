@@ -14,7 +14,7 @@ import { ApiKeyModal } from '@/components/ApiKeyModal'
 import { WebhookRunModal } from '@/components/WebhookRunModal'
 import { FloweIcon } from '@/components/FloweIcon'
 import { ChatFab } from '@/components/agent/ChatFab'
-import { useRunStreamBridge } from '@/lib/runController'
+import { requestRun, stopRun, useRunStreamBridge } from '@/lib/runController'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getWorkflow, saveWorkflow, setWorkflowPublished } from '@/lib/workflowApi'
@@ -407,6 +407,31 @@ export function WorkflowEditorPage() {
                 View logs
               </Link>
             </div>
+          )}
+
+          {executionState === 'running' ? (
+            <button
+              type="button"
+              onClick={stopRun}
+              className="pressable flex items-center gap-1.5 rounded-lg border border-[var(--color-fail)]/30 bg-[var(--color-fail)]/15 px-3 py-1.5 text-[12px] font-semibold text-[var(--color-fail)] hover:bg-[var(--color-fail)]/25"
+            >
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor">
+                <rect x="1" y="1" width="7" height="7" rx="1.5" />
+              </svg>
+              Stop
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => requestRun()}
+              disabled={nodes.length === 0}
+              className="pressable flex items-center gap-1.5 rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-canvas)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path d="M2 1.5l7 3.5-7 3.5V1.5z" />
+              </svg>
+              {executionState === 'completed' ? 'Re-run' : 'Run'}
+            </button>
           )}
 
           {/* Save */}

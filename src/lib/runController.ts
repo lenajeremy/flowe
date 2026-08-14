@@ -12,6 +12,28 @@ import posthog from '@/lib/posthog'
 // (node Run buttons, zoom controls) can trigger runs without the dock UI.
 
 let runAbort: AbortController | null = null
+let pendingRunNodeId: string | undefined
+
+/** Return the weakly connected component containing startNodeId. Following
+ * edges in both directions includes every upstream prerequisite and every
+ * downstream consumer without touching a separate graph on the same canvas. */
+function connectedNodeIds(startNodeId: string, edges: Array<{ source: string; target: string }>): Set<string> {
+  const ids = new Set<string>([startNodeId])
+  const queue = [startNodeId]
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    for (const edge of edges) {
+      const next = edge.source === current
+        ? edge.target
+        : edge.target === current ? edge.source : undefined
+      if (next && !ids.has(next)) {
+        ids.add(next)
+        queue.push(next)
+      }
+    }
+  }
+  return ids
+}
 
 /** Shared event handler — all stream consumers (manual run, external URL run,
  *  scheduled/webhook push) go through this single code path. */
@@ -73,19 +95,31 @@ function prepareRunState(runId: string | null) {
 /** Entry point for Run buttons. Flows that start from a webhook trigger get
  *  the payload-simulation modal first (it calls startRun with the payload);
  *  everything else runs immediately. */
-export function requestRun() {
+export function requestRun(nodeId?: string) {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
-  const hasWebhook = s.nodes.some((n) => n.data.nodeType === 'webhookTrigger' || n.data.nodeType === 'integrationTrigger')
+  pendingRunNodeId = nodeId
+  const scopedIds = nodeId ? connectedNodeIds(nodeId, s.edges) : null
+  const hasWebhook = s.nodes.some((n) =>
+    (!scopedIds || scopedIds.has(n.id)) &&
+    (n.data.nodeType === 'webhookTrigger' || n.data.nodeType === 'integrationTrigger'),
+  )
   if (hasWebhook) s.setWebhookRunPromptOpen(true)
-  else startRun()
+  else startRun({ nodeId })
 }
 
-export function startRun(opts?: { webhookPayload?: string }) {
+export function startRun(opts?: { webhookPayload?: string; nodeId?: string }) {
   const s = useWorkflowStore.getState()
   if (s.executionState === 'running') return
+  const nodeId = opts?.nodeId ?? pendingRunNodeId
+  pendingRunNodeId = undefined
   prepareRunState(null)
-  posthog.capture('workflow_run_started', { workflow_id: s.dbId ?? null, trigger: opts?.webhookPayload === undefined ? 'manual' : 'webhook_simulation' })
+  posthog.capture('workflow_run_started', {
+    workflow_id: s.dbId ?? null,
+    trigger: opts?.webhookPayload === undefined ? 'manual' : 'webhook_simulation',
+    scope: nodeId ? 'connected_graph' : 'workflow',
+    source_node_id: nodeId ?? null,
+  })
 
   const controller = new AbortController()
   runAbort = controller
@@ -93,6 +127,11 @@ export function startRun(opts?: { webhookPayload?: string }) {
   void (async () => {
     const { nodes, edges, workflowName, dbId } = useWorkflowStore.getState()
     const ast = serializeToAST(nodes, edges, workflowName)
+    if (nodeId) {
+      const scopedIds = connectedNodeIds(nodeId, ast.edges)
+      ast.nodes = ast.nodes.filter((node) => scopedIds.has(node.id))
+      ast.edges = ast.edges.filter((edge) => scopedIds.has(edge.source) && scopedIds.has(edge.target))
+    }
     // Simulated webhook payload rides in the trigger node's defaultValue —
     // the same slot the real ReceiveWebhook handler injects into.
     if (opts?.webhookPayload !== undefined) {

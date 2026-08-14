@@ -1,5 +1,6 @@
 import { useEffect, useState, isValidElement, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useNodeId } from '@xyflow/react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { requestRun, stopRun } from '@/lib/runController'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
@@ -29,6 +30,7 @@ const toolBtnStyle: React.CSSProperties = {
  */
 export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, executionStatus, children }: NodeBaseProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const nodeId = useNodeId()
   // Integration nodes pass a brand logo rather than a stroke glyph, and the two
   // want different insets. Detecting the element type keeps the decision here
   // instead of threading a flag through all 13 integration node components.
@@ -185,7 +187,8 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
         >
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else requestRun() }}
+            onClick={(e) => { e.stopPropagation(); if (isRunning) stopRun(); else requestRun(nodeId ?? undefined) }}
+            title={isRunning ? 'Stop the current run' : 'Run this connected graph'}
             className="pressable flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-medium text-[var(--color-dim)] hover:text-[var(--color-text)]"
             style={toolBtnStyle}
           >
@@ -198,7 +201,7 @@ export function NodeBase2({ accentHex, iconPath, icon, label, isSelected, execut
                 <path d="M2 1.5l7 3.5-7 3.5V1.5z" />
               </svg>
             )}
-            {isRunning ? 'Stop' : 'Run'}
+            {isRunning ? 'Stop' : 'Run graph'}
           </button>
           <button
             type="button"
