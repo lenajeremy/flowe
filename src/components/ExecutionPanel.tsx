@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import type { ExecutionEvent } from '@/types/workflow'
+import { groupLog, isFailure, type IterationRow } from '@/lib/runLog'
 import { approveRun, rejectRun, listRuns, getRun, type WorkflowRun } from '@/lib/workflowApi'
 import { JsonView } from '@/components/ui/JsonView'
 import { CodingAgentActivity } from '@/components/coding/CodingAgentActivity'
@@ -20,15 +21,20 @@ function EventDot({ type }: { type: ExecutionEvent['type'] }) {
     type === 'node_progress'       ? 'bg-[var(--color-accent)]' :
     type === 'workflow_started'    ? 'bg-[var(--color-accent)]' :
     type === 'workflow_completed'  ? 'bg-[var(--color-ok)]'     :
+    type === 'node_skipped'        ? 'bg-[var(--color-subtle)]' :
+    type === 'log_truncated'       ? 'bg-[var(--color-hold)]'   :
     'bg-[var(--color-muted)]'
   return <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${color}`} />
 }
 
 function EventRow({ event }: { event: ExecutionEvent }) {
   const [expanded, setExpanded] = useState(false)
-  const hasOutput = event.type === 'node_output' && event.output
+  // An iteration's own summary row carries output too, not just node_output.
+  const hasOutput = Boolean(event.output) &&
+    (event.type === 'node_output' || event.type === 'iteration_completed')
   const commandActivity = getCodingAgentCommandActivity(event)
   const hasDetails = Boolean(hasOutput || commandActivity)
+  const skipped = event.type === 'node_skipped'
 
   return (
     <div
@@ -38,9 +44,16 @@ function EventRow({ event }: { event: ExecutionEvent }) {
       <EventDot type={event.type} />
       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[var(--color-text)] font-medium truncate">
+          <span className={`text-[11px] font-medium truncate ${
+            skipped ? 'text-[var(--color-muted)] italic' : 'text-[var(--color-text)]'
+          }`}>
             {event.message}
           </span>
+          {event.outputTruncated && (
+            <span className="micro flex-shrink-0 rounded px-1 text-[var(--color-hold)] bg-[var(--color-hold)]/15">
+              truncated
+            </span>
+          )}
           {event.nodeType && (
             <span className="text-[9px] text-[var(--color-muted)] bg-[var(--color-surface2)] px-1 rounded flex-shrink-0">
               {event.nodeType}
@@ -64,6 +77,103 @@ function EventRow({ event }: { event: ExecutionEvent }) {
         {commandActivity && expanded && <CodingAgentActivity event={event} className="mt-1.5" />}
       </div>
     </div>
+  )
+}
+
+function IterationGroup({ row }: { row: IterationRow }) {
+  // Open while running and whenever it failed; collapsed once it succeeded,
+  // since a green pass is exactly the thing nobody needs to read. A click
+  // overrides that for good — the panel should not re-collapse a group the
+  // moment the pass it belongs to finishes.
+  const [override, setOverride] = useState<boolean | null>(null)
+  const preferOpen = row.status !== 'ok'
+  const open = override ?? preferOpen
+
+  const elapsed = row.endedAt !== undefined ? row.endedAt - row.startedAt : undefined
+  const tone =
+    row.status === 'error'   ? 'text-[var(--color-fail)]'   :
+    row.status === 'running' ? 'text-[var(--color-accent)]' :
+    'text-[var(--color-ok)]'
+
+  return (
+    <div className="border-l-2 ml-3 my-0.5" style={{ borderColor: 'var(--color-border)' }}>
+      <button
+        onClick={() => setOverride(!open)}
+        className="flex w-full items-center gap-2 py-1 pl-2 pr-3 text-left rounded hover:bg-[var(--color-surface2)]"
+      >
+        <span className="text-[9px] text-[var(--color-muted)] w-2 flex-shrink-0">{open ? '▾' : '▸'}</span>
+        <span className="font-mono text-[10px] tabular-nums text-[var(--color-text)] flex-shrink-0">
+          {row.ref.index + 1}/{row.ref.total}
+        </span>
+        <span className={`micro flex-shrink-0 ${tone}`}>
+          {row.status === 'error' ? 'failed' : row.status === 'running' ? 'running' : 'ok'}
+        </span>
+        {row.ref.itemPreview && (
+          <span className="truncate font-mono text-[10px] text-[var(--color-muted)]">
+            {row.ref.itemPreview}
+          </span>
+        )}
+        {elapsed !== undefined && (
+          <span className="ml-auto flex-shrink-0 font-mono text-[9px] tabular-nums text-[var(--color-subtle)]">
+            {elapsed}ms
+          </span>
+        )}
+      </button>
+      {open && row.events.map((event) => (
+        <div key={event.id} className="pl-3">
+          <EventRow event={event} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function LogList({ events }: { events: ExecutionEvent[] }) {
+  const [onlyFailed, setOnlyFailed] = useState(false)
+  const rows = useMemo(() => groupLog(events), [events])
+
+  const failureCount = useMemo(() => rows.filter(isFailure).length, [rows])
+  const hasIterations = useMemo(() => rows.some((r) => r.kind === 'iteration'), [rows])
+  const visible = onlyFailed ? rows.filter(isFailure) : rows
+
+  return (
+    <>
+      {hasIterations && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--color-border)]">
+          <span className="text-[10px] text-[var(--color-muted)]">
+            {rows.filter((r) => r.kind === 'iteration').length} iterations
+          </span>
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-[var(--color-surface2)] p-0.5">
+            <button
+              onClick={() => setOnlyFailed(false)}
+              className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors ${
+                !onlyFailed ? 'bg-[var(--color-hover2)] text-[var(--color-text)]' : 'text-[var(--color-muted)]'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setOnlyFailed(true)}
+              disabled={failureCount === 0}
+              className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors disabled:opacity-40 ${
+                onlyFailed ? 'bg-[var(--color-hover2)] text-[var(--color-fail)]' : 'text-[var(--color-muted)]'
+              }`}
+            >
+              Failed{failureCount > 0 ? ` (${failureCount})` : ''}
+            </button>
+          </div>
+        </div>
+      )}
+      {onlyFailed && visible.length === 0 ? (
+        <p className="px-3 py-4 text-center text-[11px] text-[var(--color-muted)]">Nothing failed.</p>
+      ) : (
+        visible.map((row) =>
+          row.kind === 'iteration'
+            ? <IterationGroup key={row.key} row={row} />
+            : <EventRow key={row.event.id} event={row.event} />,
+        )
+      )}
+    </>
   )
 }
 
@@ -380,9 +490,7 @@ export function ExecutionPanel() {
               <p className="text-xs text-[var(--color-muted)]">No events yet</p>
             </div>
           ) : (
-            displayLog.map((event) => (
-              <EventRow key={event.id} event={event} />
-            ))
+            <LogList events={displayLog} />
           )}
           <div ref={bottomRef} />
         </div>
@@ -418,9 +526,7 @@ export function ExecutionPanel() {
                     <p className="text-xs text-[var(--color-muted)]">No events recorded</p>
                   </div>
                 ) : (
-                  viewingRunEvents.map((event) => (
-                    <EventRow key={event.id} event={event} />
-                  ))
+                  <LogList events={viewingRunEvents} />
                 )}
               </div>
             </div>

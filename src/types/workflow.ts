@@ -1050,8 +1050,27 @@ export type ExecutionEventType =
   | 'node_error'
   | 'workflow_completed'
   | 'workflow_error'
-  | 'node_waiting'   // humanApproval is waiting for review
-  | 'node_progress'  // non-terminal activity from a long-running node
+  | 'node_waiting'         // humanApproval is waiting for review
+  | 'node_progress'        // non-terminal activity from a long-running node
+  | 'iteration_started'    // one pass of a loop body begins
+  | 'iteration_completed'  // …and ends, carrying that pass's status
+  | 'edge_taken'           // an edge enabled its target — the path, one hop at a time
+  | 'node_skipped'         // a node that never ran, with the reason why
+  | 'log_truncated'        // the run outran the event ceiling
+
+/** Why a node never ran. Absent the distinction, a path a branch declined and
+ *  one the run errored out before reaching look identical: the node is simply
+ *  missing from the log. */
+export type SkipReason = 'branch_not_taken' | 'not_reached'
+
+/** Which pass of a loop an event belongs to. Loops do not nest, so one frame
+ *  always locates an event. */
+export interface IterationRef {
+  loopNodeId: string
+  index: number
+  total: number
+  itemPreview?: string
+}
 
 export interface ExecutionEvent {
   id: string
@@ -1064,4 +1083,17 @@ export interface ExecutionEvent {
   output?: string
   payload?: Record<string, unknown>
   timestamp: number
+  /** Set on every event raised inside a loop body, and on the
+   *  iteration_started/completed pair bracketing it. */
+  iteration?: IterationRef
+  /** 'ok' | 'error' on iteration_completed. */
+  status?: 'ok' | 'error'
+  /** edge_taken only. sourceHandle is the branch output that chose the edge,
+   *  and is absent for unconditional edges. */
+  edgeId?: string
+  sourceHandle?: string
+  /** node_skipped only. */
+  skipReason?: SkipReason
+  /** The payload was clipped to the per-event cap — not the node returning less. */
+  outputTruncated?: boolean
 }
