@@ -31,6 +31,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { CodingAgentConnection } from '@/components/coding/CodingAgentConnection'
 import { CodingAgentRuns } from '@/components/coding/CodingAgentRuns'
+import { CodingRepositoryPicker } from '@/components/coding/CodingRepositoryPicker'
+import { ResourcePicker } from '@/components/ui/ResourcePicker'
 
 
 type InspectorTab = 'configure' | 'status' | 'logs'
@@ -691,23 +693,33 @@ export function ConfigPanel() {
               </p>
             </div>
 
-            <FormField label="GitHub repository" htmlFor="cfg-coding-repository" hint="owner/repository — private repositories use your connected GitHub account">
-              <Input
-                id="cfg-coding-repository"
-                value={typeof data.codingAgentRepository === 'string' ? data.codingAgentRepository : ''}
-                onChange={(event) => updateNodeData(nodeId, { codingAgentRepository: event.target.value.trim() })}
-                placeholder="acme/web-app"
-                className={inputClass}
+            <FormField label="Repository" htmlFor="cfg-coding-repository" hint="Repositories available through your connected GitHub and GitLab accounts.">
+              <CodingRepositoryPicker
+                provider={data.codingAgentRepositoryProvider === 'gitlab' ? 'gitlab' : 'github'}
+                repositoryId={typeof data.codingAgentRepositoryId === 'string' ? data.codingAgentRepositoryId : ''}
+                repository={typeof data.codingAgentRepository === 'string' ? data.codingAgentRepository : ''}
+                onChange={(selection) => updateNodeData(nodeId, {
+                  codingAgentRepositoryProvider: selection.provider,
+                  codingAgentRepositoryId: selection.repositoryId,
+                  codingAgentRepository: selection.repository,
+                  codingAgentBranch: '',
+                })}
               />
             </FormField>
 
             <FormField label="Branch" htmlFor="cfg-coding-branch" hint="The environment keeps its own checkout; Fernary does not push changes automatically.">
-              <Input
+              <ResourcePicker
                 id="cfg-coding-branch"
+                provider={data.codingAgentRepositoryProvider === 'gitlab' ? 'gitlab' : 'github'}
+                kind="branch"
+                parent={typeof data.codingAgentRepositoryId === 'string' && data.codingAgentRepositoryId !== ''
+                  ? data.codingAgentRepositoryId
+                  : data.codingAgentRepositoryProvider === 'gitlab'
+                    ? ''
+                    : typeof data.codingAgentRepository === 'string' ? data.codingAgentRepository : ''}
                 value={typeof data.codingAgentBranch === 'string' ? data.codingAgentBranch : ''}
-                onChange={(event) => updateNodeData(nodeId, { codingAgentBranch: event.target.value })}
+                onChange={(value) => updateNodeData(nodeId, { codingAgentBranch: value })}
                 placeholder="Repository default branch"
-                className={inputClass}
               />
             </FormField>
 

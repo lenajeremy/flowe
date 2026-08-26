@@ -24,7 +24,7 @@ export function CodingAgentNode({ data, selected }: NodeProps<FlowNode>) {
           <span className="text-[10px] text-[var(--color-muted)]">{persistent ? 'Reusable workspace' : 'Fresh workspace'}</span>
         </div>
         <p className="truncate font-mono text-[10.5px] text-[var(--color-text)]">
-          {repository || 'Choose a GitHub repository'}{branch ? ` · ${branch}` : ''}
+          {repository || 'Choose a repository'}{branch ? ` · ${branch}` : ''}
         </p>
         {task && <p className="line-clamp-2 text-[10.5px] leading-relaxed text-[var(--color-muted)]">{task}</p>}
       </div>

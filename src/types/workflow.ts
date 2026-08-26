@@ -152,6 +152,8 @@ export type FlowNodeData = {
   // Coding agent (server-side, isolated Daytona environment)
   codingAgentRuntime?: 'codex'
   codingAgentTask?: string
+  codingAgentRepositoryProvider?: 'github' | 'gitlab'
+  codingAgentRepositoryId?: string
   codingAgentRepository?: string
   codingAgentBranch?: string
   codingAgentWorkspaceMode?: 'persistent' | 'ephemeral'

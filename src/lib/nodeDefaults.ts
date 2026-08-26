@@ -23,6 +23,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         label: 'Coding Agent',
         codingAgentRuntime: 'codex',
         codingAgentTask: 'Inspect the repository and complete this task:\n\n{{previousNode.output}}',
+        codingAgentRepositoryProvider: 'github',
+        codingAgentRepositoryId: '',
         codingAgentRepository: '',
         codingAgentBranch: '',
         codingAgentWorkspaceMode: 'persistent',

@@ -17,8 +17,8 @@ export function CodingAgentConnection() {
   const [attempt, setAttempt] = useState<CodingAgentAuthAttempt | null>(null)
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
-	const attemptId = attempt?.id
-	const attemptStatus = attempt?.status
+  const attemptId = attempt?.id
+  const attemptStatus = attempt?.status
 
   const refresh = useCallback(async () => {
     try {
@@ -34,11 +34,11 @@ export function CodingAgentConnection() {
   useEffect(() => { void refresh() }, [refresh])
 
   useEffect(() => {
-	if (!attemptId || !attemptStatus || !['provisioning', 'waiting'].includes(attemptStatus)) return
+    if (!attemptId || !attemptStatus || !['provisioning', 'waiting'].includes(attemptStatus)) return
     let active = true
     const poll = async () => {
       try {
-		const next = await loadCodingAgentAuthAttempt(attemptId)
+        const next = await loadCodingAgentAuthAttempt(attemptId)
         if (!active) return
         setAttempt(next)
         if (next.status === 'connected') {
@@ -55,7 +55,7 @@ export function CodingAgentConnection() {
     const timer = window.setInterval(() => void poll(), 1000)
     void poll()
     return () => { active = false; window.clearInterval(timer) }
-	}, [attemptId, attemptStatus, refresh])
+  }, [attemptId, attemptStatus, refresh])
 
   async function connect() {
     setConnecting(true)
@@ -67,11 +67,16 @@ export function CodingAgentConnection() {
     }
   }
 
-  async function cancel() {
+  function cancel() {
     if (!attempt) return
-    await cancelCodingAgentAuthAttempt(attempt.id).catch(() => {})
+    const attemptIdToCancel = attempt.id
     setAttempt(null)
     setConnecting(false)
+    void cancelCodingAgentAuthAttempt(attemptIdToCancel).catch((error) => {
+      toast.error('Could not cancel Codex sign-in', {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    })
   }
 
   if (loading) {
@@ -121,7 +126,7 @@ export function CodingAgentConnection() {
         ) : (
           <p className="mt-2 flex items-center gap-2 text-[10px] text-[var(--color-muted)]"><LoaderCircle size={12} className="animate-spin" /> Preparing a secure sign-in code…</p>
         )}
-        <button type="button" onClick={() => void cancel()} className="mt-2 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-text)]">Cancel</button>
+        <button type="button" onClick={cancel} className="mt-2 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-text)]">Cancel</button>
       </div>
     )
   }
