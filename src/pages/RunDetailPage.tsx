@@ -5,6 +5,8 @@ import { consumeRunStream } from '@/lib/runStream'
 import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
 import { apiFetch } from '@/lib/http'
+import { CodingAgentActivity } from '@/components/coding/CodingAgentActivity'
+import { getCodingAgentCommandActivity } from '@/lib/codingAgentActivity'
 
 function tryJson(str: string): string {
   try {
@@ -31,6 +33,7 @@ interface NodeCard {
   output: string | null
   status: 'completed' | 'error' | 'waiting' | 'running'
   message: string
+  activities: ExecutionEvent[]
 }
 
 function buildNodeCards(events: ExecutionEvent[]): NodeCard[] {
@@ -44,6 +47,7 @@ function buildNodeCards(events: ExecutionEvent[]): NodeCard[] {
         output: null,
         status: 'running',
         message: '',
+        activities: [],
       })
     }
     if (ev.type === 'node_output' && ev.output) {
@@ -61,6 +65,10 @@ function buildNodeCards(events: ExecutionEvent[]): NodeCard[] {
     if (ev.type === 'node_waiting') {
       const card = cards.get(ev.nodeId)
       if (card) { card.status = 'waiting'; card.message = ev.message }
+    }
+    if (ev.type === 'node_progress') {
+      const card = cards.get(ev.nodeId)
+      if (card && getCodingAgentCommandActivity(ev)) card.activities.push(ev)
     }
   }
   return [...cards.values()]
@@ -266,6 +274,13 @@ export function RunDetailPage() {
             </div>
 
             {/* Output */}
+            {card.activities.length > 0 && (
+              <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3">
+                <p className="micro text-[var(--color-subtle)]">Agent activity</p>
+                {card.activities.map((event) => <CodingAgentActivity key={event.id} event={event} />)}
+              </div>
+            )}
+
             {card.output ? (
               <pre className="px-4 py-3 text-[12px] text-[var(--color-text)] whitespace-pre-wrap break-words max-h-80 overflow-y-auto leading-relaxed">
                 {tryJson(card.output)}

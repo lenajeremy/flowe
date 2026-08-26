@@ -5,6 +5,8 @@ import { useShallow } from 'zustand/react/shallow'
 import type { ExecutionEvent } from '@/types/workflow'
 import { approveRun, rejectRun, listRuns, getRun, type WorkflowRun } from '@/lib/workflowApi'
 import { JsonView } from '@/components/ui/JsonView'
+import { CodingAgentActivity } from '@/components/coding/CodingAgentActivity'
+import { getCodingAgentCommandActivity } from '@/lib/codingAgentActivity'
 
 // ── Event dot & row ───────────────────────────────────────────
 
@@ -15,6 +17,7 @@ function EventDot({ type }: { type: ExecutionEvent['type'] }) {
     type === 'node_completed'      ? 'bg-[var(--color-ok)]'     :
     type === 'node_error'          ? 'bg-[var(--color-fail)]'   :
     type === 'node_waiting'        ? 'bg-[var(--color-hold)]'   :
+    type === 'node_progress'       ? 'bg-[var(--color-accent)]' :
     type === 'workflow_started'    ? 'bg-[var(--color-accent)]' :
     type === 'workflow_completed'  ? 'bg-[var(--color-ok)]'     :
     'bg-[var(--color-muted)]'
@@ -24,11 +27,13 @@ function EventDot({ type }: { type: ExecutionEvent['type'] }) {
 function EventRow({ event }: { event: ExecutionEvent }) {
   const [expanded, setExpanded] = useState(false)
   const hasOutput = event.type === 'node_output' && event.output
+  const commandActivity = getCodingAgentCommandActivity(event)
+  const hasDetails = Boolean(hasOutput || commandActivity)
 
   return (
     <div
-      className={`flex gap-2.5 py-1.5 px-3 ${hasOutput ? 'cursor-pointer hover:bg-[var(--color-surface2)]' : ''} rounded`}
-      onClick={() => hasOutput && setExpanded((e) => !e)}
+      className={`flex gap-2.5 py-1.5 px-3 ${hasDetails ? 'cursor-pointer hover:bg-[var(--color-surface2)]' : ''} rounded`}
+      onClick={() => hasDetails && setExpanded((e) => !e)}
     >
       <EventDot type={event.type} />
       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -44,7 +49,7 @@ function EventRow({ event }: { event: ExecutionEvent }) {
           <span className="ml-auto flex-shrink-0 font-mono text-[9px] tabular-nums text-[var(--color-subtle)]">
             +{event.timestamp}ms
           </span>
-          {hasOutput && (
+          {hasDetails && (
             <span className="flex-shrink-0 text-[9px] text-[var(--color-accent)]">
               {expanded ? '▲' : '▼'}
             </span>
@@ -53,6 +58,10 @@ function EventRow({ event }: { event: ExecutionEvent }) {
         {expanded && event.output && (
           <JsonView className="mt-1.5 max-h-40 overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-canvas)] px-2 py-1.5 text-[10px]" raw={event.output} />
         )}
+        {commandActivity && !expanded && (
+          <p className="truncate font-mono text-[10px] text-[var(--color-muted)]">{commandActivity.command}</p>
+        )}
+        {commandActivity && expanded && <CodingAgentActivity event={event} className="mt-1.5" />}
       </div>
     </div>
   )

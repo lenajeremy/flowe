@@ -4,6 +4,8 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { JsonView } from '@/components/ui/JsonView'
 import type { ExecutionEvent } from '@/types/workflow'
+import { CodingAgentActivity } from '@/components/coding/CodingAgentActivity'
+import { getCodingAgentCommandActivity } from '@/lib/codingAgentActivity'
 
 // ── Figma frames 164–167: run Status / Logs tabs + output modal ──
 
@@ -148,7 +150,8 @@ function EmptyRuns({ hint }: { hint: string }) {
 export function RunOutputModal({ group, onClose }: { group: EventGroup; onClose: () => void }) {
   const request = group.events.find((e) => e.type === 'node_started')?.message
     ?? group.events[0]?.message ?? ''
-  const lines = group.events.filter((e) => e.message && e.type !== 'node_started')
+  const lines = group.events.filter((e) => e.message && e.type !== 'node_started' && !getCodingAgentCommandActivity(e))
+  const commandEvents = group.events.filter((event) => getCodingAgentCommandActivity(event))
 
   return createPortal(
     <div
@@ -185,6 +188,13 @@ export function RunOutputModal({ group, onClose }: { group: EventGroup; onClose:
                 </pre>
               </div>
             </>
+          )}
+
+          {commandEvents.length > 0 && (
+            <div className="mt-5 flex flex-col gap-3">
+              <p className="text-[14px] font-medium text-[var(--color-text)]">Agent activity</p>
+              {commandEvents.map((event) => <CodingAgentActivity key={event.id} event={event} />)}
+            </div>
           )}
 
           {/* Outputs */}
@@ -283,7 +293,9 @@ export function NodeLogsTab() {
                 <p className="pr-6 text-[14px] leading-5 text-[var(--color-text)]">{group.label}</p>
 
                 <div className="mt-2 flex flex-col gap-2">
-                  {group.events.filter((e) => e.message).map((ev) => (
+                  {group.events.filter((e) => e.message).map((ev) => getCodingAgentCommandActivity(ev) ? (
+                    <CodingAgentActivity key={ev.id} event={ev} />
+                  ) : (
                     <div key={ev.id} className="flex items-start gap-2">
                       {ev.type === 'node_error' ? (
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="mt-0.5 flex-shrink-0" style={{ color: 'var(--color-fail)' }}>

@@ -1043,6 +1043,7 @@ export type ExecutionEventType =
   | 'workflow_completed'
   | 'workflow_error'
   | 'node_waiting'   // humanApproval is waiting for review
+  | 'node_progress'  // non-terminal activity from a long-running node
 
 export interface ExecutionEvent {
   id: string
@@ -1053,5 +1054,6 @@ export interface ExecutionEvent {
   nodeType?: NodeType
   message: string
   output?: string
+  payload?: Record<string, unknown>
   timestamp: number
 }

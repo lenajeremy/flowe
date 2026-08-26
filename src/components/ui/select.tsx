@@ -2,7 +2,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 
 import { cn } from "@/lib/utils"
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon, CheckIcon, ChevronUpIcon, SearchIcon } from "lucide-react"
 
 const SelectRoot = SelectPrimitive.Root
 
@@ -57,6 +57,7 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
+  header,
   side = "bottom",
   sideOffset = 4,
   align = "center",
@@ -67,7 +68,7 @@ function SelectContent({
   Pick<
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+  > & { header?: React.ReactNode }) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner
@@ -85,6 +86,7 @@ function SelectContent({
           {...props}
         >
           <SelectScrollUpButton />
+          {header}
           <SelectPrimitive.List>{children}</SelectPrimitive.List>
           <SelectScrollDownButton />
         </SelectPrimitive.Popup>
@@ -195,20 +197,77 @@ function Select({ id, value, onChange, options }: {
   onChange: (value: string) => void
   options: Array<{ value: string; label: string }>
 }) {
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
+  const searchRef = React.useRef<HTMLInputElement>(null)
+  const searchable = options.length > 6
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const filteredOptions = normalizedQuery === ""
+    ? options
+    : options.filter((option) =>
+        option.label.toLocaleLowerCase().includes(normalizedQuery) ||
+        option.value.toLocaleLowerCase().includes(normalizedQuery)
+      )
+
+  React.useEffect(() => {
+    if (!open || !searchable) return
+    const frame = window.requestAnimationFrame(() => searchRef.current?.focus())
+    return () => window.cancelAnimationFrame(frame)
+  }, [open, searchable])
+
   return (
-    <SelectRoot value={value} onValueChange={(v) => onChange((v as string) ?? '')} items={options}>
+    <SelectRoot
+      value={value}
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (!nextOpen) setQuery("")
+      }}
+      onValueChange={(v) => onChange((v as string) ?? '')}
+      items={options}
+    >
       <SelectTrigger
         id={id}
         className="h-auto w-full rounded-[7px] border-[var(--color-border)] bg-[var(--color-surface2)] px-2.5 py-1.5 font-mono text-xs"
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
-        {options.map((opt) => (
+      <SelectContent
+        id={`${id}-content`}
+        header={searchable ? (
+          <div className="sticky top-0 z-20 border-b border-border bg-popover p-1.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-input bg-transparent px-2 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+              <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault()
+                    document.querySelector<HTMLElement>(`#${CSS.escape(id)}-content [data-slot=select-item]`)?.focus()
+                  }
+                  if (event.key !== "Escape") event.stopPropagation()
+                }}
+                placeholder="Search…"
+                aria-label="Search options"
+                className="h-7 min-w-0 flex-1 bg-transparent font-mono text-xs outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+        ) : undefined}
+      >
+        {filteredOptions.map((opt) => (
           <SelectItem key={opt.value} value={opt.value} className="font-mono text-xs">
             {opt.label}
           </SelectItem>
         ))}
+        {searchable && filteredOptions.length === 0 && (
+          <div className="px-3 py-4 text-center font-mono text-xs text-muted-foreground">
+            No matching options
+          </div>
+        )}
       </SelectContent>
     </SelectRoot>
   )
