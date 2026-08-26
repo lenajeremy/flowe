@@ -164,6 +164,14 @@ export type FlowNodeData = {
   codingAgentAutoDeleteMinutes?: number
   codingAgentAllowedDomains?: string[]
   codingAgentAllowWrite?: boolean
+  /** 'open' (default) lets the agent reach the internet; 'allowlist' restricts
+   *  it to codingAgentAllowedDomains plus the runtime, npm and the repo host.
+   *  Naming any domain implies 'allowlist'. */
+  codingAgentNetworkAccess?: 'open' | 'allowlist'
+  /** Ids of other nodes on this canvas the agent may call while it works — how
+   *  it opens its own pull request without ever holding a credential. Empty
+   *  means no tools. */
+  codingAgentToolNodes?: string[]
 
   // notion / linear shared
   integrationToken?: string    // API token — stored in node config

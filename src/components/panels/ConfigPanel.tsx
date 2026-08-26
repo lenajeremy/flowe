@@ -168,6 +168,56 @@ function getUpstreamNodes(targetId: string, nodes: FlowNode[], edges: FlowEdge[]
 }
 
 // ── Branch upstream hint ─────────────────────────────────────
+// The agent works in a sandbox with no credentials of its own, so anything it
+// needs to do in a connected account happens through a node on this canvas.
+// Granting is per node and deny-by-default: an agent given nothing gets no
+// tools, which is the right starting point for something running text from an
+// issue or an inbox next to a shell.
+function CodingAgentToolGrant({
+  granted, candidates, onChange,
+}: {
+  granted: string[]
+  candidates: FlowNode[]
+  onChange: (next: string[]) => void
+}) {
+  if (candidates.length === 0) {
+    return (
+      <p className="mb-3 rounded-lg border border-dashed border-[var(--color-border)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--color-muted)]">
+        Add another node to this canvas — a GitHub node, say — and the agent can be
+        allowed to use it to open its own pull request.
+      </p>
+    )
+  }
+  return (
+    <div className="mb-3 flex flex-col gap-1">
+      {candidates.map((candidate) => {
+        const on = granted.includes(candidate.id)
+        return (
+          <label
+            key={candidate.id}
+            className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--color-surface2)]"
+          >
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={() => onChange(
+                on ? granted.filter((id) => id !== candidate.id) : [...granted, candidate.id],
+              )}
+              className="h-3.5 w-3.5 shrink-0 accent-[var(--color-accent)]"
+            />
+            <span className="truncate text-[12px] text-[var(--color-text)]">
+              {candidate.data.label || candidate.id}
+            </span>
+            <span className="micro ml-auto shrink-0 rounded bg-[var(--color-surface2)] px-1 text-[var(--color-muted)]">
+              {candidate.data.nodeType}
+            </span>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
 function BranchInputHint({ upstreamNodes }: { upstreamNodes: FlowNode[] }) {
   if (upstreamNodes.length === 0) return null
   const upstream = upstreamNodes[0]
@@ -797,7 +847,42 @@ export function ConfigPanel() {
               </div>
             </label>
 
-            <FormField label="Additional allowed domains" htmlFor="cfg-coding-domains" hint="One hostname per line (up to 12 additional entries). Wildcards like *.example.com are supported. OpenAI, GitHub, and npm use the other 8 slots.">
+            <FormField
+              label="Tools the agent may use"
+              htmlFor="cfg-coding-tools"
+              hint="Nodes on this canvas the agent can call while it works. It holds no credentials itself — the server runs the node on its behalf, with your connected accounts."
+            >
+              <CodingAgentToolGrant
+                granted={Array.isArray(data.codingAgentToolNodes) ? data.codingAgentToolNodes : []}
+                candidates={nodes.filter((candidate) => candidate.id !== nodeId)}
+                onChange={(next) => updateNodeData(nodeId, { codingAgentToolNodes: next })}
+              />
+            </FormField>
+
+            <FormField
+              label="Internet access"
+              htmlFor="cfg-coding-network"
+              hint="Open lets the agent reach package registries and documentation, which most real tasks need. Restricted confines it to the domains below plus the runtime, npm and your repository host."
+            >
+              <Select
+                id="cfg-coding-network"
+                value={
+                  data.codingAgentNetworkAccess === 'allowlist' ||
+                  (data.codingAgentAllowedDomains ?? []).length > 0
+                    ? 'allowlist'
+                    : 'open'
+                }
+                onChange={(value) => updateNodeData(nodeId, {
+                  codingAgentNetworkAccess: value as 'open' | 'allowlist',
+                })}
+                options={[
+                  { value: 'open', label: 'Open — the whole internet' },
+                  { value: 'allowlist', label: 'Restricted — listed domains only' },
+                ]}
+              />
+            </FormField>
+
+            <FormField label="Additional allowed domains" htmlFor="cfg-coding-domains" hint="One hostname per line (up to 12 additional entries). Wildcards like *.example.com are supported. Listing any domain restricts the agent to the allowlist, whatever the setting above says.">
               <Textarea
                 id="cfg-coding-domains"
                 rows={4}
