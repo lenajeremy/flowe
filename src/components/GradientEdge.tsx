@@ -28,6 +28,15 @@ export function GradientEdge(props: EdgeProps) {
 
   const accent = typeof data?.accent === 'string' ? data.accent : '#70f17b'
 
+  // Path overlay. 'skipped' is the one that has to read as *deliberate* rather
+  // than as a rendering glitch, so it changes shape — dashed, arrowless — and
+  // not just opacity. 'ahead' is the scrubber's "not yet": faint but solid, so
+  // it stays distinguishable from a path that was never taken at all.
+  const pathState = data?.pathState as 'taken' | 'skipped' | 'ahead' | undefined
+  const verdict = typeof data?.verdict === 'string' ? data.verdict : undefined
+  const skipped = pathState === 'skipped'
+  const ahead = pathState === 'ahead'
+
   const [path] = getBezierPath({
     sourceX, sourceY, sourcePosition,
     targetX, targetY, targetPosition,
@@ -111,13 +120,41 @@ export function GradientEdge(props: EdgeProps) {
         id={id}
         path={path}
         style={{
-          stroke: `url(#${gradId})`,
-          strokeWidth: selected ? 4 : 3,
+          stroke: skipped ? 'var(--color-border)' : `url(#${gradId})`,
+          strokeWidth: skipped ? 1.5 : selected ? 4 : pathState === 'taken' ? 4 : 3,
+          strokeDasharray: skipped ? '4 4' : undefined,
+          opacity: skipped ? 0.45 : ahead ? 0.3 : 1,
         }}
       />
 
       {/* Arrowhead, aligned to the curve's tangent at the target socket. */}
-      <polygon points={arrowPoints} style={{ fill: accent }} stroke="none" />
+      {!skipped && (
+        <polygon points={arrowPoints} style={{ fill: accent, opacity: ahead ? 0.3 : 1 }} stroke="none" />
+      )}
+
+      {/* The branch output that selected this edge, e.g. true / approved. */}
+      {verdict && (
+        <foreignObject
+          x={(sourceX + targetX) / 2 - 30}
+          y={(sourceY + targetY) / 2 - 9}
+          width={60}
+          height={18}
+          style={{ overflow: 'visible', pointerEvents: 'none' }}
+        >
+          <div className="flex justify-center">
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none"
+              style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: accent,
+              }}
+            >
+              {verdict}
+            </span>
+          </div>
+        </foreignObject>
+      )}
     </>
   )
 }

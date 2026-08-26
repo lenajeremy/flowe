@@ -17,6 +17,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { getDefaultNodeData } from '@/lib/nodeDefaults'
 import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import type { NodeType, FlowEdge } from '@/types/workflow'
+import { derivePath, edgePathState, nodePathState, isEmptyPath } from '@/lib/runLog'
 import posthog from '@/lib/posthog'
 
 // Must be defined at module scope — never inside a component body
@@ -45,6 +46,7 @@ interface CanvasProps {
 export function Canvas({ theme }: CanvasProps) {
   const {
     nodes, edges,
+    isPathMode, pathStep, pathEvents, executionLog,
     onNodesChange, onEdgesChange, onConnect,
     setSelectedNodeId, selectedNodeId, selectedNodeIds,
     selectedEdgeId, setSelectedEdgeId,
@@ -66,6 +68,10 @@ export function Canvas({ theme }: CanvasProps) {
       selectedNodeIds: s.selectedNodeIds,
       selectedEdgeId: s.selectedEdgeId,
       setSelectedEdgeId: s.setSelectedEdgeId,
+      isPathMode: s.isPathMode,
+      pathStep: s.pathStep,
+      pathEvents: s.pathEvents,
+      executionLog: s.executionLog,
       setSelectedNodeIds: s.setSelectedNodeIds,
       addNode: s.addNode,
       deleteNodesById: s.deleteNodesById,
@@ -133,20 +139,46 @@ export function Canvas({ theme }: CanvasProps) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [edges, selectedNodeId, selectedNodeIds, selectedEdgeId, deleteNodesById, deleteEdgesById, undo, redo, setActiveTool])
 
+  // A run with no path events at all is one from before this existed, or a
+  // single-node test. Overlaying it would grey out the whole graph and claim
+  // nothing ran, so the overlay stays off rather than lying.
+  const runPath = useMemo(
+    () => derivePath(pathEvents ?? executionLog),
+    [pathEvents, executionLog],
+  )
+  const pathActive = isPathMode && !isEmptyPath(runPath)
+
   // ── Gradient edges — Figma frames 161-168: fade into the target's accent ──
   const animatedEdges = useMemo(
     () => edges.map((e) => {
       const targetNode = nodes.find((n) => n.id === e.target)
       const accent = targetNode ? NODE_ACCENT_HEX[targetNode.data.nodeType] : '#70f17b'
+      const pathState = pathActive ? edgePathState(runPath, e, pathStep) : undefined
       return {
         ...e,
         type: 'gradient',
-        data: { ...e.data, accent },
-        animated: executionState === 'running',
+        data: {
+          ...e.data,
+          accent,
+          pathState,
+          // The branch output that chose this edge, surfaced on the edge itself
+          // — which is where "why did it go this way" is actually asked.
+          verdict: pathState === 'taken' ? runPath.taken.get(e.id) || undefined : undefined,
+        },
+        animated: executionState === 'running' && pathState !== 'skipped',
         selected: e.id === selectedEdgeId,
       }
     }),
-    [edges, nodes, executionState, selectedEdgeId],
+    [edges, nodes, executionState, selectedEdgeId, pathActive, runPath, pathStep],
+  )
+
+  // Node dimming rides on the React Flow wrapper's className rather than a prop
+  // threaded through forty node components.
+  const pathNodes = useMemo(
+    () => (pathActive
+      ? nodes.map((n) => ({ ...n, className: `path-${nodePathState(runPath, n.id, pathStep)}` }))
+      : nodes),
+    [nodes, pathActive, runPath, pathStep],
   )
 
   const onNodeClick = useCallback(
@@ -211,7 +243,7 @@ export function Canvas({ theme }: CanvasProps) {
   return (
     <div className="relative h-full flex-1 overflow-hidden">
       <ReactFlow
-        nodes={nodes}
+        nodes={pathNodes}
         edges={animatedEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

@@ -95,6 +95,10 @@ export interface WorkflowRun {
   error_message?: string
   // Present on GET /runs/:id only — list endpoints return summaries
   events?: ExecutionEvent[]
+  // The graph this run actually executed, captured at admission. Lets a past
+  // run be compared against the workflow as it stands now, which may have been
+  // edited since — or, for a manual run, never saved in the first place.
+  graph?: { nodes: { id: string }[]; edges: { id: string }[] }
   created_at: string
   updated_at: string
 }

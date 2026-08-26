@@ -847,3 +847,16 @@ select:focus-visible { outline: none; }
 }
 .legal-prose tbody tr:last-child td { border-bottom: 0; }
 .legal-prose em { font-style: italic; }
+
+/* ── Path overlay ─────────────────────────────────────────────────────────
+   Dimming rides on React Flow's node wrapper rather than a prop threaded
+   through forty node components. Edges carry their own state in GradientEdge,
+   where the dashed, arrowless "skipped" treatment lives — opacity alone reads
+   as a rendering glitch rather than as a path deliberately not taken. */
+.react-flow__node.path-taken,
+.react-flow__node.path-ahead,
+.react-flow__node.path-skipped {
+  transition: opacity 200ms var(--ease-in-out), filter 200ms var(--ease-in-out);
+}
+.react-flow__node.path-skipped { opacity: 0.25; filter: saturate(0.15); }
+.react-flow__node.path-ahead   { opacity: 0.45; }

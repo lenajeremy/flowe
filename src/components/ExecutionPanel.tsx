@@ -219,7 +219,7 @@ export function ExecutionPanel() {
     isLogPanelOpen, setLogPanelOpen,
     executionState, executionLog,
     pendingApproval, setPendingApproval,
-    dbId,
+    dbId, setPathEvents, nodes,
   } = useWorkflowStore(
     useShallow((s) => ({
       isLogPanelOpen: s.isLogPanelOpen,
@@ -229,6 +229,8 @@ export function ExecutionPanel() {
       pendingApproval: s.pendingApproval,
       setPendingApproval: s.setPendingApproval,
       dbId: s.dbId,
+      setPathEvents: s.setPathEvents,
+      nodes: s.nodes,
     })),
   )
 
@@ -306,18 +308,36 @@ export function ExecutionPanel() {
     setViewingRun(run)
     if (run.events) {
       setViewingRunEvents(run.events)
+      setPathEvents(run.events)
       return
     }
     setViewingRunLoading(true)
     try {
       const full = await getRun(run.id)
       setViewingRunEvents(full.events ?? [])
+      setViewingRun(full)
+      // Point the canvas overlay at this run rather than the live log, so
+      // opening a past run and turning on Path shows that run's path.
+      setPathEvents(full.events ?? [])
     } catch {
       setViewingRunEvents([])
     } finally {
       setViewingRunLoading(false)
     }
   }
+
+  // The canvas draws the workflow as it is now. If the run predates an edit,
+  // say so rather than letting the overlay quietly describe a different graph.
+  const graphDrift = useMemo(() => {
+    const snapshot = viewingRun?.graph?.nodes
+    if (!snapshot) return 0
+    const current = new Set(nodes.map((n) => n.id))
+    const then = new Set(snapshot.map((n) => n.id))
+    let drift = 0
+    for (const id of then) if (!current.has(id)) drift++
+    for (const id of current) if (!then.has(id)) drift++
+    return drift
+  }, [viewingRun, nodes])
 
   // Derive node output entries for the State tab
   const nodeOutputEntries = useMemo(() => {
@@ -501,7 +521,7 @@ export function ExecutionPanel() {
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)] flex-shrink-0">
                 <button
-                  onClick={() => { setViewingRun(null); setViewingRunEvents([]) }}
+                  onClick={() => { setViewingRun(null); setViewingRunEvents([]); setPathEvents(null) }}
                   className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -516,6 +536,15 @@ export function ExecutionPanel() {
                   {viewingRun.status}
                 </span>
               </div>
+              {graphDrift > 0 && (
+                <div
+                  className="px-3 py-1.5 text-[10px] flex-shrink-0"
+                  style={{ background: 'var(--tint-hold)', color: 'var(--color-hold)' }}
+                >
+                  This workflow has changed since this run — {graphDrift} node{graphDrift === 1 ? '' : 's'} differ.
+                  The path drawn on the canvas is approximate.
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto py-1">
                 {viewingRunLoading ? (
                   <div className="flex items-center justify-center h-full">

@@ -106,6 +106,19 @@ interface WorkflowStore {
   isLogPanelOpen: boolean
   setLogPanelOpen: (open: boolean) => void
 
+  // Path overlay: draw which way the last run actually went through the graph.
+  // pathStep is a position in the run's node order — null shows the whole path,
+  // a number reveals it up to that point, which is the only way to read order
+  // off a graph that fans out.
+  isPathMode: boolean
+  setPathMode: (on: boolean) => void
+  pathStep: number | null
+  setPathStep: (step: number | null) => void
+  // Events the overlay reads. null follows the live executionLog; a past run
+  // sets its own so the canvas can show a run other than the current one.
+  pathEvents: ExecutionEvent[] | null
+  setPathEvents: (events: ExecutionEvent[] | null) => void
+
   isConfigPanelOpen: boolean
   setConfigPanelOpen: (open: boolean) => void
 
@@ -441,6 +454,16 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   isLogPanelOpen: false,
   setLogPanelOpen: (open) => set({ isLogPanelOpen: open }),
+
+  isPathMode: false,
+  // Leaving path mode drops the scrubber and the pinned run together: coming
+  // back to a half-scrubbed overlay of a run you have since stopped looking at
+  // is confusing rather than convenient.
+  setPathMode: (on) => set(on ? { isPathMode: true } : { isPathMode: false, pathStep: null, pathEvents: null }),
+  pathStep: null,
+  setPathStep: (step) => set({ pathStep: step }),
+  pathEvents: null,
+  setPathEvents: (events) => set({ pathEvents: events }),
 
   isConfigPanelOpen: true,
   setConfigPanelOpen: (open) => set({ isConfigPanelOpen: open }),
