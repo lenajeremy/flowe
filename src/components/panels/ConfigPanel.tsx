@@ -757,7 +757,7 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            <FormField label="Branch" htmlFor="cfg-coding-branch" hint="The environment keeps its own checkout; Fernary does not push changes automatically.">
+            <FormField label="Branch" htmlFor="cfg-coding-branch" hint="The environment keeps its own checkout. Nothing is pushed unless you grant the agent a repository node below to do it with.">
               <ResourcePicker
                 id="cfg-coding-branch"
                 provider={data.codingAgentRepositoryProvider === 'gitlab' ? 'gitlab' : 'github'}
