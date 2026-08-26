@@ -52,6 +52,7 @@ import { GoogleContactsNode }   from './GoogleContactsNode'
 import { HubSpotNode }          from './HubSpotNode'
 import { FrontNode }            from './FrontNode'
 import { DataNode }             from './DataNode'
+import { CodingAgentNode }      from './CodingAgentNode'
 
 // Must be defined at module scope — never inside a component body
 export const nodeTypes = {
@@ -109,4 +110,5 @@ export const nodeTypes = {
   hubspot:          HubSpotNode,
   front:            FrontNode,
   data:             DataNode,
+  codingAgent:      CodingAgentNode,
 }

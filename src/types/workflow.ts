@@ -56,6 +56,7 @@ export type NodeType =
   | 'hubspot'
   | 'front'
   | 'data'
+  | 'codingAgent'
 
 export type ExecutionStatus = 'idle' | 'running' | 'completed' | 'error' | 'waiting'
 
@@ -147,6 +148,20 @@ export type FlowNodeData = {
 
   // LLM web tools
   enableWebSearch?: boolean  // gives the LLM web_search + read_url tools
+
+  // Coding agent (server-side, isolated Daytona environment)
+  codingAgentRuntime?: 'codex'
+  codingAgentTask?: string
+  codingAgentRepository?: string
+  codingAgentBranch?: string
+  codingAgentWorkspaceMode?: 'persistent' | 'ephemeral'
+  codingAgentConversationKey?: string
+  codingAgentModel?: string
+  codingAgentMaxDuration?: number
+  codingAgentAutoStopMinutes?: number
+  codingAgentAutoDeleteMinutes?: number
+  codingAgentAllowedDomains?: string[]
+  codingAgentAllowWrite?: boolean
 
   // notion / linear shared
   integrationToken?: string    // API token — stored in node config

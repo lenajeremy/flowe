@@ -406,6 +406,7 @@ async function executeNode(
     case 'hubspot':
     case 'front':
     case 'data':
+    case 'codingAgent':
       // Integration and Data nodes use server-side state (OAuth connections or
       // persisted stores) — they run through the backend Run button, not this
       // in-browser preview executor.

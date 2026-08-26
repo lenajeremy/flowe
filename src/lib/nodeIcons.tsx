@@ -57,6 +57,7 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   integrationTrigger: icon('integrationTrigger'),
   scheduledTrigger: icon('scheduledTrigger'),
   data:             icon('data'),
+  codingAgent:      icon('codingAgent'),
 
   // Third-party services — their own logos
   notion:           logo('notion'),

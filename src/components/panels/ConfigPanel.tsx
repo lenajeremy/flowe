@@ -29,6 +29,8 @@ import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { CodingAgentConnection } from '@/components/coding/CodingAgentConnection'
+import { CodingAgentRuns } from '@/components/coding/CodingAgentRuns'
 
 
 type InspectorTab = 'configure' | 'status' | 'logs'
@@ -674,6 +676,129 @@ export function ConfigPanel() {
                 </p>
               </div>
             </label>
+          </>
+        )}
+
+        {/* Coding Agent */}
+        {nodeType === 'codingAgent' && (
+          <>
+            <CodingAgentConnection />
+
+            <div className="my-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-hover)] p-3">
+              <p className="text-[11px] font-medium text-[var(--color-text)]">Runs in an isolated Daytona workspace</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-[var(--color-muted)]">
+                Codex can inspect and test this repository. The workspace is isolated from Fernary, network access is allowlisted, and credentials are injected only for the duration of the job.
+              </p>
+            </div>
+
+            <FormField label="GitHub repository" htmlFor="cfg-coding-repository" hint="owner/repository — private repositories use your connected GitHub account">
+              <Input
+                id="cfg-coding-repository"
+                value={typeof data.codingAgentRepository === 'string' ? data.codingAgentRepository : ''}
+                onChange={(event) => updateNodeData(nodeId, { codingAgentRepository: event.target.value.trim() })}
+                placeholder="acme/web-app"
+                className={inputClass}
+              />
+            </FormField>
+
+            <FormField label="Branch" htmlFor="cfg-coding-branch" hint="The environment keeps its own checkout; Fernary does not push changes automatically.">
+              <Input
+                id="cfg-coding-branch"
+                value={typeof data.codingAgentBranch === 'string' ? data.codingAgentBranch : ''}
+                onChange={(event) => updateNodeData(nodeId, { codingAgentBranch: event.target.value })}
+                placeholder="Repository default branch"
+                className={inputClass}
+              />
+            </FormField>
+
+            <FormField label="Task" htmlFor="cfg-coding-task" hint="Upstream node outputs can be inserted as templates.">
+              <TemplateField
+                id="cfg-coding-task"
+                multiline
+                rows={7}
+                value={typeof data.codingAgentTask === 'string' ? data.codingAgentTask : ''}
+                onChange={(value) => updateNodeData(nodeId, { codingAgentTask: value })}
+                placeholder="Inspect the repository and fix the issue described in {{previousNode.output}}"
+              />
+            </FormField>
+
+            <FormField label="Workspace" htmlFor="cfg-coding-workspace">
+              <Select
+                id="cfg-coding-workspace"
+                value={data.codingAgentWorkspaceMode === 'ephemeral' ? 'ephemeral' : 'persistent'}
+                onChange={(value) => updateNodeData(nodeId, { codingAgentWorkspaceMode: value as 'persistent' | 'ephemeral' })}
+                options={[
+                  { value: 'persistent', label: 'Reusable — keep files between runs' },
+                  { value: 'ephemeral', label: 'Fresh — delete after every run' },
+                ]}
+              />
+            </FormField>
+
+            <FormField label="Conversation key (optional)" htmlFor="cfg-coding-conversation" hint="Runs with the same key and workspace continue the same Codex thread.">
+              <TemplateField
+                id="cfg-coding-conversation"
+                value={typeof data.codingAgentConversationKey === 'string' ? data.codingAgentConversationKey : ''}
+                onChange={(value) => updateNodeData(nodeId, { codingAgentConversationKey: value })}
+                placeholder="issue-{{previousNode.output}}"
+              />
+            </FormField>
+
+            <FormField label="Maximum run time (minutes)" htmlFor="cfg-coding-timeout">
+              <Input
+                id="cfg-coding-timeout"
+                type="number"
+                min={1}
+                max={120}
+                value={Math.round((typeof data.codingAgentMaxDuration === 'number' ? data.codingAgentMaxDuration : 1800) / 60)}
+                onChange={(event) => {
+                  const minutes = Math.max(1, Math.min(120, Number(event.target.value) || 1))
+                  updateNodeData(nodeId, { codingAgentMaxDuration: minutes * 60 })
+                }}
+                className={inputClass}
+              />
+            </FormField>
+
+            <FormField label="Model override (optional)" htmlFor="cfg-coding-model" hint="Leave blank to use the current Codex default for the connected account.">
+              <Input
+                id="cfg-coding-model"
+                value={typeof data.codingAgentModel === 'string' ? data.codingAgentModel : ''}
+                onChange={(event) => updateNodeData(nodeId, { codingAgentModel: event.target.value })}
+                placeholder="Use Codex default"
+                className={inputClass}
+              />
+            </FormField>
+
+            <label className="mb-3 flex cursor-pointer select-none items-start gap-3">
+              <div className="relative mt-0.5 shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={data.codingAgentAllowWrite === true}
+                  onChange={(event) => updateNodeData(nodeId, { codingAgentAllowWrite: event.target.checked })}
+                />
+                <div className={`h-4.5 w-8 rounded-full transition-colors ${data.codingAgentAllowWrite ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`} />
+                <div className={`absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${data.codingAgentAllowWrite ? 'translate-x-3.5' : ''}`} />
+              </div>
+              <div>
+                <p className="mb-1 text-[13px] font-medium leading-none">Allow repository changes</p>
+                <p className="text-[10px] leading-relaxed text-[var(--color-muted)]">When off, Codex can inspect and test but receives a read-only workspace policy.</p>
+              </div>
+            </label>
+
+            <FormField label="Additional allowed domains" htmlFor="cfg-coding-domains" hint="One hostname per line (up to 12 additional entries). Wildcards like *.example.com are supported. OpenAI, GitHub, and npm use the other 8 slots.">
+              <Textarea
+                id="cfg-coding-domains"
+                rows={4}
+                value={(data.codingAgentAllowedDomains ?? []).join('\n')}
+                onChange={(event) => updateNodeData(nodeId, {
+                  codingAgentAllowedDomains: event.target.value.split(/[\n,]/).map((value) => value.trim()).filter(Boolean),
+                })}
+                placeholder="docs.example.com"
+                className={textareaClass}
+              />
+            </FormField>
+
+            <CodingAgentRuns workflowId={dbId} nodeId={nodeId} />
           </>
         )}
 

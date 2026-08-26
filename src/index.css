@@ -242,6 +242,7 @@
   --na-hubspot:          #ff7a59;
   --na-front:            #e5e4e5;
   --na-data:             #2dd4bf;
+  --na-codingAgent:      #8b9cff;
 
   /* Node-card glow: full neon bloom on dark, a whisper on light */
   --node-glow-o: 0.7;
@@ -405,6 +406,7 @@
   --na-hubspot:          #d94f2b;
   --na-front:            #565664;
   --na-data:             #0d9488;
+  --na-codingAgent:      #4e5ec7;
 
   --node-glow-o: 0.16;
   --node-icon-glow: none;

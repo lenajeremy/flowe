@@ -15,7 +15,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
   // fallback for everything that isn't a connected app.
   { category: 'Triggers', items: ['integrationTrigger', 'scheduledTrigger', 'webhookTrigger'] },
   { category: 'Input/Output', items: ['textInput', 'imageInput', 'textOutput'] },
-  { category: 'Actions', items: ['llm', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
+  { category: 'Actions', items: ['llm', 'codingAgent', 'humanApproval', 'httpRequest', 'emailSend', 'branch', 'loop'] },
   { category: 'Data', items: ['data'] },
   { category: 'Integrations', items: [
     'gmail', 'googlecalendar', 'googledrive', 'googledocs', 'googlesheets',

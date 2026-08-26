@@ -17,6 +17,22 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
         maxTokens: 1024,
         enableWebSearch: true,
       }
+    case 'codingAgent':
+      return {
+        nodeType: 'codingAgent',
+        label: 'Coding Agent',
+        codingAgentRuntime: 'codex',
+        codingAgentTask: 'Inspect the repository and complete this task:\n\n{{previousNode.output}}',
+        codingAgentRepository: '',
+        codingAgentBranch: '',
+        codingAgentWorkspaceMode: 'persistent',
+        codingAgentConversationKey: '',
+        codingAgentMaxDuration: 1800,
+        codingAgentAutoStopMinutes: 15,
+        codingAgentAutoDeleteMinutes: 10080,
+        codingAgentAllowedDomains: [],
+        codingAgentAllowWrite: true,
+      }
     case 'branch':
       return { nodeType: 'branch', label: 'Branch', condition: '' }
     case 'loop':
