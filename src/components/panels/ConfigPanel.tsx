@@ -862,7 +862,7 @@ export function ConfigPanel() {
             <FormField
               label="Internet access"
               htmlFor="cfg-coding-network"
-              hint="Open lets the agent reach package registries and documentation, which most real tasks need. Restricted confines it to the domains below plus the runtime, npm and your repository host."
+              hint="Open asks for no sandbox-level restriction, so the agent gets whatever your Daytona plan allows — full internet on higher tiers, your organisation's policy on Tier 1 and 2, which cannot be widened from here. Restricted narrows it further to the domains below plus the runtime, npm and your repository host."
             >
               <Select
                 id="cfg-coding-network"
@@ -876,7 +876,7 @@ export function ConfigPanel() {
                   codingAgentNetworkAccess: value as 'open' | 'allowlist',
                 })}
                 options={[
-                  { value: 'open', label: 'Open — the whole internet' },
+                  { value: 'open', label: 'Open — whatever your plan allows' },
                   { value: 'allowlist', label: 'Restricted — listed domains only' },
                 ]}
               />
