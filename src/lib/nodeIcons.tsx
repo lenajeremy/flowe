@@ -100,5 +100,6 @@ export const NODE_ICONS: Record<NodeType, ReactNode> = {
   googlesearchconsole: logo('googlesearchconsole'),
   googlecontacts:   logo('googlecontacts'),
   hubspot:          logo('hubspot'),
+  sentry:           logo('sentry'),
   front:            logo('front'),
 }

@@ -51,6 +51,7 @@ import { GoogleSearchConsoleNode } from './GoogleSearchConsoleNode'
 import { GoogleContactsNode }   from './GoogleContactsNode'
 import { HubSpotNode }          from './HubSpotNode'
 import { FrontNode }            from './FrontNode'
+import { SentryNode }           from './SentryNode'
 import { DataNode }             from './DataNode'
 import { CodingAgentNode }      from './CodingAgentNode'
 
@@ -109,6 +110,7 @@ export const nodeTypes = {
   googlecontacts:   GoogleContactsNode,
   hubspot:          HubSpotNode,
   front:            FrontNode,
+  sentry:           SentryNode,
   data:             DataNode,
   codingAgent:      CodingAgentNode,
 }

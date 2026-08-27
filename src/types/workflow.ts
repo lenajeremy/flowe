@@ -55,6 +55,7 @@ export type NodeType =
   | 'googlecontacts'
   | 'hubspot'
   | 'front'
+  | 'sentry'
   | 'data'
   | 'codingAgent'
 
@@ -1012,6 +1013,28 @@ export type FlowNodeData = {
   frontTeammateId?: string
   frontTo?: string
   frontUrl?: string
+
+  // sentry
+  sentryProject?: string          // project slug
+  sentryIssueId?: string          // numeric issue id, not the short id like BACKEND-4F
+  sentryQuery?: string            // Sentry search syntax, e.g. is:unresolved level:error
+  sentryStatsPeriod?: string      // 1h | 24h | 14d | 90d
+  sentryEnvironment?: string
+  sentrySort?: string             // date | freq | new | user
+  sentryLimit?: number
+  sentryCursor?: string
+  sentryStatus?: string           // overrides the status a triage op sets
+  sentryAssignee?: string         // user:<id> | team:<id> | email
+  sentryComment?: string
+  sentryTagKey?: string
+  sentryIgnoreMinutes?: number
+  sentryIgnoreCount?: number
+  sentryVersion?: string
+  sentryProjects?: string         // comma-separated slugs for a release or deploy
+  sentryRef?: string
+  sentryUrl?: string
+  sentryDeployName?: string
+  sentryFields?: string           // comma-separated Discover fields
 
   // Index signature — required by @xyflow/react Node<Data> constraint
   [key: string]: unknown

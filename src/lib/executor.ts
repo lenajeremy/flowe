@@ -405,6 +405,7 @@ async function executeNode(
     case 'googlecontacts':
     case 'hubspot':
     case 'front':
+    case 'sentry':
     case 'data':
     case 'codingAgent':
       // Integration and Data nodes use server-side state (OAuth connections or

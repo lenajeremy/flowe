@@ -81,7 +81,7 @@ const RESOURCE_LABEL: Record<string, string> = {
 // of. Those fall back to a text field rather than crashing the panel.
 const PICKABLE_PROVIDERS = new Set(['github', 'gitlab', 'slack', 'notion', 'linear', 'gmail',
   'stripe', 'googlecalendar', 'googledrive', 'outlook', 'jira', 'confluence', 'bitbucket',
-  'airtable', 'clickup', 'monday', 'asana', 'supabase', 'googlesearchconsole'])
+  'airtable', 'clickup', 'monday', 'asana', 'supabase', 'googlesearchconsole', 'sentry'])
 const PICKABLE_KINDS = new Set(['database', 'page', 'team', 'project', 'repo', 'price', 'calendar',
   'folder', 'channel', 'user', 'label', 'space', 'board', 'tasklist', 'base', 'workspace',
   'property', 'branch', 'group', 'column', 'section', 'task'])
