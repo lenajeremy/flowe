@@ -4,13 +4,18 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   cancelCodingAgentJob,
+	approveCodingAgentToolCall,
   loadCodingAgentEnvironments,
   loadCodingAgentJob,
   loadCodingAgentJobs,
+	loadCodingAgentToolCalls,
+	rejectCodingAgentToolCall,
+	reconcileCodingAgentToolCall,
   resetCodingAgentEnvironment,
   type CodingAgentJob,
   type CodingAgentJobDetails,
   type CodingAgentJobStatus,
+	type CodingAgentToolCall,
 } from '@/lib/codingAgents'
 
 const terminal = new Set<CodingAgentJobStatus>(['succeeded', 'failed', 'cancelled', 'timed_out'])
@@ -43,6 +48,7 @@ export function CodingAgentRuns({ workflowId, nodeId }: { workflowId?: string; n
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(Boolean(workflowId))
   const [working, setWorking] = useState<string | null>(null)
+	const [toolCalls, setToolCalls] = useState<Record<string, CodingAgentToolCall[]>>({})
 
   const refresh = useCallback(async (quiet = false) => {
     if (!workflowId) return
@@ -63,6 +69,25 @@ export function CodingAgentRuns({ workflowId, nodeId }: { workflowId?: string; n
     const timer = window.setInterval(() => void refresh(true), 2500)
     return () => window.clearInterval(timer)
   }, [hasActive, refresh])
+
+	const refreshToolCalls = useCallback(async (jobId: string, quiet = false) => {
+		try {
+			const calls = await loadCodingAgentToolCalls(jobId)
+			setToolCalls((current) => ({ ...current, [jobId]: calls }))
+		} catch (error) {
+			if (!quiet) toast.error('Could not load workflow-tool activity', { description: error instanceof Error ? error.message : undefined })
+		}
+	}, [])
+
+	useEffect(() => {
+		if (!expanded) return
+		void refreshToolCalls(expanded, true)
+		const active = jobs.find((job) => job.id === expanded)
+		const pending = toolCalls[expanded]?.some((call) => call.status === 'pending_approval' || call.status === 'approved' || call.status === 'executing')
+		if ((!active || terminal.has(active.status)) && !pending) return
+		const timer = window.setInterval(() => void refreshToolCalls(expanded, true), 1500)
+		return () => window.clearInterval(timer)
+	}, [expanded, jobs, refreshToolCalls, toolCalls])
 
 	useEffect(() => {
 		if (!expanded) return
@@ -91,7 +116,33 @@ export function CodingAgentRuns({ workflowId, nodeId }: { workflowId?: string; n
         toast.error('Could not load run details', { description: error instanceof Error ? error.message : undefined })
       }
     }
+		void refreshToolCalls(job.id, true)
   }
+
+	async function resolveToolCall(call: CodingAgentToolCall, approve: boolean) {
+		setWorking(call.id)
+		try {
+			if (approve) await approveCodingAgentToolCall(call.id)
+			else await rejectCodingAgentToolCall(call.id)
+			await refreshToolCalls(call.job_id, true)
+		} catch (error) {
+			toast.error(`Could not ${approve ? 'approve' : 'reject'} the tool call`, { description: error instanceof Error ? error.message : undefined })
+		} finally {
+			setWorking(null)
+		}
+	}
+
+	async function reconcileToolCall(call: CodingAgentToolCall, outcome: 'completed' | 'not_completed') {
+		setWorking(call.id)
+		try {
+			await reconcileCodingAgentToolCall(call.id, outcome)
+			await refreshToolCalls(call.job_id, true)
+		} catch (error) {
+			toast.error('Could not reconcile the tool call', { description: error instanceof Error ? error.message : undefined })
+		} finally {
+			setWorking(null)
+		}
+	}
 
   async function cancel(job: CodingAgentJob) {
     setWorking(job.id)
@@ -174,6 +225,36 @@ export function CodingAgentRuns({ workflowId, nodeId }: { workflowId?: string; n
                         {artifact.inline_content && <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[9px] leading-relaxed text-[var(--color-muted)]">{artifact.inline_content}</pre>}
                       </div>
                     ))}
+					{(toolCalls[job.id] ?? []).map((call) => (
+						<div key={call.id} className={`mt-2 rounded-md border p-2 ${call.status === 'pending_approval' ? 'border-amber-500/30 bg-amber-500/5' : 'border-[var(--color-border)] bg-[var(--color-canvas)]'}`}>
+							<div className="flex items-center gap-2">
+								<span className="truncate text-[10px] font-medium">{call.node_label || call.node_id} · {call.operation}</span>
+								<span className={`ml-auto rounded px-1 py-0.5 text-[9px] ${call.effect === 'read' ? 'bg-emerald-500/10 text-emerald-300' : call.effect === 'write' ? 'bg-amber-500/10 text-amber-300' : 'bg-red-500/10 text-red-300'}`}>{call.effect}</span>
+							</div>
+							<p className="mt-1 text-[9.5px] capitalize text-[var(--color-muted)]">{call.status.replaceAll('_', ' ')}</p>
+							{call.reason && <p className="mt-1 text-[10px] leading-relaxed text-[var(--color-text)]"><span className="text-[var(--color-muted)]">Why:</span> {call.reason}</p>}
+							<details className="mt-1.5">
+								<summary className="cursor-pointer text-[9.5px] text-[var(--color-muted)]">Effective configuration (secrets redacted)</summary>
+								<pre className="mt-1 max-h-36 overflow-auto whitespace-pre-wrap break-words rounded bg-black/10 p-1.5 text-[9px]">{JSON.stringify(call.effective_config, null, 2)}</pre>
+							</details>
+							{call.status === 'pending_approval' && (
+								<div className="mt-2 flex gap-1.5">
+									<Button size="xs" disabled={working === call.id} onClick={() => void resolveToolCall(call, true)}>Approve once</Button>
+									<Button size="xs" variant="outline" disabled={working === call.id} onClick={() => void resolveToolCall(call, false)}>Reject</Button>
+								</div>
+							)}
+							{call.status === 'outcome_unknown' && (
+								<div className="mt-2">
+									<p className="mb-1.5 text-[9.5px] text-amber-600 dark:text-amber-300">Check the target system before choosing. Fernary will not retry this action while unresolved.</p>
+									<div className="flex gap-1.5">
+										<Button size="xs" disabled={working === call.id} onClick={() => void reconcileToolCall(call, 'completed')}>It completed</Button>
+										<Button size="xs" variant="outline" disabled={working === call.id} onClick={() => void reconcileToolCall(call, 'not_completed')}>It did not complete</Button>
+									</div>
+								</div>
+							)}
+							{call.last_error && <p className="mt-1.5 text-[9.5px] text-red-400">{call.last_error}</p>}
+						</div>
+					))}
                   </div>
                 )}
               </div>

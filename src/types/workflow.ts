@@ -172,6 +172,11 @@ export type FlowNodeData = {
    *  it opens its own pull request without ever holding a credential. Empty
    *  means no tools. */
   codingAgentToolNodes?: string[]
+  codingAgentToolGrants?: Array<{
+    nodeId: string
+    allowedOperations: string[]
+    allowedOverrideFields: string[]
+  }>
 
   // notion / linear shared
   integrationToken?: string    // API token — stored in node config

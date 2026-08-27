@@ -1,5 +1,40 @@
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
+import type { FlowEdge, FlowNode } from '@/types/workflow'
+
+export type CodingAgentToolEffect = 'read' | 'write' | 'destructive'
+
+export interface CodingAgentToolGrant {
+  nodeId: string
+  allowedOperations: string[]
+  allowedOverrideFields: string[]
+}
+
+export interface CodingAgentToolCapability {
+  nodeId: string
+  nodeType: string
+  label: string
+  operationField?: string
+  operations: Array<{ id: string; label: string; effect: CodingAgentToolEffect; sensitive?: boolean }>
+  overridableFields: string[]
+}
+
+export interface CodingAgentToolCall {
+  id: string
+  job_id: string
+  node_id: string
+  node_label: string
+  tool_name: string
+  operation: string
+  effect: CodingAgentToolEffect
+  reason?: string
+  arguments: Record<string, unknown>
+  effective_config: Record<string, unknown>
+  status: 'pending_approval' | 'approved' | 'executing' | 'succeeded' | 'failed' | 'outcome_unknown' | 'rejected' | 'cancelled'
+  result?: Record<string, unknown>
+  last_error?: string
+  requested_at: string
+}
 
 export interface CodingAgentCredential {
   id: string
@@ -88,6 +123,39 @@ async function apiJSON<T>(path: string, init?: RequestInit): Promise<T> {
 export async function loadCodingAgentRuntimes(): Promise<CodingAgentRuntimeStatus[]> {
   const response = await apiJSON<{ runtimes: CodingAgentRuntimeStatus[] }>('/api/coding-agents/runtimes')
   return response.runtimes
+}
+
+export async function loadCodingAgentCapabilities(nodes: FlowNode[], edges: FlowEdge[]): Promise<{
+  capabilities: CodingAgentToolCapability[]
+  defaultPolicy: { version: number; nodes: CodingAgentToolGrant[] }
+}> {
+  return apiJSON('/api/coding-agents/capabilities', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: '1.0', name: 'Current canvas', nodes, edges }),
+  })
+}
+
+export async function loadCodingAgentToolCalls(jobId: string): Promise<CodingAgentToolCall[]> {
+  return apiJSON(`/api/coding-agent-tool-calls?jobId=${encodeURIComponent(jobId)}`)
+}
+
+export function loadCodingAgentToolCall(id: string): Promise<CodingAgentToolCall> {
+  return apiJSON(`/api/coding-agent-tool-calls/${encodeURIComponent(id)}`)
+}
+
+export function approveCodingAgentToolCall(id: string): Promise<CodingAgentToolCall> {
+  return apiJSON(`/api/coding-agent-tool-calls/${encodeURIComponent(id)}/approve`, { method: 'POST' })
+}
+
+export function rejectCodingAgentToolCall(id: string): Promise<CodingAgentToolCall> {
+  return apiJSON(`/api/coding-agent-tool-calls/${encodeURIComponent(id)}/reject`, { method: 'POST' })
+}
+
+export function reconcileCodingAgentToolCall(id: string, outcome: 'completed' | 'not_completed'): Promise<CodingAgentToolCall> {
+  return apiJSON(`/api/coding-agent-tool-calls/${encodeURIComponent(id)}/reconcile`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcome }),
+  })
 }
 
 export function startCodexConnection(): Promise<CodingAgentAuthAttempt> {

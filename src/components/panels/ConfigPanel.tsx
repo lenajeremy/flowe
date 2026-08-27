@@ -33,6 +33,11 @@ import { CodingAgentConnection } from '@/components/coding/CodingAgentConnection
 import { CodingAgentRuns } from '@/components/coding/CodingAgentRuns'
 import { CodingRepositoryPicker } from '@/components/coding/CodingRepositoryPicker'
 import { ResourcePicker } from '@/components/ui/ResourcePicker'
+import {
+  loadCodingAgentCapabilities,
+  type CodingAgentToolCapability,
+  type CodingAgentToolGrant as CodingAgentToolGrantValue,
+} from '@/lib/codingAgents'
 
 
 type InspectorTab = 'configure' | 'status' | 'logs'
@@ -174,12 +179,44 @@ function getUpstreamNodes(targetId: string, nodes: FlowNode[], edges: FlowEdge[]
 // tools, which is the right starting point for something running text from an
 // issue or an inbox next to a shell.
 function CodingAgentToolGrant({
-  granted, candidates, onChange,
+  grants, legacyGranted, candidates, nodes, edges, onChange,
 }: {
-  granted: string[]
+  grants: CodingAgentToolGrantValue[]
+  legacyGranted: string[]
   candidates: FlowNode[]
-  onChange: (next: string[]) => void
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+  onChange: (next: CodingAgentToolGrantValue[]) => void
 }) {
+	const [capabilities, setCapabilities] = useState<CodingAgentToolCapability[]>([])
+	const [safeDefaults, setSafeDefaults] = useState<CodingAgentToolGrantValue[]>([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState('')
+
+	useEffect(() => {
+		let active = true
+		void loadCodingAgentCapabilities(nodes, edges)
+			.then((response) => {
+				if (!active) return
+				setError('')
+				setCapabilities(response.capabilities)
+				setSafeDefaults(response.defaultPolicy.nodes)
+			})
+			.catch((reason: unknown) => {
+				if (active) setError(reason instanceof Error ? reason.message : 'Could not load tool permissions')
+			})
+			.finally(() => { if (active) setLoading(false) })
+		return () => { active = false }
+	}, [nodes, edges])
+
+	const effectiveGrants = grants.length > 0
+		? grants
+		: safeDefaults.filter((grant) => legacyGranted.includes(grant.nodeId))
+	const grantFor = (nodeId: string) => effectiveGrants.find((grant) => grant.nodeId === nodeId)
+	const replaceGrant = (next: CodingAgentToolGrantValue) => onChange([
+		...effectiveGrants.filter((grant) => grant.nodeId !== next.nodeId), next,
+	])
+
   if (candidates.length === 0) {
     return (
       <p className="mb-3 rounded-lg border border-dashed border-[var(--color-border)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--color-muted)]">
@@ -188,30 +225,76 @@ function CodingAgentToolGrant({
       </p>
     )
   }
+	if (loading) return <p className="mb-3 text-[10px] text-[var(--color-muted)]">Loading safe tool permissions…</p>
+	if (error) return <p className="mb-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-[10px] text-red-300">{error}</p>
   return (
-    <div className="mb-3 flex flex-col gap-1">
+    <div className="mb-3 flex flex-col gap-2">
       {candidates.map((candidate) => {
-        const on = granted.includes(candidate.id)
+		const capability = capabilities.find((item) => item.nodeId === candidate.id)
+		if (!capability) return null
+		const grant = grantFor(candidate.id)
+		const on = Boolean(grant)
         return (
-          <label
+          <div
             key={candidate.id}
-            className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--color-surface2)]"
+            className="rounded-lg border border-[var(--color-border)] px-2.5 py-2"
           >
-            <input
-              type="checkbox"
-              checked={on}
-              onChange={() => onChange(
-                on ? granted.filter((id) => id !== candidate.id) : [...granted, candidate.id],
-              )}
-              className="h-3.5 w-3.5 shrink-0 accent-[var(--color-accent)]"
-            />
-            <span className="truncate text-[12px] text-[var(--color-text)]">
-              {candidate.data.label || candidate.id}
-            </span>
-            <span className="micro ml-auto shrink-0 rounded bg-[var(--color-surface2)] px-1 text-[var(--color-muted)]">
-              {candidate.data.nodeType}
-            </span>
-          </label>
+			<label className="flex cursor-pointer select-none items-center gap-2.5">
+				<input
+					type="checkbox"
+					checked={on}
+					onChange={() => {
+						if (on) onChange(effectiveGrants.filter((item) => item.nodeId !== candidate.id))
+						else {
+							const safe = safeDefaults.find((item) => item.nodeId === candidate.id)
+							onChange([...effectiveGrants, safe ?? { nodeId: candidate.id, allowedOperations: [], allowedOverrideFields: [] }])
+						}
+					}}
+					className="h-3.5 w-3.5 shrink-0 accent-[var(--color-accent)]"
+				/>
+				<span className="truncate text-[12px] text-[var(--color-text)]">{capability.label || candidate.id}</span>
+				<span className="micro ml-auto shrink-0 rounded bg-[var(--color-surface2)] px-1 text-[var(--color-muted)]">{candidate.data.nodeType}</span>
+			</label>
+			{on && grant && (
+				<div className="mt-2 border-t border-[var(--color-border)] pt-2">
+					<p className="mb-1.5 text-[10px] font-medium text-[var(--color-muted)]">Allowed operations</p>
+					<div className="flex flex-col gap-1">
+						{capability.operations.map((operation) => {
+							const checked = grant.allowedOperations.includes(operation.id)
+							return (
+								<label key={operation.id} className="flex cursor-pointer items-center gap-2 text-[10px] text-[var(--color-text)]">
+									<input type="checkbox" checked={checked} onChange={() => replaceGrant({
+										...grant,
+										allowedOperations: checked
+											? grant.allowedOperations.filter((id) => id !== operation.id)
+											: [...grant.allowedOperations, operation.id],
+									})} className="h-3 w-3 accent-[var(--color-accent)]" />
+									<span>{operation.label}</span>
+									<span className={`ml-auto rounded px-1 py-0.5 ${operation.effect === 'read' ? 'bg-emerald-500/10 text-emerald-300' : operation.effect === 'write' ? 'bg-amber-500/10 text-amber-300' : 'bg-red-500/10 text-red-300'}`}>{operation.effect}</span>
+								</label>
+							)
+						})}
+					</div>
+					{capability.overridableFields.length > 0 && (
+						<details className="mt-2">
+							<summary className="cursor-pointer text-[10px] text-[var(--color-muted)]">Fields the agent may change ({grant.allowedOverrideFields.length})</summary>
+							<div className="mt-1.5 grid grid-cols-2 gap-1">
+								{capability.overridableFields.map((field) => {
+									const checked = grant.allowedOverrideFields.includes(field)
+									return <label key={field} className="flex cursor-pointer items-center gap-1.5 text-[9px] text-[var(--color-text)]">
+										<input type="checkbox" checked={checked} onChange={() => replaceGrant({
+											...grant,
+											allowedOverrideFields: checked ? grant.allowedOverrideFields.filter((id) => id !== field) : [...grant.allowedOverrideFields, field],
+										})} className="h-3 w-3 accent-[var(--color-accent)]" />
+										<span className="truncate">{field}</span>
+									</label>
+								})}
+							</div>
+						</details>
+					)}
+				</div>
+			)}
+		</div>
         )
       })}
     </div>
@@ -790,7 +873,7 @@ export function ConfigPanel() {
                 value={data.codingAgentWorkspaceMode === 'ephemeral' ? 'ephemeral' : 'persistent'}
                 onChange={(value) => updateNodeData(nodeId, { codingAgentWorkspaceMode: value as 'persistent' | 'ephemeral' })}
                 options={[
-                  { value: 'persistent', label: 'Reusable — keep files between runs' },
+				  { value: 'persistent', label: 'Reusable sandbox — fresh checkout per job' },
                   { value: 'ephemeral', label: 'Fresh — delete after every run' },
                 ]}
               />
@@ -853,9 +936,12 @@ export function ConfigPanel() {
               hint="Nodes on this canvas the agent can call while it works. It holds no credentials itself — the server runs the node on its behalf, with your connected accounts."
             >
               <CodingAgentToolGrant
-                granted={Array.isArray(data.codingAgentToolNodes) ? data.codingAgentToolNodes : []}
+				grants={Array.isArray(data.codingAgentToolGrants) ? data.codingAgentToolGrants : []}
+				legacyGranted={Array.isArray(data.codingAgentToolNodes) ? data.codingAgentToolNodes : []}
                 candidates={nodes.filter((candidate) => candidate.id !== nodeId)}
-                onChange={(next) => updateNodeData(nodeId, { codingAgentToolNodes: next })}
+				nodes={nodes}
+				edges={edges}
+				onChange={(next) => updateNodeData(nodeId, { codingAgentToolGrants: next, codingAgentToolNodes: [] })}
               />
             </FormField>
 
@@ -882,13 +968,13 @@ export function ConfigPanel() {
               />
             </FormField>
 
-            <FormField label="Additional allowed domains" htmlFor="cfg-coding-domains" hint="One hostname per line (up to 12 additional entries). Wildcards like *.example.com are supported. Listing any domain restricts the agent to the allowlist, whatever the setting above says.">
+			<FormField label="Additional allowed domains" htmlFor="cfg-coding-domains" hint="One hostname per line (up to 10 additional entries when workflow tools are enabled). Wildcards like *.example.com are supported. Listing any domain restricts the agent to the allowlist, whatever the setting above says.">
               <Textarea
                 id="cfg-coding-domains"
                 rows={4}
                 value={(data.codingAgentAllowedDomains ?? []).join('\n')}
                 onChange={(event) => updateNodeData(nodeId, {
-                  codingAgentAllowedDomains: event.target.value.split(/[\n,]/).map((value) => value.trim()).filter(Boolean),
+				  codingAgentAllowedDomains: event.target.value.split(/[\n,]/).map((value) => value.trim()).filter(Boolean).slice(0, 10),
                 })}
                 placeholder="docs.example.com"
                 className={textareaClass}

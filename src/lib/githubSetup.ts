@@ -18,6 +18,8 @@ export interface GitHubInstallation {
   suspended?: boolean
   permissions_configured: boolean
   permissions_missing: string[]
+	agent_writes_configured: boolean
+	agent_writes_missing: string[]
   settings_url?: string
   repositories?: Array<{
     id: number
@@ -127,6 +129,10 @@ export async function fetchGitHubSetup(): Promise<GitHubSetupStatus> {
             .map((permission) => permission.trim())
             .slice(0, 10)
           : [],
+		agent_writes_configured: installation.agent_writes_configured === true,
+		agent_writes_missing: Array.isArray(installation.agent_writes_missing)
+			? installation.agent_writes_missing.filter((permission): permission is string => typeof permission === 'string').slice(0, 10)
+			: [],
         settings_url: isGitHubInstallationSettingsURL(installation.settings_url)
           ? installation.settings_url
           : undefined,

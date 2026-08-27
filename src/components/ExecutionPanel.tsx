@@ -8,6 +8,8 @@ import { approveRun, rejectRun, listRuns, getRun, type WorkflowRun } from '@/lib
 import { JsonView } from '@/components/ui/JsonView'
 import { CodingAgentActivity } from '@/components/coding/CodingAgentActivity'
 import { getCodingAgentCommandActivity } from '@/lib/codingAgentActivity'
+import { getCodingAgentToolActivity } from '@/lib/codingAgentActivity'
+import { CodingAgentToolActivity } from '@/components/coding/CodingAgentToolActivity'
 
 // ── Event dot & row ───────────────────────────────────────────
 
@@ -33,7 +35,8 @@ function EventRow({ event }: { event: ExecutionEvent }) {
   const hasOutput = Boolean(event.output) &&
     (event.type === 'node_output' || event.type === 'iteration_completed')
   const commandActivity = getCodingAgentCommandActivity(event)
-  const hasDetails = Boolean(hasOutput || commandActivity)
+	const toolActivity = getCodingAgentToolActivity(event)
+  const hasDetails = Boolean(hasOutput || commandActivity || toolActivity)
   const skipped = event.type === 'node_skipped'
 
   return (
@@ -75,6 +78,7 @@ function EventRow({ event }: { event: ExecutionEvent }) {
           <p className="truncate font-mono text-[10px] text-[var(--color-muted)]">{commandActivity.command}</p>
         )}
         {commandActivity && expanded && <CodingAgentActivity event={event} className="mt-1.5" />}
+		{toolActivity && expanded && <CodingAgentToolActivity event={event} />}
       </div>
     </div>
   )

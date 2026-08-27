@@ -7,6 +7,7 @@ import {
   ResourceFetchError,
   type IntegrationResource,
 } from '@/lib/integrationResources'
+import { fetchGitHubSetup, githubRepositoryInstallation, type GitHubSetupStatus } from '@/lib/githubSetup'
 
 export type CodingRepositoryProvider = 'github' | 'gitlab'
 
@@ -30,6 +31,7 @@ export function CodingRepositoryPicker({
   const [repositories, setRepositories] = useState<RepositoryOption[]>([])
   const [loading, setLoading] = useState(true)
   const [connectedProviders, setConnectedProviders] = useState<CodingRepositoryProvider[]>([])
+	const [githubSetup, setGithubSetup] = useState<GitHubSetupStatus | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -61,6 +63,9 @@ export function CodingRepositoryPicker({
           }))))
           setLoading(false)
         })
+		void fetchGitHubSetup().then((status) => { if (alive && version === requestVersion) setGithubSetup(status) }).catch(() => {
+			if (alive && version === requestVersion) setGithubSetup(null)
+		})
     }
     load()
     const onIntegrationChanged = (event: Event) => {
@@ -98,6 +103,9 @@ export function CodingRepositoryPicker({
       label: `${provider === 'github' ? 'GitHub' : 'GitLab'} · ${repository} (connection unavailable)`,
     }] : []),
   ], [connectedProviders.length, currentIsUnavailable, currentValue, loading, provider, repositories, repository])
+	const selectedInstallation = provider === 'github' && githubSetup && repository
+		? githubRepositoryInstallation(githubSetup, repository)
+		: undefined
 
   return (
     <div className="flex flex-col gap-1">
@@ -123,6 +131,11 @@ export function CodingRepositoryPicker({
           Connect GitHub or GitLab from Integrations, then return here to choose a repository.
         </p>
       )}
+		{selectedInstallation && !selectedInstallation.agent_writes_configured && (
+			<p className="text-[10px] leading-relaxed text-amber-600 dark:text-amber-300">
+				This checkout can run, but some GitHub workflow tools need additional Fernary GitHub App access: {selectedInstallation.agent_writes_missing.join(', ') || 'write permissions'}.
+			</p>
+		)}
     </div>
   )
 }
