@@ -6,6 +6,11 @@ import { motion } from 'framer-motion'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useShallow } from 'zustand/react/shallow'
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
+import { AgentPermissionEditor } from '@/components/agent/AgentPermissionEditor'
 import { TemplateField } from '@/components/ui/TemplateField'
 import { JsonView } from '@/components/ui/JsonView'
 import { JsonEditor } from '@/components/ui/JsonEditor'
@@ -38,6 +43,13 @@ import {
   type CodingAgentToolCapability,
   type CodingAgentToolGrant as CodingAgentToolGrantValue,
 } from '@/lib/codingAgents'
+import {
+  agentPermissionCount,
+  cloneAgentCapabilityPolicy,
+  normalizeAgentCapabilityPolicy,
+  type AgentCapabilityPolicy,
+  type LegacyAgentNodeGrant,
+} from '@/lib/agentDeployments'
 
 
 type InspectorTab = 'configure' | 'status' | 'logs'
@@ -175,49 +187,60 @@ function getUpstreamNodes(targetId: string, nodes: FlowNode[], edges: FlowEdge[]
 // ── Branch upstream hint ─────────────────────────────────────
 // The agent works in a sandbox with no credentials of its own, so anything it
 // needs to do in a connected account happens through a node on this canvas.
-// Granting is per node and deny-by-default: an agent given nothing gets no
+// Granting is per integration and deny-by-default: an agent given nothing gets no
 // tools, which is the right starting point for something running text from an
 // issue or an inbox next to a shell.
 function CodingAgentToolGrant({
-  grants, legacyGranted, candidates, nodes, edges, onChange,
+  grants, legacyGranted, nodes, edges, onChange,
 }: {
-  grants: CodingAgentToolGrantValue[]
+  grants: NonNullable<FlowNodeData['codingAgentToolGrants']>
   legacyGranted: string[]
-  candidates: FlowNode[]
   nodes: FlowNode[]
   edges: FlowEdge[]
   onChange: (next: CodingAgentToolGrantValue[]) => void
 }) {
-	const [capabilities, setCapabilities] = useState<CodingAgentToolCapability[]>([])
-	const [safeDefaults, setSafeDefaults] = useState<CodingAgentToolGrantValue[]>([])
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
+  const [capabilities, setCapabilities] = useState<CodingAgentToolCapability[]>([])
+  const [safeDefaults, setSafeDefaults] = useState<AgentCapabilityPolicy>({ version: 2, integrations: [] })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<AgentCapabilityPolicy>({ version: 2, integrations: [] })
 
-	useEffect(() => {
-		let active = true
-		void loadCodingAgentCapabilities(nodes, edges)
-			.then((response) => {
-				if (!active) return
-				setError('')
-				setCapabilities(response.capabilities)
-				setSafeDefaults(response.defaultPolicy.nodes)
-			})
-			.catch((reason: unknown) => {
-				if (active) setError(reason instanceof Error ? reason.message : 'Could not load tool permissions')
-			})
-			.finally(() => { if (active) setLoading(false) })
-		return () => { active = false }
-	}, [nodes, edges])
+  useEffect(() => {
+    let active = true
+    void loadCodingAgentCapabilities(nodes, edges)
+      .then((response) => {
+        if (!active) return
+        setError('')
+        setCapabilities(response.capabilities)
+        setSafeDefaults(response.defaultPolicy)
+      })
+      .catch((reason: unknown) => {
+        if (active) setError(reason instanceof Error ? reason.message : 'Could not load tool permissions')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [nodes, edges])
 
-	const effectiveGrants = grants.length > 0
-		? grants
-		: safeDefaults.filter((grant) => legacyGranted.includes(grant.nodeId))
-	const grantFor = (nodeId: string) => effectiveGrants.find((grant) => grant.nodeId === nodeId)
-	const replaceGrant = (next: CodingAgentToolGrantValue) => onChange([
-		...effectiveGrants.filter((grant) => grant.nodeId !== next.nodeId), next,
-	])
+  const integrationGrants = grants.filter((grant): grant is CodingAgentToolGrantValue => (
+    typeof grant.nodeType === 'string' && Array.isArray(grant.nodeIds)
+  ))
+  const legacyGrants = grants.filter((grant): grant is LegacyAgentNodeGrant => (
+    typeof grant.nodeId === 'string' && !('nodeType' in grant)
+  ))
+  let currentPolicy = normalizeAgentCapabilityPolicy({
+    version: integrationGrants.length > 0 ? 2 : 1,
+    integrations: integrationGrants,
+    nodes: legacyGrants,
+  }, capabilities)
+  if (currentPolicy.integrations.length === 0 && legacyGranted.length > 0) {
+    currentPolicy = cloneAgentCapabilityPolicy(safeDefaults)
+    currentPolicy.integrations = currentPolicy.integrations
+      .map((grant) => ({ ...grant, nodeIds: grant.nodeIds.filter((nodeId) => legacyGranted.includes(nodeId)) }))
+      .filter((grant) => grant.nodeIds.length > 0 && grant.allowedOperations.length > 0)
+  }
 
-  if (candidates.length === 0) {
+  if (capabilities.length === 0 && !loading && !error) {
     return (
       <p className="mb-3 rounded-lg border border-dashed border-[var(--color-border)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--color-muted)]">
         Add another node to this canvas — a GitHub node, say — and the agent can be
@@ -225,78 +248,33 @@ function CodingAgentToolGrant({
       </p>
     )
   }
-	if (loading) return <p className="mb-3 text-[10px] text-[var(--color-muted)]">Loading safe tool permissions…</p>
-	if (error) return <p className="mb-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-[10px] text-red-300">{error}</p>
+  if (loading) return <p className="mb-3 text-[10px] text-[var(--color-muted)]">Loading safe tool permissions…</p>
+  if (error) return <p className="mb-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-[10px] text-red-300">{error}</p>
+  const permissionCount = agentPermissionCount(currentPolicy)
   return (
-    <div className="mb-3 flex flex-col gap-2">
-      {candidates.map((candidate) => {
-		const capability = capabilities.find((item) => item.nodeId === candidate.id)
-		if (!capability) return null
-		const grant = grantFor(candidate.id)
-		const on = Boolean(grant)
-        return (
-          <div
-            key={candidate.id}
-            className="rounded-lg border border-[var(--color-border)] px-2.5 py-2"
-          >
-			<label className="flex cursor-pointer select-none items-center gap-2.5">
-				<input
-					type="checkbox"
-					checked={on}
-					onChange={() => {
-						if (on) onChange(effectiveGrants.filter((item) => item.nodeId !== candidate.id))
-						else {
-							const safe = safeDefaults.find((item) => item.nodeId === candidate.id)
-							onChange([...effectiveGrants, safe ?? { nodeId: candidate.id, allowedOperations: [], allowedOverrideFields: [] }])
-						}
-					}}
-					className="h-3.5 w-3.5 shrink-0 accent-[var(--color-accent)]"
-				/>
-				<span className="truncate text-[12px] text-[var(--color-text)]">{capability.label || candidate.id}</span>
-				<span className="micro ml-auto shrink-0 rounded bg-[var(--color-surface2)] px-1 text-[var(--color-muted)]">{candidate.data.nodeType}</span>
-			</label>
-			{on && grant && (
-				<div className="mt-2 border-t border-[var(--color-border)] pt-2">
-					<p className="mb-1.5 text-[10px] font-medium text-[var(--color-muted)]">Allowed operations</p>
-					<div className="flex flex-col gap-1">
-						{capability.operations.map((operation) => {
-							const checked = grant.allowedOperations.includes(operation.id)
-							return (
-								<label key={operation.id} className="flex cursor-pointer items-center gap-2 text-[10px] text-[var(--color-text)]">
-									<input type="checkbox" checked={checked} onChange={() => replaceGrant({
-										...grant,
-										allowedOperations: checked
-											? grant.allowedOperations.filter((id) => id !== operation.id)
-											: [...grant.allowedOperations, operation.id],
-									})} className="h-3 w-3 accent-[var(--color-accent)]" />
-									<span>{operation.label}</span>
-									<span className={`ml-auto rounded px-1 py-0.5 ${operation.effect === 'read' ? 'bg-emerald-500/10 text-emerald-300' : operation.effect === 'write' ? 'bg-amber-500/10 text-amber-300' : 'bg-red-500/10 text-red-300'}`}>{operation.effect}</span>
-								</label>
-							)
-						})}
-					</div>
-					{capability.overridableFields.length > 0 && (
-						<details className="mt-2">
-							<summary className="cursor-pointer text-[10px] text-[var(--color-muted)]">Fields the agent may change ({grant.allowedOverrideFields.length})</summary>
-							<div className="mt-1.5 grid grid-cols-2 gap-1">
-								{capability.overridableFields.map((field) => {
-									const checked = grant.allowedOverrideFields.includes(field)
-									return <label key={field} className="flex cursor-pointer items-center gap-1.5 text-[9px] text-[var(--color-text)]">
-										<input type="checkbox" checked={checked} onChange={() => replaceGrant({
-											...grant,
-											allowedOverrideFields: checked ? grant.allowedOverrideFields.filter((id) => id !== field) : [...grant.allowedOverrideFields, field],
-										})} className="h-3 w-3 accent-[var(--color-accent)]" />
-										<span className="truncate">{field}</span>
-									</label>
-								})}
-							</div>
-						</details>
-					)}
-				</div>
-			)}
-		</div>
-        )
-      })}
+    <div className="mb-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11.5px] font-medium text-[var(--color-text)]">{permissionCount > 0 ? `${permissionCount} ${permissionCount === 1 ? 'ability' : 'abilities'} across ${currentPolicy.integrations.length} ${currentPolicy.integrations.length === 1 ? 'integration' : 'integrations'}` : 'No workflow tools allowed'}</p>
+          <p className="mt-0.5 text-[9.5px] leading-4 text-[var(--color-muted)]">Writes still require approval before Fernary runs them.</p>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => { setDraft(cloneAgentCapabilityPolicy(currentPolicy)); setOpen(true) }}>Customize Permissions</Button>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex max-h-[88vh] w-[min(820px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-[var(--color-border)] px-5 py-4 pr-12">
+            <DialogTitle>Customize coding agent permissions</DialogTitle>
+            <DialogDescription>Abilities are granted once per integration. Choose the configured resources that can back them and which fields Codex may set.</DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            <AgentPermissionEditor capabilities={capabilities} policy={draft} onChange={setDraft} />
+          </div>
+          <DialogFooter className="mx-0 mb-0 shrink-0 rounded-none px-5 py-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={() => { onChange(draft.integrations); setOpen(false) }}>Save permissions</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -938,7 +916,6 @@ export function ConfigPanel() {
               <CodingAgentToolGrant
 				grants={Array.isArray(data.codingAgentToolGrants) ? data.codingAgentToolGrants : []}
 				legacyGranted={Array.isArray(data.codingAgentToolNodes) ? data.codingAgentToolNodes : []}
-                candidates={nodes.filter((candidate) => candidate.id !== nodeId)}
 				nodes={nodes}
 				edges={edges}
 				onChange={(next) => updateNodeData(nodeId, { codingAgentToolGrants: next, codingAgentToolNodes: [] })}

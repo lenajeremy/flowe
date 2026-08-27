@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, Bot, Check, CircleAlert, ExternalLink, Hash, LoaderCircle,
-  LockKeyhole, Pause, Play, Save, ShieldCheck, Trash2,
+  Pause, Play, Save, ShieldCheck, Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { AgentPermissionEditor } from '@/components/agent/AgentPermissionEditor'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,31 +15,16 @@ import {
   listAgentHosts,
   revokeAgentDeployment,
   updateAgentDeployment,
+  cloneAgentCapabilityPolicy,
   type AgentCapabilityPolicy,
   type AgentDeploymentRecord,
   type AgentHostChannel,
   type AgentHostInstallation,
-  type AgentNodeCapability,
 } from '@/lib/agentDeployments'
 import { cn } from '@/lib/utils'
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong'
-}
-
-function clonePolicy(policy: AgentCapabilityPolicy): AgentCapabilityPolicy {
-  return {
-    version: Number.isInteger(policy.version) ? policy.version : 1,
-    nodes: (Array.isArray(policy.nodes) ? policy.nodes : []).map((node) => ({
-      nodeId: node.nodeId,
-      allowedOperations: Array.isArray(node.allowedOperations) ? [...node.allowedOperations] : [],
-      allowedOverrideFields: Array.isArray(node.allowedOverrideFields) ? [...node.allowedOverrideFields] : [],
-    })),
-  }
-}
-
-function humanizeField(field: string) {
-  return field.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/^./, (letter) => letter.toUpperCase())
 }
 
 function formattedDate(value?: string) {
@@ -63,7 +49,7 @@ export function AgentDetailPage() {
     try {
       const next = await getAgentDeployment(id)
       setRecord(next)
-      setPolicy(clonePolicy(next.deployment.capability_policy))
+      setPolicy(cloneAgentCapabilityPolicy(next.deployment.capability_policy))
       document.title = `${next.deployment.name} · Agents · Fernary`
     } catch (nextError) {
       setError(errorMessage(nextError))
@@ -77,40 +63,8 @@ export function AgentDetailPage() {
   const dirty = useMemo(() => Boolean(record && policy && JSON.stringify(policy) !== JSON.stringify(record.deployment.capability_policy)), [policy, record])
   const canEdit = Boolean(record?.can_manage && record.deployment.status !== 'revoked')
 
-  function toggleOperation(nodeId: string, operationId: string) {
-    if (!canEdit) return
-    setPolicy((current) => {
-      if (!current) return current
-      const next = clonePolicy(current)
-      let grant = next.nodes.find((node) => node.nodeId === nodeId)
-      if (!grant) {
-        grant = { nodeId, allowedOperations: [], allowedOverrideFields: [] }
-        next.nodes.push(grant)
-      }
-      grant.allowedOperations = grant.allowedOperations.includes(operationId)
-        ? grant.allowedOperations.filter((item) => item !== operationId)
-        : [...grant.allowedOperations, operationId]
-      if (grant.allowedOperations.length === 0) next.nodes = next.nodes.filter((node) => node.nodeId !== nodeId)
-      return next
-    })
-  }
-
-  function toggleField(nodeId: string, field: string) {
-    if (!canEdit) return
-    setPolicy((current) => {
-      if (!current) return current
-      const next = clonePolicy(current)
-      const grant = next.nodes.find((node) => node.nodeId === nodeId)
-      if (!grant || grant.allowedOperations.length === 0) return current
-      grant.allowedOverrideFields = grant.allowedOverrideFields.includes(field)
-        ? grant.allowedOverrideFields.filter((item) => item !== field)
-        : [...grant.allowedOverrideFields, field]
-      return next
-    })
-  }
-
   async function savePermissions() {
-    if (!record || !policy || !dirty || !canEdit || policy.nodes.length === 0) return
+    if (!record || !policy || !dirty || !canEdit || policy.integrations.length === 0) return
     setBusy('permissions')
     try {
       const updated = await updateAgentDeployment(record.deployment.id, {
@@ -118,7 +72,7 @@ export function AgentDetailPage() {
         expectedUpdatedAt: record.deployment.updated_at,
       })
       setRecord(updated)
-      setPolicy(clonePolicy(updated.deployment.capability_policy))
+      setPolicy(cloneAgentCapabilityPolicy(updated.deployment.capability_policy))
       toast.success('Agent permissions updated', { description: 'Pending approvals from the previous policy were expired.' })
     } catch (nextError) {
       toast.error('Could not update permissions', { description: errorMessage(nextError) })
@@ -134,7 +88,7 @@ export function AgentDetailPage() {
     try {
       const updated = await updateAgentDeployment(record.deployment.id, { status })
       setRecord(updated)
-      setPolicy(clonePolicy(updated.deployment.capability_policy))
+      setPolicy(cloneAgentCapabilityPolicy(updated.deployment.capability_policy))
       toast.success(status === 'active' ? 'Agent resumed' : 'Agent paused')
     } catch (nextError) {
       toast.error(`Could not ${status === 'active' ? 'resume' : 'pause'} agent`, { description: errorMessage(nextError) })
@@ -174,21 +128,19 @@ export function AgentDetailPage() {
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,.75fr)]">
         <div className="space-y-5">
-          <AgentDestinationEditor record={record} onUpdated={(updated) => { setRecord(updated); setPolicy(clonePolicy(updated.deployment.capability_policy)) }} />
+          <AgentDestinationEditor record={record} onUpdated={(updated) => { setRecord(updated); setPolicy(cloneAgentCapabilityPolicy(updated.deployment.capability_policy)) }} />
         <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
           <div className="flex flex-col gap-3 border-b border-[var(--color-border)] p-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="flex items-center gap-2"><ShieldCheck size={16} className="text-[var(--color-accent)]" /><h2 className="text-[14px] font-semibold">Permissions</h2></div>
               <p className="mt-1.5 max-w-xl text-[11.5px] leading-relaxed text-[var(--color-muted)]">Operations define what the agent may call. Editable fields are the only values it may change; every other value stays pinned to the deployed workflow. Writes always require approval in Slack.</p>
             </div>
-            {canEdit && <Button onClick={() => void savePermissions()} disabled={!dirty || !policy?.nodes.length || busy !== null}><Save /> {busy === 'permissions' ? 'Saving…' : 'Save permissions'}</Button>}
+            {canEdit && <Button onClick={() => void savePermissions()} disabled={!dirty || !policy?.integrations.length || busy !== null}><Save /> {busy === 'permissions' ? 'Saving…' : 'Save permissions'}</Button>}
           </div>
           {!record.can_manage && <div className="border-b border-[var(--color-border)] bg-[var(--color-hover)] px-5 py-3 text-[11px] text-[var(--color-muted)]">View only. The deployment owner or an organization admin can change these permissions.</div>}
           {record.deployment.status === 'revoked' && <div className="border-b border-[var(--color-border)] bg-[var(--color-hover)] px-5 py-3 text-[11px] text-[var(--color-muted)]">Revoked deployments are immutable audit history.</div>}
-          <div className="space-y-4 p-5">
-            {capabilities.length === 0 ? <p className="py-8 text-center text-[12px] text-[var(--color-muted)]">The stored capability catalog is unavailable.</p> : capabilities.map((capability) => (
-              <CapabilityEditor key={capability.nodeId} capability={capability} policy={policy} editable={canEdit} onOperation={toggleOperation} onField={toggleField} />
-            ))}
+          <div className="p-5">
+            {capabilities.length === 0 ? <p className="py-8 text-center text-[12px] text-[var(--color-muted)]">The stored capability catalog is unavailable.</p> : policy && <AgentPermissionEditor capabilities={capabilities} policy={policy} onChange={setPolicy} readOnly={!canEdit} />}
           </div>
         </section>
         </div>
@@ -454,54 +406,6 @@ function DestinationChannelRow({ channel, workspaceID, selected, editable, canAu
       {!channel.is_member && editable && (!canAutoJoin || channel.is_private) && (
         <p className="px-9 pb-2 text-[9px] text-[var(--color-subtle)]">In Slack, run <span className="font-medium text-[var(--color-muted)]">/invite</span> and select the Fernary app.</p>
       )}
-    </div>
-  )
-}
-
-function CapabilityEditor({ capability, policy, editable, onOperation, onField }: {
-  capability: AgentNodeCapability
-  policy: AgentCapabilityPolicy | null
-  editable: boolean
-  onOperation: (nodeId: string, operationId: string) => void
-  onField: (nodeId: string, field: string) => void
-}) {
-  const grant = policy?.nodes.find((node) => node.nodeId === capability.nodeId)
-  const enabled = Boolean(grant?.allowedOperations.length)
-  return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div><p className="text-[12.5px] font-semibold">{capability.label}</p><p className="mt-0.5 text-[10px] text-[var(--color-subtle)]">{capability.nodeType}</p></div>
-        <span className={cn('rounded-full px-2 py-0.5 text-[9.5px] font-medium', enabled ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]' : 'bg-[var(--color-hover)] text-[var(--color-subtle)]')}>{enabled ? 'Exposed' : 'Not exposed'}</span>
-      </div>
-      <div className="mt-3">
-        <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--color-subtle)]">Allowed operations</p>
-        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-          {capability.operations.map((operation) => {
-            const checked = grant?.allowedOperations.includes(operation.id) ?? false
-            const write = operation.effect !== 'read'
-            return (
-              <button key={operation.id} type="button" disabled={!editable} onClick={() => onOperation(capability.nodeId, operation.id)} className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] disabled:cursor-default">
-                <CheckBox checked={checked} />
-                <span className="min-w-0 flex-1 truncate text-[11.5px]">{operation.label}</span>
-                <span className={cn('rounded px-1.5 py-0.5 text-[8.5px] font-medium uppercase tracking-wide', write ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300')}>{write ? 'Approval' : 'Read'}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-      <div className="mt-4 border-t border-[var(--color-border)] pt-3">
-        <div className="flex items-center gap-1.5"><LockKeyhole size={11} className="text-[var(--color-subtle)]" /><p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--color-subtle)]">Fields the agent may set</p></div>
-        {capability.overridableFields.length === 0 ? (
-          <p className="mt-2 text-[10.5px] text-[var(--color-muted)]">All settings stay pinned to the deployed workflow.</p>
-        ) : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {capability.overridableFields.map((field) => {
-              const checked = grant?.allowedOverrideFields.includes(field) ?? false
-              return <button key={field} type="button" disabled={!editable || !enabled} onClick={() => onField(capability.nodeId, field)} className={cn('rounded-lg border px-2 py-1.5 text-[10.5px] transition-colors disabled:cursor-not-allowed disabled:opacity-45', checked ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]' : 'border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-hover)]')}>{humanizeField(field)}</button>
-            })}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

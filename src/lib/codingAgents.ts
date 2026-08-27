@@ -1,23 +1,13 @@
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import type { FlowEdge, FlowNode } from '@/types/workflow'
+import { normalizeAgentCapabilities, normalizeAgentCapabilityPolicy } from '@/lib/agentDeployments'
+import type { AgentCapabilityPolicy, AgentIntegrationCapability, AgentIntegrationGrant } from '@/lib/agentDeployments'
 
 export type CodingAgentToolEffect = 'read' | 'write' | 'destructive'
 
-export interface CodingAgentToolGrant {
-  nodeId: string
-  allowedOperations: string[]
-  allowedOverrideFields: string[]
-}
-
-export interface CodingAgentToolCapability {
-  nodeId: string
-  nodeType: string
-  label: string
-  operationField?: string
-  operations: Array<{ id: string; label: string; effect: CodingAgentToolEffect; sensitive?: boolean }>
-  overridableFields: string[]
-}
+export type CodingAgentToolGrant = AgentIntegrationGrant
+export type CodingAgentToolCapability = AgentIntegrationCapability
 
 export interface CodingAgentToolCall {
   id: string
@@ -127,13 +117,15 @@ export async function loadCodingAgentRuntimes(): Promise<CodingAgentRuntimeStatu
 
 export async function loadCodingAgentCapabilities(nodes: FlowNode[], edges: FlowEdge[]): Promise<{
   capabilities: CodingAgentToolCapability[]
-  defaultPolicy: { version: number; nodes: CodingAgentToolGrant[] }
+  defaultPolicy: AgentCapabilityPolicy
 }> {
-  return apiJSON('/api/coding-agents/capabilities', {
+  const response = await apiJSON<{ capabilities: CodingAgentToolCapability[]; defaultPolicy: AgentCapabilityPolicy }>('/api/coding-agents/capabilities', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: '1.0', name: 'Current canvas', nodes, edges }),
   })
+  const capabilities = normalizeAgentCapabilities(response.capabilities)
+  return { ...response, capabilities, defaultPolicy: normalizeAgentCapabilityPolicy(response.defaultPolicy, capabilities) }
 }
 
 export async function loadCodingAgentToolCalls(jobId: string): Promise<CodingAgentToolCall[]> {

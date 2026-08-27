@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IntegrationLogo } from '@/components/IntegrationLogo'
+import { AgentPermissionEditor } from '@/components/agent/AgentPermissionEditor'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -37,11 +38,12 @@ import {
   listAgentHosts,
   revokeAgentDeployment,
   updateAgentDeployment,
+  normalizeAgentCapabilityPolicy,
   type AgentCapabilityPolicy,
   type AgentDeploymentRecord,
   type AgentHostChannel,
   type AgentHostInstallation,
-  type AgentNodeCapability,
+  type AgentIntegrationCapability,
   type AgentPermissionAnalysis,
 } from '@/lib/agentDeployments'
 
@@ -86,17 +88,6 @@ function humanizeField(field: string) {
     .replace(/^./, (letter) => letter.toUpperCase())
 }
 
-function clonePolicy(policy: AgentCapabilityPolicy): AgentCapabilityPolicy {
-  return {
-    version: Number.isInteger(policy.version) ? policy.version : 1,
-    nodes: (Array.isArray(policy.nodes) ? policy.nodes : []).map((node) => ({
-      nodeId: node.nodeId,
-      allowedOperations: Array.isArray(node.allowedOperations) ? [...node.allowedOperations] : [],
-      allowedOverrideFields: Array.isArray(node.allowedOverrideFields) ? [...node.allowedOverrideFields] : [],
-    })),
-  }
-}
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong'
 }
@@ -107,7 +98,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [destination, setDestination] = useState<SlackDestinationState>({
     hostId: '', channels: [], selectedChannels: [], channelsLoading: false, loadVersion: 0,
   })
-  const [capabilities, setCapabilities] = useState<AgentNodeCapability[]>([])
+  const [capabilities, setCapabilities] = useState<AgentIntegrationCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
   const [name, setName] = useState(workflowName || 'Workflow agent')
   const [alias, setAlias] = useState(slugAgentName(workflowName))
@@ -271,12 +262,12 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   }, [connecting])
 
   const policySummary = useMemo(() => {
-    const byNode = new Map(capabilities.map((capability) => [capability.nodeId, capability]))
+    const byType = new Map(capabilities.map((capability) => [capability.nodeType, capability]))
     const reads: string[] = []
     const writes: string[] = []
     const fixed: string[] = []
-    for (const grant of policy?.nodes ?? []) {
-      const capability = byNode.get(grant.nodeId)
+    for (const grant of policy?.integrations ?? []) {
+      const capability = byType.get(grant.nodeType)
       if (!capability) continue
       for (const operationId of grant.allowedOperations) {
         const operation = capability.operations.find((item) => item.id === operationId)
@@ -294,9 +285,9 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
 
   const reviewWarnings = useMemo(() => {
     const warnings = [...(analysis?.warnings ?? [])]
-    const byNode = new Map(capabilities.map((capability) => [capability.nodeId, capability]))
-    for (const grant of policy?.nodes ?? []) {
-      const capability = byNode.get(grant.nodeId)
+    const byType = new Map(capabilities.map((capability) => [capability.nodeType, capability]))
+    for (const grant of policy?.integrations ?? []) {
+      const capability = byType.get(grant.nodeType)
       if (!capability) continue
       for (const operationId of grant.allowedOperations) {
         const operation = capability.operations.find((item) => item.id === operationId)
@@ -323,7 +314,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
     channels.some((channel) => channel.id === channelId && channel.is_member))
   const canDeploy = Boolean(
-    analysis && policy && policy.nodes.length > 0 && validName && validAlias &&
+    analysis && policy && policy.integrations.length > 0 && validName && validAlias &&
     selectedHost && validChannelSelection && !channelsLoading && !connecting && !deploying,
   )
 
@@ -358,7 +349,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     try {
       const result = await analyzeAgentDeployment(workflowId)
       setAnalysis(result)
-      setPolicy(clonePolicy(result.policy))
+      setPolicy(normalizeAgentCapabilityPolicy(result.policy, capabilities))
     } catch (error) {
       toast.error('Could not analyze agent access', { description: errorMessage(error) })
     } finally {
@@ -394,36 +385,6 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
       channelsLoading: Boolean(nextHostId),
       loadVersion: current.loadVersion + 1,
     }))
-  }
-
-  function toggleOperation(nodeId: string, operationId: string) {
-    setPolicy((current) => {
-      if (!current) return current
-      const next = clonePolicy(current)
-      let grant = next.nodes.find((node) => node.nodeId === nodeId)
-      if (!grant) {
-        grant = { nodeId, allowedOperations: [], allowedOverrideFields: [] }
-        next.nodes.push(grant)
-      }
-      grant.allowedOperations = grant.allowedOperations.includes(operationId)
-        ? grant.allowedOperations.filter((id) => id !== operationId)
-        : [...grant.allowedOperations, operationId]
-      if (grant.allowedOperations.length === 0) next.nodes = next.nodes.filter((node) => node.nodeId !== nodeId)
-      return next
-    })
-  }
-
-  function toggleField(nodeId: string, field: string) {
-    setPolicy((current) => {
-      if (!current) return current
-      const next = clonePolicy(current)
-      const grant = next.nodes.find((node) => node.nodeId === nodeId)
-      if (!grant) return current
-      grant.allowedOverrideFields = grant.allowedOverrideFields.includes(field)
-        ? grant.allowedOverrideFields.filter((item) => item !== field)
-        : [...grant.allowedOverrideFields, field]
-      return next
-    })
   }
 
   async function deploy() {
@@ -681,38 +642,8 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                         <ChevronDown size={15} className="transition-transform group-open:rotate-180" />
                       </summary>
                       <div className="border-t border-[var(--color-border)] px-4 py-3">
-                        <p className="mb-3 text-[10.5px] leading-4 text-[var(--color-subtle)]">Operations control what a node may do. Editable fields control which saved settings the model may change per request. Every write still needs the requester’s approval.</p>
-                        <div className="space-y-3">
-                          {capabilities.map((capability) => {
-                            const grant = policy.nodes.find((node) => node.nodeId === capability.nodeId)
-                            return (
-                              <div key={capability.nodeId} className="rounded-lg bg-[var(--color-canvas)] p-3">
-                                <p className="text-[11.5px] font-medium">{capability.label}</p>
-                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                  {capability.operations.map((operation) => {
-                                    const checked = grant?.allowedOperations.includes(operation.id) ?? false
-                                    return (
-                                      <button key={operation.id} type="button" onClick={() => toggleOperation(capability.nodeId, operation.id)} className={`rounded-full border px-2.5 py-1 text-[10.5px] transition-colors ${checked ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-text)]' : 'border-[var(--color-border)] text-[var(--color-subtle)] hover:text-[var(--color-text)]'}`}>
-                                        {operation.label}{operation.effect !== 'read' ? ' · approval' : ''}
-                                      </button>
-                                    )
-                                  })}
-                                </div>
-                                {grant && capability.overridableFields.filter((field) => field !== capability.operationField).length > 0 && (
-                                  <div className="mt-2.5 border-t border-[var(--color-border)] pt-2.5">
-                                    <p className="mb-1.5 text-[10px] text-[var(--color-subtle)]">Fields the agent may set</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {capability.overridableFields.filter((field) => field !== capability.operationField).map((field) => {
-                                        const checked = grant.allowedOverrideFields.includes(field)
-                                        return <button key={field} type="button" onClick={() => toggleField(capability.nodeId, field)} className={`rounded-full border px-2.5 py-1 text-[10.5px] ${checked ? 'border-violet-500/60 bg-violet-500/10' : 'border-[var(--color-border)] text-[var(--color-subtle)]'}`}>{humanizeField(field)}</button>
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
+                        <p className="mb-3 text-[10.5px] leading-4 text-[var(--color-subtle)]">Abilities are configured once per integration. Resource selection restricts which saved configurations may be used. Every write still needs the requester’s approval.</p>
+                        <AgentPermissionEditor capabilities={capabilities} policy={policy} onChange={setPolicy} />
                       </div>
                     </details>
                   </div>

@@ -173,7 +173,9 @@ export type FlowNodeData = {
    *  means no tools. */
   codingAgentToolNodes?: string[]
   codingAgentToolGrants?: Array<{
-    nodeId: string
+    nodeType?: string
+    nodeIds?: string[]
+    nodeId?: string
     allowedOperations: string[]
     allowedOverrideFields: string[]
   }>
