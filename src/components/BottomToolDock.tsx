@@ -302,7 +302,7 @@ export function BottomToolDock({ onSave }: { onSave?: () => void } = {}) {
         const response = await apiFetch(`${API}/api/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ workflow: ast, workflowId: dbId ?? '' }),
+          body: JSON.stringify({ workflow: ast, toolWorkflow: ast, workflowId: dbId ?? '' }),
           signal: controller.signal,
         })
         if (!response.ok || !response.body) throw new Error(`Server error ${response.status}`)

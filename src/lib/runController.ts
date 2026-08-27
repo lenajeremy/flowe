@@ -184,7 +184,15 @@ export function startRun(opts?: {
 
   void (async () => {
     const { nodes, edges, workflowName, dbId } = useWorkflowStore.getState()
-    const ast = serializeToAST(nodes, edges, workflowName)
+    // Keep the complete canvas for coding-agent tool authorization. The
+    // executable graph may be narrowed to one connected component, but its
+    // disconnected backing integration nodes must remain in this snapshot.
+    const toolWorkflow = serializeToAST(nodes, edges, workflowName)
+    const ast = {
+      ...toolWorkflow,
+      nodes: [...toolWorkflow.nodes],
+      edges: [...toolWorkflow.edges],
+    }
     if (nodeId) {
       const scopedIds = connectedNodeIds(nodeId, ast.edges)
       ast.nodes = ast.nodes.filter((node) => scopedIds.has(node.id))
@@ -207,6 +215,7 @@ export function startRun(opts?: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workflow: ast,
+          toolWorkflow,
           workflowId: dbId ?? '',
           onlyNodeId: opts?.onlyNodeId,
           initialOutputs: opts?.onlyNodeId ? opts.initialOutputs : undefined,
