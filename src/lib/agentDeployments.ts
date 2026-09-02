@@ -172,6 +172,12 @@ export interface AgentHostChannelInventory {
   channels: AgentHostChannel[]
   scope: 'member' | 'public'
   notice?: string
+  /**
+   * The bot's own channel list could not be read, so `is_member` on each
+   * channel means "could not tell" rather than "the bot is not in it". Disabling
+   * on it here would lock the user out of every channel over a failed lookup.
+   */
+  membership_unknown?: boolean
 }
 
 export function listAgentHostChannels(hostId: string): Promise<AgentHostChannelInventory> {

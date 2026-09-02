@@ -61,6 +61,8 @@ interface SlackDestinationState {
    *  could not be matched. Shown, not swallowed: an unexplained short list
    *  reads as "the channel is missing" rather than "we could not see it". */
   channelsNotice?: string
+  /** is_member could not be determined, so it must not gate selection. */
+  channelsMembershipUnknown?: boolean
   loadVersion: number
 }
 
@@ -109,7 +111,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [loading, setLoading] = useState(false)
   const [hosts, setHosts] = useState<AgentHostInstallation[]>([])
   const [destination, setDestination] = useState<SlackDestinationState>({
-    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', loadVersion: 0,
+    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', channelsMembershipUnknown: false, loadVersion: 0,
   })
   const [capabilities, setCapabilities] = useState<AgentNodeCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
@@ -126,7 +128,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const analyzeInFlightRef = useRef(false)
   const deployInFlightRef = useRef(false)
 
-  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, loadVersion } = destination
+  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, channelsMembershipUnknown, loadVersion } = destination
 
   const refreshHosts = useCallback(async () => {
     // OAuth may replace the workspace. Invalidate the old host/channel pair
@@ -219,6 +221,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
             channels: [...(next.channels ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
             channelsLoading: false,
             channelsNotice: next.notice ?? '',
+            channelsMembershipUnknown: next.membership_unknown ?? false,
           }
         })
       })
@@ -325,8 +328,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const reconnectHost = hosts.find((host) => !hostReady(host))
   const validName = name.trim().length > 0 && name.trim().length <= 80
   const validAlias = /^[a-z0-9][a-z0-9_-]{1,31}$/.test(alias)
+  // When the bot's membership could not be read, is_member is unknown rather
+  // than false. Gating on it then would refuse every channel over a failed
+  // lookup; let the deploy proceed and surface a real error if the bot is
+  // genuinely absent.
+  const selectable = (channel: AgentHostChannel) => channelsMembershipUnknown || channel.is_member
   const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
-    channels.some((channel) => channel.id === channelId && channel.is_member))
+    channels.some((channel) => channel.id === channelId && selectable(channel)))
   const canDeploy = Boolean(
     analysis && policy && policy.nodes.length > 0 && validName && validAlias &&
     selectedHost && validChannelSelection && !channelsLoading && !connecting && !deploying,
@@ -379,7 +387,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     }
     setDestination((current) => {
       const channel = current.channels.find((item) => item.id === channelId)
-      if (!channel?.is_member) return current
+      if (!channel || (!current.channelsMembershipUnknown && !channel.is_member)) return current
       const alreadySelected = current.selectedChannels.includes(channelId)
       if (!alreadySelected && current.selectedChannels.length >= 20) return current
       return {
@@ -434,7 +442,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   async function deploy() {
     if (!canDeploy || deployInFlightRef.current || !analysis || !policy || !selectedHost) return
     const selected = channels
-      .filter((channel) => selectedChannels.includes(channel.id) && channel.is_member)
+      .filter((channel) => selectedChannels.includes(channel.id) && selectable(channel))
       .map((channel) => ({ id: channel.id, name: channel.name }))
     if (selected.length === 0 || selected.length > 20 || selected.length !== selectedChannels.length) return
     deployInFlightRef.current = true
@@ -634,13 +642,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                       ) : channels.map((channel) => {
                         const checked = selectedChannels.includes(channel.id)
                         return (
-                          <button key={channel.id} type="button" disabled={!channel.is_member} onClick={() => toggleChannel(channel.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
+                          <button key={channel.id} type="button" disabled={!selectable(channel)} onClick={() => toggleChannel(channel.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
                             <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--primary-foreground)]' : 'border-[var(--color-border)]'}`}>
                               {checked && <Check size={11} strokeWidth={3} />}
                             </span>
                             <Hash size={13} className="text-[var(--color-subtle)]" />
                             <span className="flex-1 text-[12px]">{channel.name}</span>
-                            <span className="text-[10px] text-[var(--color-subtle)]">{!channel.is_member ? 'invite Fernary first' : channel.is_private ? 'private' : ''}</span>
+                            <span className="text-[10px] text-[var(--color-subtle)]">{!selectable(channel) ? 'invite Fernary first' : channel.is_private ? 'private' : ''}</span>
                           </button>
                         )
                       })}
