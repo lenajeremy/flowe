@@ -71,6 +71,7 @@ const LOGO_DOMAINS: Partial<Record<NodeType, string>> = {
   gumroad:   'gumroad.com',
   hubspot:   'hubspot.com',
   front:     'front.com',
+  sentry:    'sentry.io',
 }
 
 /**

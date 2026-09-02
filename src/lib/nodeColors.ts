@@ -58,6 +58,7 @@ export const NODE_ACCENT_HEX: Record<NodeType, string> = {
   googlecontacts:   'var(--na-googlecontacts)',
   hubspot:          'var(--na-hubspot)',
   front:            'var(--na-front)',
+  sentry:           'var(--na-sentry)',
   data:             'var(--na-data)',
   codingAgent:      'var(--na-codingAgent)',
 }
@@ -121,6 +122,7 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   googlecontacts:   'M8 3a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM3.5 13.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5',
   hubspot:          'M11 3v3.5M11 9.5V13M11 8a2 2 0 100-.01M4 8h5M4 8a1.5 1.5 0 100-.01',
   front:            'M2.5 3.5h11v4h-6v5h-5z',
+  sentry:           'M8 2.5l5 8.5h-2.5M8 2.5L5.5 7M6 8.5L4 12h6.5',
   data:             'M8 2.2c3 0 5 .9 5 2s-2 2-5 2-5-.9-5-2 2-2 5-2zM3 6.2c0 1.1 2 2 5 2s5-.9 5-2M3 4.2v7.6c0 1.1 2 2 5 2s5-.9 5-2V4.2',
   codingAgent:      'M5 2.5h6M4 5h8a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zM5 8h.01M11 8h.01M5 11h6M8 2.5V1',
 }
@@ -179,6 +181,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   googlecontacts:   'Google Contacts',
   hubspot:          'HubSpot',
   front:            'Front',
+  sentry:           'Sentry',
   data:             'Data Store',
   codingAgent:      'Coding Agent',
 }
@@ -237,6 +240,7 @@ export const NODE_DESCRIPTIONS: Record<NodeType, string> = {
   googlecontacts:   'Contacts & groups',
   hubspot:          'CRM records & deals',
   front:            'Shared inbox',
+  sentry:           'Errors & issue triage',
   data:             'Persist & recall data',
   codingAgent:      'Build and test code in an isolated workspace',
 }

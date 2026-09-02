@@ -32,7 +32,7 @@ export function IntegrationConnect({
   manualField,
   onGitHubSetupChange,
 }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'sentry' | 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   hasManualToken: boolean
   manualField: ReactNode
@@ -46,6 +46,7 @@ export function IntegrationConnect({
   const [apiKey, setApiKey] = useState('')
   const [savingKey, setSavingKey] = useState(false)
   const [keyError, setKeyError] = useState('')
+  const [connectError, setConnectError] = useState('')
 
   const refresh = useCallback(() => {
     apiFetch(`${API}/api/integrations`)
@@ -64,11 +65,30 @@ export function IntegrationConnect({
     const apiOrigin = API ? new URL(API).origin : window.location.origin
     function onMessage(e: MessageEvent) {
       if (e.origin !== apiOrigin) return
-      const d = e.data as { type?: string; provider?: string } | null
-      if (d?.type === 'integration-oauth' && d.provider === provider) {
-        clearResourceCache(provider)
-        refresh()
+      const d = e.data as { type?: string; provider?: string; handoff?: string } | null
+      if (d?.type !== 'integration-oauth' || d.provider !== provider) return
+      // Sentry's install redirect carries no state of ours, so the popup can
+      // only hand back a one-time id for the installation it just finished.
+      // This authenticated call is what binds it to the signed-in account —
+      // without it the install exists at Sentry and nowhere here.
+      if (provider === 'sentry' && d.handoff) {
+        apiFetch(`${API}/api/integrations/sentry/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ handoff: d.handoff }),
+        })
+          .then(async (r) => {
+            if (!r.ok) {
+              const body = (await r.json().catch(() => ({}))) as { error?: string }
+              setConnectError(body.error ?? 'Could not finish connecting Sentry')
+            }
+          })
+          .catch(() => setConnectError('Could not finish connecting Sentry'))
+          .finally(() => { clearResourceCache(provider); refresh() })
+        return
       }
+      clearResourceCache(provider)
+      refresh()
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
@@ -76,6 +96,7 @@ export function IntegrationConnect({
 
   function connect() {
     if (provider === 'shopify' && !shop.trim()) return
+    setConnectError('')
     // The connect endpoint needs our bearer token (Authorization header), so we
     // can't just point a popup at it. Open a blank popup synchronously — inside
     // the click gesture, so it isn't blocked — then send it to the provider's
@@ -286,6 +307,10 @@ export function IntegrationConnect({
           </button>
         )}
       </div>
+
+      {connectError && (
+        <p className="text-[10px] leading-relaxed text-[var(--color-fail)]">{connectError}</p>
+      )}
 
       {/* Shopify needs the store domain before it can build the authorize URL */}
       {!connected && provider === 'shopify' && (

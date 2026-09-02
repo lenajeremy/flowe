@@ -26,7 +26,7 @@ export function ResourcePicker({
   placeholder,
   allowManual = true,
 }: {
-  provider: 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep' | 'airtable' | 'clickup' | 'supabase' | 'googlesearchconsole'
+  provider: 'sentry' | 'notion' | 'linear' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep' | 'airtable' | 'clickup' | 'supabase' | 'googlesearchconsole'
   kind: 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property' | 'branch' | 'group' | 'column' | 'section' | 'task'
   /**
    * Scopes the list to what lives inside another resource — a repository's

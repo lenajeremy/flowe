@@ -120,6 +120,8 @@ export function getDefaultNodeData(type: NodeType): FlowNodeData {
       return { nodeType: 'hubspot', label: 'HubSpot', integrationOp: 'search_objects', hubspotObjectType: 'contacts', hubspotLimit: 25 }
     case 'front':
       return { nodeType: 'front', label: 'Front', integrationOp: 'list_conversations', frontLimit: 25 }
+    case 'sentry':
+      return { nodeType: 'sentry', label: 'Sentry', integrationOp: 'list_issues', sentryQuery: 'is:unresolved', sentryStatsPeriod: '24h', sentryLimit: 25 }
     case 'googlesearchconsole':
       return { nodeType: 'googlesearchconsole', label: 'Search Console', integrationOp: 'query_search_analytics', gscDimensions: 'query', gscRowLimit: 100 }
     case 'googlecontacts':

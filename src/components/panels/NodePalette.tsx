@@ -22,7 +22,7 @@ const PALETTE_GROUPS: Array<{ category: string; items: NodeType[] }> = [
     'googleslides', 'googleforms', 'googlemeet', 'googlechat', 'googletasks',
     'googlekeep', 'googlesearchconsole', 'googlecontacts', 'outlook', 'slack', 'notion', 'linear',
     'github', 'gitlab', 'jira', 'confluence', 'bitbucket',
-    'stripe', 'shopify', 'hubspot', 'front', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'monday', 'asana', 'typeform', 'calendly', 'dropbox', 'netlify', 'vercel', 'supabase', 'gumroad'] },
+    'stripe', 'shopify', 'hubspot', 'front', 'sentry', 'granola', 'resend', 'sendgrid', 'kit', 'airtable', 'clickup', 'monday', 'asana', 'typeform', 'calendly', 'dropbox', 'netlify', 'vercel', 'supabase', 'gumroad'] },
 ]
 
 function PaletteItem({ type }: { type: NodeType }) {

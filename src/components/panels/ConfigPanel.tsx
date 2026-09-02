@@ -26,7 +26,7 @@ import {
   GoogleMeetConfig, GoogleSlidesConfig, GoogleFormsConfig,
   GoogleTasksConfig, GoogleChatConfig, GoogleKeepConfig, GranolaConfig, ResendConfig, SendGridConfig, KitConfig, AirtableConfig, ClickUpConfig, MondayConfig, AsanaConfig, TypeformConfig, CalendlyConfig, DropboxConfig, NetlifyConfig, VercelConfig, SupabaseConfig, GumroadConfig,
   GoogleSearchConsoleConfig, GoogleContactsConfig,
-  HubSpotConfig, FrontConfig,
+  HubSpotConfig, FrontConfig, SentryConfig,
 } from '@/components/panels/integrationConfigs'
 import { IntegrationTriggerConfig } from '@/components/panels/IntegrationTriggerConfig'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
@@ -1306,6 +1306,7 @@ export function ConfigPanel() {
         {nodeType === 'googlecontacts' && <GoogleContactsConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'hubspot' && <HubSpotConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
         {nodeType === 'front' && <FrontConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
+        {nodeType === 'sentry' && <SentryConfig data={data} nodeId={nodeId} updateNodeData={updateNodeData} />}
 
         {/* scheduledTrigger */}
         {nodeType === 'scheduledTrigger' && (

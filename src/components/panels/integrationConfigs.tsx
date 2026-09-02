@@ -88,7 +88,7 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
   )
 }
 
-type ResourceProvider = 'airtable' | 'clickup' | 'monday' | 'asana' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+type ResourceProvider = 'sentry' | 'airtable' | 'clickup' | 'monday' | 'asana' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
 type ResourceKind = 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property' | 'group' | 'column' | 'section' | 'task'
 
 function ResourceField({ label, provider, kind, field, parentField, data, nodeId, updateNodeData, placeholder }: FieldProps & { provider: ResourceProvider; kind: ResourceKind; parentField?: string }) {
@@ -215,7 +215,7 @@ function FilePickField({ data, nodeId, updateNodeData, contentField, nameField, 
 function IntegrationSection({
   provider, label, data, nodeId, updateNodeData, defaultOp, ops, tokenPlaceholder, hideManual, children,
 }: {
-  provider: 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
+  provider: 'sentry' | 'github' | 'gitlab' | 'monday' | 'asana' | 'gmail' | 'stripe' | 'shopify' | 'googlecalendar' | 'outlook' | 'slack' | 'googledrive' | 'googledocs' | 'googlesheets' | 'jira' | 'confluence' | 'bitbucket' | 'granola' | 'resend' | 'sendgrid' | 'kit' | 'airtable' | 'clickup' | 'typeform' | 'calendly' | 'dropbox' | 'netlify' | 'vercel' | 'supabase' | 'gumroad' | 'googlesearchconsole' | 'googlecontacts' | 'hubspot' | 'front' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
   label: string
   data: FlowNodeData
   nodeId: string
@@ -5103,6 +5103,166 @@ export function HubSpotConfig({ data, nodeId, updateNodeData }: ProviderConfigPr
           <NumField label="Limit" field="hubspotLimit" data={data} nodeId={nodeId} updateNodeData={updateNodeData} fallback={25} />
         )}
       </IntegrationSection>
+  )
+}
+
+// Sentry.
+//
+// The organization is not a field: it comes from the installation, so asking
+// for it here would be asking the user to retype something we already know.
+export function SentryConfig({ data, nodeId, updateNodeData }: ProviderConfigProps) {
+  const op = data.integrationOp ?? 'list_issues'
+  const needsIssue = ['get_issue', 'get_latest_event', 'list_issue_events', 'list_issue_tag_values',
+    'resolve_issue', 'ignore_issue', 'unresolve_issue', 'assign_issue', 'delete_issue',
+    'list_comments', 'add_comment'].includes(op)
+  const needsProject = ['get_project', 'list_alert_rules'].includes(op)
+  const scopesByProject = ['list_issues', 'list_releases', 'query_events'].includes(op)
+  const isRelease = ['create_release', 'create_deploy'].includes(op)
+  const listsSomething = ['list_issues', 'list_issue_events', 'list_releases', 'query_events'].includes(op)
+
+  return (
+    <IntegrationSection
+      provider="sentry" label="Sentry" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+      defaultOp="list_issues"
+      ops={[
+        { value: 'list_issues', label: 'List Issues' },
+        { value: 'get_issue', label: 'Get Issue' },
+        { value: 'get_latest_event', label: 'Get Latest Event (stack trace)' },
+        { value: 'list_issue_events', label: 'List Issue Events' },
+        { value: 'list_issue_tag_values', label: 'List Tag Values' },
+        { value: 'resolve_issue', label: 'Resolve Issue' },
+        { value: 'ignore_issue', label: 'Archive Issue' },
+        { value: 'unresolve_issue', label: 'Reopen Issue' },
+        { value: 'assign_issue', label: 'Assign Issue' },
+        { value: 'delete_issue', label: 'Delete Issue' },
+        { value: 'list_comments', label: 'List Comments' },
+        { value: 'add_comment', label: 'Add Comment' },
+        { value: 'list_projects', label: 'List Projects' },
+        { value: 'get_project', label: 'Get Project' },
+        { value: 'list_alert_rules', label: 'List Alert Rules' },
+        { value: 'list_releases', label: 'List Releases' },
+        { value: 'create_release', label: 'Create Release' },
+        { value: 'create_deploy', label: 'Create Deploy' },
+        { value: 'query_events', label: 'Query Events (Discover)' },
+      ]}
+      tokenPlaceholder="Sentry auth token"
+      hideManual
+    >
+      {(needsProject || scopesByProject) && (
+        <ResourceField label={needsProject ? 'Project' : 'Project (optional)'} provider="sentry" kind="project"
+          field="sentryProject" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+          placeholder={needsProject ? 'backend' : 'all projects'} />
+      )}
+
+      {needsIssue && (
+        <TextField label="Issue ID" field="sentryIssueId" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="1234567890 — or {{trigger-1.data.id}}" />
+      )}
+      {op === 'get_issue' && (
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          This returns the issue summary. For the stack trace an LLM can actually diagnose, use Get
+          Latest Event.
+        </p>
+      )}
+
+      {(op === 'list_issues' || op === 'list_releases' || op === 'query_events') && (
+        <TextField label={op === 'list_issues' ? 'Search' : 'Query'} field="sentryQuery" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData}
+          placeholder={op === 'list_issues' ? 'is:unresolved level:error' : 'transaction.duration:>500'} />
+      )}
+      {op === 'query_events' && (
+        <TextField label="Fields" field="sentryFields" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="title,project,count()" />
+      )}
+
+      {op === 'list_issue_tag_values' && (
+        <TextField label="Tag" field="sentryTagKey" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="browser" />
+      )}
+
+      {(op === 'resolve_issue' || op === 'unresolve_issue') && (
+        <SelectField label="Status" field="sentryStatus" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback=""
+          options={[
+            { value: '', label: op === 'resolve_issue' ? 'Resolved' : 'Unresolved' },
+            { value: 'resolvedInNextRelease', label: 'Resolved in the next release' },
+          ]} />
+      )}
+
+      {op === 'ignore_issue' && (<>
+        <NumField label="Archive for (minutes)" field="sentryIgnoreMinutes" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback={0} />
+        <NumField label="…or until it happens this many more times" field="sentryIgnoreCount" data={data}
+          nodeId={nodeId} updateNodeData={updateNodeData} fallback={0} />
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
+          Leave both at 0 to archive forever.
+        </p>
+      </>)}
+
+      {op === 'assign_issue' && (
+        <TextField label="Assign to" field="sentryAssignee" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="user:12345, team:678, or jane@acme.com" />
+      )}
+
+      {op === 'add_comment' && (
+        <AreaField label="Comment" field="sentryComment" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="{{llm-1.output}}" />
+      )}
+
+      {isRelease && (<>
+        <TextField label="Version" field="sentryVersion" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="1.4.2 or a commit sha" />
+        <TextField label="Projects" field="sentryProjects" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="backend,frontend" />
+        <TextField label={op === 'create_deploy' ? 'Environment' : 'Environment (optional)'}
+          field="sentryEnvironment" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+          placeholder="production" />
+        <TextField label="Link (optional)" field="sentryUrl" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="https://github.com/acme/app/releases/tag/1.4.2" />
+      </>)}
+      {op === 'create_release' && (
+        <TextField label="Commit (optional)" field="sentryRef" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="a1b2c3d" />
+      )}
+      {op === 'create_deploy' && (
+        <TextField label="Deploy name (optional)" field="sentryDeployName" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} placeholder="deploy-2419" />
+      )}
+
+      {listsSomething && (<>
+        {op !== 'list_releases' && (
+          <SelectField label="Time range" field="sentryStatsPeriod" data={data} nodeId={nodeId}
+            updateNodeData={updateNodeData} fallback="24h"
+            options={[
+              { value: '1h', label: 'Last hour' },
+              { value: '24h', label: 'Last 24 hours' },
+              { value: '7d', label: 'Last 7 days' },
+              { value: '14d', label: 'Last 14 days' },
+              { value: '90d', label: 'Last 90 days' },
+            ]} />
+        )}
+        <NumField label="Limit" field="sentryLimit" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback={25} />
+      </>)}
+
+      {op === 'list_issues' && (
+        <SelectField label="Sort by" field="sentrySort" data={data} nodeId={nodeId}
+          updateNodeData={updateNodeData} fallback=""
+          options={[
+            { value: '', label: 'Last seen' },
+            { value: 'freq', label: 'Events' },
+            { value: 'new', label: 'First seen' },
+            { value: 'user', label: 'Users affected' },
+          ]} />
+      )}
+
+      {op === 'delete_issue' && (
+        <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-fail)]">
+          This permanently removes the issue and its events from Sentry. Archive it instead if you only
+          want it out of the way.
+        </p>
+      )}
+    </IntegrationSection>
   )
 }
 
