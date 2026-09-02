@@ -134,11 +134,13 @@ export function ChatPanel() {
     return () => ro.disconnect()
   }, [])
 
-  const { nodes, edges, dbId, importWorkflowVersion, applyPatch, undo } = useWorkflowStore(
+  const { nodes, edges, workflowName, dbId, setWorkflowName, importWorkflowVersion, applyPatch, undo } = useWorkflowStore(
     useShallow((s) => ({
       nodes: s.nodes,
       edges: s.edges,
+      workflowName: s.workflowName,
       dbId: s.dbId,
+      setWorkflowName: s.setWorkflowName,
       importWorkflowVersion: s.importWorkflowVersion,
       applyPatch: s.applyPatch,
       undo: s.undo,
@@ -246,6 +248,7 @@ export function ChatPanel() {
           prompt: text,
           model: chatModel,
           workflowId: dbId ?? '',
+          currentName: workflowName,
           history: historySnapshot,
           currentNodes: nodes.map(({ id, type, position, data }) => ({
             id, type, position,
@@ -305,6 +308,9 @@ export function ChatPanel() {
             try {
               const parsed = JSON.parse(data)
               if (parsed.nodes && parsed.edges) {
+                if (typeof parsed.name === 'string' && parsed.name.trim()) {
+                  setWorkflowName(parsed.name.trim())
+                }
                 importWorkflowVersion(parsed.nodes, parsed.edges)
                 setMessages((m) =>
                   m.map((msg) => msg.id === assistantId ? { ...msg, workflowApplied: true } : msg),
@@ -433,7 +439,7 @@ export function ChatPanel() {
       setIsGenerating(false)
       abortRef.current = null
     }
-  }, [input, isGenerating, messages, nodes, edges, chatModel, dbId, importWorkflowVersion, applyPatch, saveChat])
+  }, [input, isGenerating, messages, nodes, edges, workflowName, chatModel, dbId, setWorkflowName, importWorkflowVersion, applyPatch, saveChat])
 
   handleSendRef.current = handleSend
 

@@ -18,6 +18,7 @@ import { AuthVerifyPage } from '@/pages/AuthVerifyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppShell } from '@/components/AppShell'
+import { FeedbackCapture } from '@/components/feedback/FeedbackCapture'
 import { PricingPage } from '@/pages/PricingPage'
 import { BillingPage } from '@/pages/BillingPage'
 import { UsagePage } from '@/pages/UsagePage'
@@ -49,6 +50,7 @@ function App() {
           every toast and overrides the per-type palette richColors exists to
           provide — which is how richColors was switched on and doing nothing. */}
       <Toaster richColors theme={resolved} position="top-right" />
+      <FeedbackCapture />
       <Routes>
         {/* ── Public: marketing and auth ────────────────────────── */}
         <Route path="/" element={<LandingPage />} />

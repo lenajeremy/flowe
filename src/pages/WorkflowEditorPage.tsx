@@ -212,13 +212,24 @@ export function WorkflowEditorPage() {
 
   // ── Mark unsaved when canvas changes (after initial load) ──
   const initialLoadDone = useRef(false)
+  const isSavingRef = useRef(false)
+  // A change that lands while a save is in flight is not covered by that save:
+  // the request serialized its snapshot before the change existed. Dropping the
+  // dirty mark here would let the save report "saved" over an edit the server
+  // never received, and nothing would schedule another one. The builder's
+  // generated workflow name arrives over SSE and can land in exactly that
+  // window, which is how this surfaced.
+  const changedDuringSaveRef = useRef(false)
   useEffect(() => {
     if (!initialLoadDone.current) {
       // Skip the very first render after loadWorkflow
       initialLoadDone.current = true
       return
     }
-    if (saveStatus === 'saving') return
+    if (isSavingRef.current) {
+      changedDuringSaveRef.current = true
+      return
+    }
     setSaveStatus('unsaved')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, workflowName])
@@ -290,18 +301,25 @@ export function WorkflowEditorPage() {
   }, [dbId, createDefaultSchedule])
 
   // ── Save function ─────────────────────────────────────────
-  const isSavingRef = useRef(false)
-
   async function handleSave() {
     if (isSavingRef.current || !dbId) return
     isSavingRef.current = true
+    changedDuringSaveRef.current = false
     setSaveStatus('saving')
     try {
       const ast = serializeToAST(nodes, edges, workflowName)
       await saveWorkflow(ast, dbId)
       posthog.capture('workflow_saved', { workflow_id: dbId, node_count: nodes.length, edge_count: edges.length })
-      setSaveStatus('saved')
-      setTimeout(() => setSaveStatus('idle'), 2000)
+      if (changedDuringSaveRef.current) {
+        // Something changed after this request took its snapshot, so what is on
+        // the server is already behind. Staying dirty is what gets it picked up
+        // by the next autosave instead of being silently lost.
+        changedDuringSaveRef.current = false
+        setSaveStatus('unsaved')
+      } else {
+        setSaveStatus('saved')
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      }
     } catch {
       setSaveStatus('unsaved')
     } finally {

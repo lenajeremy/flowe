@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 .vercel
 .ssr
+
+# Local git worktrees — scratch checkouts, never project files
+.claude/worktrees/
