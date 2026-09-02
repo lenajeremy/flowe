@@ -91,10 +91,23 @@ function SelectField({ label, field, data, nodeId, updateNodeData, fallback, opt
 type ResourceProvider = 'vercel' | 'airtable' | 'clickup' | 'monday' | 'asana' | 'supabase' | 'googlesearchconsole' | 'notion' | 'linear' | 'github' | 'gitlab' | 'gmail' | 'stripe' | 'googlecalendar' | 'googledrive' | 'outlook' | 'slack' | 'jira' | 'confluence' | 'bitbucket' | 'googlemeet' | 'googleslides' | 'googleforms' | 'googletasks' | 'googlechat' | 'googlekeep'
 type ResourceKind = 'deployment' | 'domain' | 'envvar' | 'database' | 'page' | 'team' | 'project' | 'repo' | 'price' | 'calendar' | 'folder' | 'channel' | 'user' | 'label' | 'space' | 'board' | 'tasklist' | 'base' | 'workspace' | 'property' | 'group' | 'column' | 'section' | 'task'
 
-function ResourceField({ label, provider, kind, field, parentField, parentFields, data, nodeId, updateNodeData, placeholder }: FieldProps & {
+function ResourceField({ label, provider, kind, field, parentField, parentFields, optionalParent, clears, data, nodeId, updateNodeData, placeholder }: FieldProps & {
   provider: ResourceProvider
   kind: ResourceKind
   parentField?: string
+  /**
+   * The parent is a filter rather than a requirement, so a blank one means
+   * "list what the account can see" instead of "wait". A personal Vercel
+   * account has no team, and without this its project picker would sit waiting
+   * for a team that will never be chosen.
+   */
+  optionalParent?: boolean
+  /**
+   * Fields whose value belongs to the old parent and is meaningless once this
+   * one changes. A project id from the previous team is not a smaller problem
+   * than an empty one — it points at something real in the wrong place.
+   */
+  clears?: string[]
   /**
    * For resources nested two levels deep, where one field cannot name the
    * container: a Vercel deployment belongs to a project, which belongs to a
@@ -113,14 +126,19 @@ function ResourceField({ label, provider, kind, field, parentField, parentFields
     const parts = parentFields.map(read)
     parent = parts[parts.length - 1] === '' ? '' : parts.join('/')
   } else if (parentField) {
-    parent = read(parentField)
+    const value = read(parentField)
+    // undefined asks for the unscoped list; '' means "waiting on a choice".
+    parent = value === '' && optionalParent ? undefined : value
   }
   return (
     <FormField label={label} htmlFor={`cfg-${nodeId}-${field}`}>
       <ResourcePicker provider={provider} kind={kind} id={`cfg-${nodeId}-${field}`} placeholder={placeholder}
         parent={parent}
         value={typeof data[field] === 'string' ? (data[field] as string) : ''}
-        onChange={(val) => updateNodeData(nodeId, { [field]: val })} />
+        onChange={(val) => updateNodeData(nodeId, {
+          [field]: val,
+          ...Object.fromEntries((clears ?? []).map((name) => [name, ''])),
+        })} />
     </FormField>
   )
 }
@@ -4253,6 +4271,7 @@ export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
             owner's personal scope and a team project comes back 404. */}
         {op !== 'get_current_user' && (<>
           <ResourceField label="Team (optional)" provider="vercel" kind="team" field="vercelTeamId"
+            clears={['vercelProjectId', 'vercelDeploymentId', 'vercelEnvVarId']}
             data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="team_… for a personal account, leave blank" />
           <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
@@ -4265,12 +4284,14 @@ export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
 
         {needsProject && (
           <ResourceField label="Project" provider="vercel" kind="project" field="vercelProjectId"
-            parentField="vercelTeamId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            parentField="vercelTeamId" optionalParent
+            clears={['vercelDeploymentId', 'vercelEnvVarId']} data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="project name or ID" />
         )}
         {op === 'list_deployments' && (
           <ResourceField label="Project (optional)" provider="vercel" kind="project" field="vercelProjectId"
-            parentField="vercelTeamId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            parentField="vercelTeamId" optionalParent
+            clears={['vercelDeploymentId', 'vercelEnvVarId']} data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="all projects when blank" />
         )}
 
@@ -4280,7 +4301,8 @@ export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
             friends ignore the saved project — it is here to narrow the picker. */}
         {needsDeployment && !needsProject && (
           <ResourceField label="Project" provider="vercel" kind="project" field="vercelProjectId"
-            parentField="vercelTeamId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            parentField="vercelTeamId" optionalParent
+            clears={['vercelDeploymentId', 'vercelEnvVarId']} data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="pick one to list its deployments" />
         )}
         {needsDeployment && (
