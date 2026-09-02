@@ -30,6 +30,7 @@ import {
 } from '@/components/panels/integrationConfigs'
 import { IntegrationTriggerConfig } from '@/components/panels/IntegrationTriggerConfig'
 import type { LLMModel, FlowNode, FlowEdge, FlowNodeData } from '@/types/workflow'
+import { DEFAULT_LLM_MODEL } from '@/types/workflow'
 import { API } from '@/lib/config'
 import { apiFetch } from '@/lib/http'
 import { Input } from '@/components/ui/input'
@@ -162,18 +163,23 @@ const DATA_OPS: Record<string, Array<{ value: string; label: string }>> = {
   ],
 }
 
+// The models the server can actually route, cheapest first.
+//
+// This list had drifted: gemini-3-flash, gemini-3.1-flash, gemini-3.1-flash-lite,
+// gpt-4o-mini, o4-mini, claude-opus-4-5 and claude-sonnet-4-5 are not in the
+// server's catalog, so choosing one sent an id the provider rejects. Google leads
+// because Flash is the default and the cheapest thing that does this work.
 const LLM_MODELS: Array<{ value: string; label: string; group: string }> = [
-  { value: 'gpt-4o',                 label: 'GPT-4o',              group: 'OpenAI' },
-  { value: 'gpt-4o-mini',            label: 'GPT-4o Mini',         group: 'OpenAI' },
-  { value: 'o4-mini',                label: 'o4-mini',             group: 'OpenAI' },
-  { value: 'claude-opus-4-5',        label: 'Claude Opus 4.5',     group: 'Anthropic' },
-  { value: 'claude-sonnet-4-5',      label: 'Claude Sonnet 4.5',   group: 'Anthropic' },
-  { value: 'claude-haiku-4-5',       label: 'Claude Haiku 4.5',    group: 'Anthropic' },
-  { value: 'gemini-2.5-pro',         label: 'Gemini 2.5 Pro',        group: 'Google' },
-  { value: 'gemini-3-flash',         label: 'Gemini 3 Flash',        group: 'Google' },
-  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro',        group: 'Google' },
-  { value: 'gemini-3.1-flash',       label: 'Gemini 3.1 Flash',      group: 'Google' },
-  { value: 'gemini-3.1-flash-lite',  label: 'Gemini 3.1 Flash Lite', group: 'Google' },
+  { value: 'gemini-3.5-flash',            label: 'Gemini 3.5 Flash',   group: 'Google' },
+  { value: 'gemini-3-flash-preview',      label: 'Gemini 3 Flash',     group: 'Google' },
+  { value: 'gemini-3.1-pro-preview',      label: 'Gemini 3.1 Pro',     group: 'Google' },
+  { value: 'gpt-5.4-mini',                label: 'GPT-5.4 Mini',       group: 'OpenAI' },
+  { value: 'gpt-5.5',                     label: 'GPT-5.5',            group: 'OpenAI' },
+  { value: 'claude-haiku-4-5-20251001',   label: 'Claude Haiku 4.5',   group: 'Anthropic' },
+  { value: 'claude-sonnet-4-6',           label: 'Claude Sonnet 4.6',  group: 'Anthropic' },
+  { value: 'claude-opus-4-8',             label: 'Claude Opus 4.8',    group: 'Anthropic' },
+  { value: 'grok-4.3',                    label: 'Grok 4.3',           group: 'xAI' },
+  { value: 'grok-4.5',                    label: 'Grok 4.5',           group: 'xAI' },
 ]
 
 /** Returns all nodes that have an edge pointing TO targetId (direct upstream only) */
@@ -711,7 +717,7 @@ export function ConfigPanel() {
             <FormField label="Model" htmlFor="cfg-model">
               <Select
                 id="cfg-model"
-                value={typeof data.model === 'string' ? data.model : 'gpt-4o'}
+                value={typeof data.model === 'string' ? data.model : DEFAULT_LLM_MODEL}
                 onChange={(v) => updateNodeData(nodeId, { model: v as LLMModel })}
                 options={LLM_MODELS}
               />

@@ -3,9 +3,10 @@ import { NodeBase2 } from '@/components/ui/NodeBase2'
 import { NODE_ACCENT_HEX } from '@/lib/nodeColors'
 import { NODE_ICONS } from '@/lib/nodeIcons'
 import type { FlowNode } from '@/types/workflow'
+import { DEFAULT_LLM_MODEL } from '@/types/workflow'
 
 export function LLMNode({ data, selected }: NodeProps<FlowNode>) {
-  const model = typeof data.model === 'string' ? data.model : 'gpt-4o'
+  const model = typeof data.model === 'string' ? data.model : DEFAULT_LLM_MODEL
   const temperature = typeof data.temperature === 'number' ? data.temperature : 0.7
   const maxTokens = typeof data.maxTokens === 'number' ? data.maxTokens : 1024
   const userPrompt = typeof data.userPrompt === 'string' ? data.userPrompt : ''
