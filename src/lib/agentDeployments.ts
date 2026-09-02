@@ -84,7 +84,12 @@ export interface AgentHostInstallation {
 export interface AgentHostChannel {
   id: string
   name: string
-  is_member: boolean
+  /**
+   * null when the server could not determine whether the bot is in this
+   * channel — distinct from false, which means it definitely is not. Treating
+   * null as false disables every channel over a failed lookup.
+   */
+  is_member: boolean | null
   is_private: boolean
 }
 
@@ -278,7 +283,27 @@ export function getAgentHostConnectURL(): Promise<{ url: string }> {
   return apiJSON(`/api/agent-hosts/slack/connect?origin=${origin}`)
 }
 
-export function listAgentHostChannels(hostId: string): Promise<AgentHostChannel[]> {
+/**
+ * The channels this user may deploy to.
+ *
+ * Scoped server-side to the caller's own Slack membership — the shared host bot
+ * sits in channels that have nothing to do with whoever is asking. `scope` is
+ * "public" when their Slack identity could not be matched, in which case
+ * `notice` explains why private channels are missing.
+ */
+export interface AgentHostChannelInventory {
+  channels: AgentHostChannel[]
+  scope: 'member' | 'public'
+  notice?: string
+  /**
+   * The bot's own channel list could not be read, so `is_member` on each
+   * channel means "could not tell" rather than "the bot is not in it". Disabling
+   * on it here would lock the user out of every channel over a failed lookup.
+   */
+  membership_unknown?: boolean
+}
+
+export function listAgentHostChannels(hostId: string): Promise<AgentHostChannelInventory> {
   return apiJSON(`/api/agent-hosts/${hostId}/channels`)
 }
 

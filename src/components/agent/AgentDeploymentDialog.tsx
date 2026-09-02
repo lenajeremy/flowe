@@ -59,6 +59,10 @@ interface SlackDestinationState {
   channels: AgentHostChannel[]
   selectedChannels: string[]
   channelsLoading: boolean
+  /** Set when the list is public-only because the caller's Slack identity
+   *  could not be matched. Shown, not swallowed: an unexplained short list
+   *  reads as "the channel is missing" rather than "we could not see it". */
+  channelsNotice?: string
   loadVersion: number
 }
 
@@ -96,7 +100,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [loading, setLoading] = useState(false)
   const [hosts, setHosts] = useState<AgentHostInstallation[]>([])
   const [destination, setDestination] = useState<SlackDestinationState>({
-    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, loadVersion: 0,
+    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', loadVersion: 0,
   })
   const [capabilities, setCapabilities] = useState<AgentIntegrationCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
@@ -113,13 +117,13 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const analyzeInFlightRef = useRef(false)
   const deployInFlightRef = useRef(false)
 
-  const { hostId, channels, selectedChannels, channelsLoading, loadVersion } = destination
+  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, loadVersion } = destination
 
   const refreshHosts = useCallback(async () => {
     // OAuth may replace the workspace. Invalidate the old host/channel pair
     // before the network request so it can never be submitted during refresh.
     setDestination((current) => ({
-      hostId: '', channels: [], selectedChannels: [], channelsLoading: true,
+      hostId: '', channels: [], selectedChannels: [], channelsLoading: true, channelsNotice: '',
       loadVersion: current.loadVersion + 1,
     }))
     const next = await listAgentHosts()
@@ -148,7 +152,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     setName(workflowName || 'Workflow agent')
     setAlias(slugAgentName(workflowName))
     setDestination((current) => ({
-      ...current, channels: [], selectedChannels: [], channelsLoading: false,
+      ...current, channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '',
     }))
     setAnalysis(null)
     setPolicy(null)
@@ -203,8 +207,9 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
           if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
           return {
             ...current,
-            channels: [...next].sort((a, b) => a.name.localeCompare(b.name)),
+            channels: [...(next.channels ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
             channelsLoading: false,
+            channelsNotice: next.notice ?? '',
           }
         })
       })
@@ -212,7 +217,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
         if (!active) return
         setDestination((current) => {
           if (current.hostId !== requestedHostId || current.loadVersion !== requestedLoadVersion) return current
-          return { ...current, channels: [], selectedChannels: [], channelsLoading: false }
+          return { ...current, channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '' }
         })
         toast.error('Could not load Slack channels', { description: errorMessage(error) })
       })
@@ -311,8 +316,14 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const reconnectHost = hosts.find((host) => !hostReady(host))
   const validName = name.trim().length > 0 && name.trim().length <= 80
   const validAlias = /^[a-z0-9][a-z0-9_-]{1,31}$/.test(alias)
+  // When the bot's membership could not be read, is_member is unknown rather
+  // than false. Gating on it then would refuse every channel over a failed
+  // lookup; let the deploy proceed and surface a real error if the bot is
+  // genuinely absent.
+  // null is "could not tell", which stays pickable; only an explicit false disables.
+  const selectable = (channel: AgentHostChannel) => channel.is_member !== false
   const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
-    channels.some((channel) => channel.id === channelId && channel.is_member))
+    channels.some((channel) => channel.id === channelId && selectable(channel)))
   const canDeploy = Boolean(
     analysis && policy && policy.integrations.length > 0 && validName && validAlias &&
     selectedHost && validChannelSelection && !channelsLoading && !connecting && !deploying,
@@ -365,7 +376,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     }
     setDestination((current) => {
       const channel = current.channels.find((item) => item.id === channelId)
-      if (!channel?.is_member) return current
+      if (!channel || channel.is_member === false) return current
       const alreadySelected = current.selectedChannels.includes(channelId)
       if (!alreadySelected && current.selectedChannels.length >= 20) return current
       return {
@@ -390,7 +401,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   async function deploy() {
     if (!canDeploy || deployInFlightRef.current || !analysis || !policy || !selectedHost) return
     const selected = channels
-      .filter((channel) => selectedChannels.includes(channel.id) && channel.is_member)
+      .filter((channel) => selectedChannels.includes(channel.id) && selectable(channel))
       .map((channel) => ({ id: channel.id, name: channel.name }))
     if (selected.length === 0 || selected.length > 20 || selected.length !== selectedChannels.length) return
     deployInFlightRef.current = true
@@ -576,20 +587,27 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
                       <span className="flex items-center gap-1 text-[10.5px] text-[var(--color-subtle)]"><LockKeyhole size={11} /> Starts closed</span>
                     </div>
                     <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-1.5">
+                      {!channelsLoading && channelsNotice && channels.length > 0 && (
+                        <p className="px-2.5 pb-1.5 pt-1 text-[11px] leading-relaxed text-[var(--color-subtle)]">
+                          {channelsNotice}
+                        </p>
+                      )}
                       {channelsLoading ? (
                         <div className="flex h-20 items-center justify-center"><LoaderCircle className="animate-spin text-[var(--color-muted)]" size={17} /></div>
                       ) : channels.length === 0 ? (
-                        <p className="px-3 py-6 text-center text-[11.5px] text-[var(--color-muted)]">No channels are available. Invite Fernary to a private channel before selecting it.</p>
+                        <p className="px-3 py-6 text-center text-[11.5px] text-[var(--color-muted)]">
+                          {channelsNotice || 'No channels are available. Invite Fernary to a private channel before selecting it.'}
+                        </p>
                       ) : channels.map((channel) => {
                         const checked = selectedChannels.includes(channel.id)
                         return (
-                          <button key={channel.id} type="button" disabled={!channel.is_member} onClick={() => toggleChannel(channel.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
+                          <button key={channel.id} type="button" disabled={!selectable(channel)} onClick={() => toggleChannel(channel.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
                             <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--primary-foreground)]' : 'border-[var(--color-border)]'}`}>
                               {checked && <Check size={11} strokeWidth={3} />}
                             </span>
                             <Hash size={13} className="text-[var(--color-subtle)]" />
                             <span className="flex-1 text-[12px]">{channel.name}</span>
-                            <span className="text-[10px] text-[var(--color-subtle)]">{!channel.is_member ? 'invite Fernary first' : channel.is_private ? 'private' : ''}</span>
+                            <span className="text-[10px] text-[var(--color-subtle)]">{!selectable(channel) ? 'invite Fernary first' : channel.is_private ? 'private' : ''}</span>
                           </button>
                         )
                       })}
