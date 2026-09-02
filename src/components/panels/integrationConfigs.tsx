@@ -4271,7 +4271,7 @@ export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
             owner's personal scope and a team project comes back 404. */}
         {op !== 'get_current_user' && (<>
           <ResourceField label="Team (optional)" provider="vercel" kind="team" field="vercelTeamId"
-            clears={['vercelProjectId', 'vercelDeploymentId', 'vercelEnvVarId']}
+            clears={['vercelProjectId', 'vercelDeploymentId', 'vercelEnvVarId', 'vercelDomain']}
             data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="team_… for a personal account, leave blank" />
           <p className="-mt-1 text-[10px] leading-relaxed text-[var(--color-subtle)]">
@@ -4415,7 +4415,7 @@ export function VercelConfig({ data, nodeId, updateNodeData }: ProviderConfigPro
 
         {domainOp && (
           <ResourceField label="Domain" provider="vercel" kind="domain" field="vercelDomain"
-            parentField="vercelTeamId" data={data} nodeId={nodeId} updateNodeData={updateNodeData}
+            parentField="vercelTeamId" optionalParent data={data} nodeId={nodeId} updateNodeData={updateNodeData}
             placeholder="www.example.com" />
         )}
         {op === 'add_project_domain' && (<>
