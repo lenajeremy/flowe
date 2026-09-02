@@ -61,8 +61,6 @@ interface SlackDestinationState {
    *  could not be matched. Shown, not swallowed: an unexplained short list
    *  reads as "the channel is missing" rather than "we could not see it". */
   channelsNotice?: string
-  /** is_member could not be determined, so it must not gate selection. */
-  channelsMembershipUnknown?: boolean
   loadVersion: number
 }
 
@@ -111,7 +109,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const [loading, setLoading] = useState(false)
   const [hosts, setHosts] = useState<AgentHostInstallation[]>([])
   const [destination, setDestination] = useState<SlackDestinationState>({
-    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', channelsMembershipUnknown: false, loadVersion: 0,
+    hostId: '', channels: [], selectedChannels: [], channelsLoading: false, channelsNotice: '', loadVersion: 0,
   })
   const [capabilities, setCapabilities] = useState<AgentNodeCapability[]>([])
   const [deployments, setDeployments] = useState<AgentDeploymentRecord[]>([])
@@ -128,7 +126,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   const analyzeInFlightRef = useRef(false)
   const deployInFlightRef = useRef(false)
 
-  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, channelsMembershipUnknown, loadVersion } = destination
+  const { hostId, channels, selectedChannels, channelsLoading, channelsNotice, loadVersion } = destination
 
   const refreshHosts = useCallback(async () => {
     // OAuth may replace the workspace. Invalidate the old host/channel pair
@@ -221,7 +219,6 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
             channels: [...(next.channels ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
             channelsLoading: false,
             channelsNotice: next.notice ?? '',
-            channelsMembershipUnknown: next.membership_unknown ?? false,
           }
         })
       })
@@ -332,7 +329,8 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
   // than false. Gating on it then would refuse every channel over a failed
   // lookup; let the deploy proceed and surface a real error if the bot is
   // genuinely absent.
-  const selectable = (channel: AgentHostChannel) => channelsMembershipUnknown || channel.is_member
+  // null is "could not tell", which stays pickable; only an explicit false disables.
+  const selectable = (channel: AgentHostChannel) => channel.is_member !== false
   const validChannelSelection = selectedChannels.length > 0 && selectedChannels.every((channelId) =>
     channels.some((channel) => channel.id === channelId && selectable(channel)))
   const canDeploy = Boolean(
@@ -387,7 +385,7 @@ export function AgentDeploymentDialog({ open, workflowId, workflowName, onOpenCh
     }
     setDestination((current) => {
       const channel = current.channels.find((item) => item.id === channelId)
-      if (!channel || (!current.channelsMembershipUnknown && !channel.is_member)) return current
+      if (!channel || channel.is_member === false) return current
       const alreadySelected = current.selectedChannels.includes(channelId)
       if (!alreadySelected && current.selectedChannels.length >= 20) return current
       return {

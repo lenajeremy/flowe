@@ -61,7 +61,12 @@ export interface AgentHostInstallation {
 export interface AgentHostChannel {
   id: string
   name: string
-  is_member: boolean
+  /**
+   * null when the server could not determine whether the bot is in this
+   * channel — distinct from false, which means it definitely is not. Treating
+   * null as false disables every channel over a failed lookup.
+   */
+  is_member: boolean | null
   is_private: boolean
 }
 
