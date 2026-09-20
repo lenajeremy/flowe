@@ -1089,6 +1089,7 @@ export type ExecutionEventType =
   | 'workflow_completed'
   | 'workflow_error'
   | 'node_waiting'         // humanApproval is waiting for review
+  | 'approval_feedback'    // a reviewer rejected an attempt and said what to change
   | 'node_progress'        // non-terminal activity from a long-running node
   | 'iteration_started'    // one pass of a loop body begins
   | 'iteration_completed'  // …and ends, carrying that pass's status

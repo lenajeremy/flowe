@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getRun, approveRun, rejectRun, type WorkflowRun } from '@/lib/workflowApi'
+import { getRun, approveRun, rejectRun, retryWithFeedback, type WorkflowRun } from '@/lib/workflowApi'
 import { consumeRunStream } from '@/lib/runStream'
 import { API } from '@/lib/config'
 import type { ExecutionEvent } from '@/types/workflow'
@@ -34,6 +34,31 @@ interface NodeCard {
   status: 'completed' | 'error' | 'waiting' | 'running'
   message: string
   activities: ExecutionEvent[]
+  /** Set from the waiting event: whether the step feeding this gate can be
+   *  sent back for another attempt. Only the server knows what feeds the gate,
+   *  so this is never inferred here. */
+  canRetry?: boolean
+  retriesLeft?: number
+}
+
+/** One rejected attempt: what the reviewer turned down, and the steer they gave. */
+interface FeedbackRound {
+  attempt: number
+  feedback: string
+  rejectedOutput: string | null
+}
+
+function buildFeedbackRounds(events: ExecutionEvent[]): FeedbackRound[] {
+  const rounds: FeedbackRound[] = []
+  for (const ev of events) {
+    if (ev.type !== 'approval_feedback') continue
+    rounds.push({
+      attempt: typeof ev.payload?.attempt === 'number' ? ev.payload.attempt : rounds.length + 1,
+      feedback: ev.message,
+      rejectedOutput: ev.output ?? null,
+    })
+  }
+  return rounds
 }
 
 function buildNodeCards(events: ExecutionEvent[]): NodeCard[] {
@@ -64,7 +89,13 @@ function buildNodeCards(events: ExecutionEvent[]): NodeCard[] {
     }
     if (ev.type === 'node_waiting') {
       const card = cards.get(ev.nodeId)
-      if (card) { card.status = 'waiting'; card.message = ev.message }
+      if (card) {
+        card.status = 'waiting'
+        card.message = ev.message
+        card.canRetry = ev.payload?.canRetry === true
+        card.retriesLeft =
+          typeof ev.payload?.retriesLeft === 'number' ? ev.payload.retriesLeft : 0
+      }
     }
     if (ev.type === 'node_progress') {
       const card = cards.get(ev.nodeId)
@@ -82,6 +113,11 @@ export function RunDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [approving, setApproving] = useState(false)
   const [decided, setDecided] = useState<'approved' | 'rejected' | null>(null)
+  // Reject opens a choice rather than ending the run outright: end it, or send
+  // the previous step back with a steer.
+  const [rejecting, setRejecting] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [decisionError, setDecisionError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -136,10 +172,12 @@ export function RunDetailPage() {
   const waitingCard = cards.find((c) => c.status === 'waiting')
   const waitingIdx = waitingCard ? cards.indexOf(waitingCard) : -1
   const prevCard = waitingIdx > 0 ? cards[waitingIdx - 1] : null
+  const rounds = buildFeedbackRounds(events)
 
   async function handleDecision(approve: boolean) {
     if (!run || !waitingCard || approving) return
     setApproving(true)
+    setDecisionError(null)
     try {
       if (approve) {
         await approveRun(run.id, waitingCard.nodeId)
@@ -148,8 +186,28 @@ export function RunDetailPage() {
         await rejectRun(run.id, waitingCard.nodeId)
         setDecided('rejected')
       }
-    } catch {
-      // best-effort
+    } catch (err) {
+      setDecisionError(err instanceof Error ? err.message : 'Could not save that decision.')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  async function handleRetry() {
+    if (!run || !waitingCard || approving) return
+    const steer = feedback.trim()
+    if (!steer) return
+    setApproving(true)
+    setDecisionError(null)
+    try {
+      await retryWithFeedback(run.id, waitingCard.nodeId, steer)
+      // The run is not finished — it goes back to the previous step and will
+      // pause here again with a new result, so the panel closes rather than
+      // showing an outcome.
+      setFeedback('')
+      setRejecting(false)
+    } catch (err) {
+      setDecisionError(err instanceof Error ? err.message : 'Could not send that feedback.')
     } finally {
       setApproving(false)
     }
@@ -217,22 +275,98 @@ export function RunDetailPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => void handleDecision(true)}
-                disabled={approving}
-                className="pressable flex-1 rounded-lg bg-[var(--color-ok)] px-4 py-2.5 text-sm font-semibold text-[var(--color-canvas)] disabled:opacity-50"
-              >
-                {approving ? 'Saving…' : 'Approve'}
-              </button>
-              <button
-                onClick={() => void handleDecision(false)}
-                disabled={approving}
-                className="pressable flex-1 rounded-lg bg-[var(--color-fail)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Reject
-              </button>
-            </div>
+            {rounds.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="micro text-[var(--color-subtle)]">
+                  {rounds.length === 1 ? '1 earlier attempt' : `${rounds.length} earlier attempts`}
+                </p>
+                {rounds.map((round) => (
+                  <div
+                    key={round.attempt}
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-2"
+                  >
+                    <p className="micro text-[var(--color-subtle)]">Attempt {round.attempt} — you asked for</p>
+                    <p className="mt-1 text-[12px] text-[var(--color-text)]">{round.feedback}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {decisionError && (
+              <p className="text-xs text-[var(--color-fail)]">{decisionError}</p>
+            )}
+
+            {!rejecting ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => void handleDecision(true)}
+                  disabled={approving}
+                  className="pressable flex-1 rounded-lg bg-[var(--color-ok)] px-4 py-2.5 text-sm font-semibold text-[var(--color-canvas)] disabled:opacity-50"
+                >
+                  {approving ? 'Saving…' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => {
+                    // With nothing to steer there is only one thing reject can
+                    // mean, so skip the extra click and end the run.
+                    if (waitingCard.canRetry) setRejecting(true)
+                    else void handleDecision(false)
+                  }}
+                  disabled={approving}
+                  className="pressable flex-1 rounded-lg bg-[var(--color-fail)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  Reject
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-text)]">
+                    Send it back to {prevCard?.label ?? 'the previous step'}?
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">
+                    Say what to change and it will try again in this run, then come back to you.
+                    {typeof waitingCard.retriesLeft === 'number' && waitingCard.retriesLeft > 0 && (
+                      <> {waitingCard.retriesLeft} attempt{waitingCard.retriesLeft === 1 ? '' : 's'} left.</>
+                    )}
+                  </p>
+                </div>
+
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  autoFocus
+                  rows={4}
+                  maxLength={4000}
+                  placeholder="Don't open with a greeting — lead with what changed, and keep it under three lines."
+                  className="w-full resize-y rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-subtle)] focus:border-[var(--color-accent)] focus:outline-none"
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => void handleRetry()}
+                    disabled={approving || !feedback.trim()}
+                    className="pressable flex-1 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--color-canvas)] disabled:opacity-40"
+                  >
+                    {approving ? 'Sending…' : 'Retry with feedback'}
+                  </button>
+                  <button
+                    onClick={() => void handleDecision(false)}
+                    disabled={approving}
+                    className="pressable rounded-lg border border-[var(--color-fail)]/50 px-4 py-2.5 text-sm font-semibold text-[var(--color-fail)] disabled:opacity-50"
+                  >
+                    End the run
+                  </button>
+                  <button
+                    onClick={() => { setRejecting(false); setDecisionError(null) }}
+                    disabled={approving}
+                    className="pressable rounded-lg px-3 py-2.5 text-sm text-[var(--color-muted)] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
