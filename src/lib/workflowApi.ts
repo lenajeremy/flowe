@@ -133,6 +133,31 @@ export async function rejectRun(runId: string, nodeId: string): Promise<void> {
   if (!res.ok) throw new Error(`Failed to reject run: ${res.status}`)
 }
 
+/**
+ * Send the step feeding this gate back for another attempt, steered by the
+ * reviewer's note. It shares the reject endpoint because it is the same
+ * decision from the run's point of view — what differs is whether the run ends
+ * here or the previous step tries again.
+ *
+ * Only offered when the waiting event reports `canRetry`; the server refuses
+ * regardless when the upstream node has no prompt to steer.
+ */
+export async function retryWithFeedback(
+  runId: string,
+  nodeId: string,
+  feedback: string,
+): Promise<void> {
+  const res = await apiFetch(`${API}/api/runs/${runId}/node/${nodeId}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ retry: true, feedback }),
+  })
+  if (!res.ok) {
+    const detail = (await res.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Failed to send feedback: ${res.status}`)
+  }
+}
+
 // ── Programmatic API keys ────────────────────────────────────
 
 export interface ApiKey {
