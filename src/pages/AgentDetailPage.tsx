@@ -253,7 +253,11 @@ function AgentDestinationEditor({ record, onUpdated }: { record: AgentDeployment
     setLoadingChannels(true)
     setChannels([])
     listAgentHostChannels(selectedHost.id).then((next) => {
-      if (active) setChannels([...next].sort((left, right) => left.name.localeCompare(right.name)))
+      if (!active) return
+      setChannels([...(next.channels ?? [])].sort((left, right) => left.name.localeCompare(right.name)))
+      // Say why the list is short rather than letting it look like the channel
+      // does not exist.
+      if (next.notice) toast.info(next.notice)
     }).catch((nextError) => {
       if (active) toast.error('Could not load Slack channels', { description: errorMessage(nextError) })
     }).finally(() => {
